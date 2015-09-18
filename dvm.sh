@@ -112,6 +112,8 @@ dvm() {
         echo
       ;;
 
+    esac
+
 
 }
 
