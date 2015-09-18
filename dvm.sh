@@ -112,9 +112,27 @@ dvm() {
         echo
       ;;
 
+      "debug" )
+        echo >&2 "\$SHELL: $SHELL"
+        echo >&2 "\$DVM_DIR: $(echo $DVM_DIR | sed "s#$HOME#\$HOME#g")"
+        for DVM_DEBUG_COMMAND in 'dvm current' 'which docker'
+        do
+          local DVM_DEBUG_OUTPUT="$($DVM_DEBUG_COMMAND | sed "s#$DVM_DIR#\$DVM_DIR#g")"
+          echo >&2 "$DVM_DEBUG_COMMAND: ${DVM_DEBUG_OUTPUT}"
+        done
+        return 42
+      ;;
+
+      "current" )
+        dvm_version current
+      ;;
+
+      * )
+        >&2 nvm help
+        return 127
+      ;;
+
     esac
-
-
 }
 
 
