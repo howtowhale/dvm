@@ -128,7 +128,7 @@ dvm() {
       ;;
 
       * )
-        >&2 nvm help
+        >&2 dvm help
         return 127
       ;;
 
