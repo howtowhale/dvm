@@ -165,7 +165,7 @@ dvm() {
         echo "Usage:"
         echo "  dvm help                              Show this message"
         echo "  dvm --version                         Print out the latest released version of dvm"
-        echo "  dvm install [-s] <version>            Download and install a <version>, [-s] from source. Uses .dvmrc if available"
+        echo "  dvm install <version>                 Download and install a <version>. Uses .dvmrc if available"
         echo "  dvm uninstall <version>               Uninstall a version"
         echo "  dvm use <version>                     Modify PATH to use <version>. Uses .dvmrc if available"
         echo "  dvm run <version> [<args>]            Run <version> with <args> as arguments. Uses .dvmrc if available for <version>"
