@@ -112,6 +112,38 @@ dvm_version() {
   fi
 }
 
+dvm_ls() {
+  local PATTERN
+  PATTERN="$1"
+  local VERSIONS
+  VERSIONS=''
+
+  if [ "${PATTERNS}" = 'current' ]; then
+    dvm_ls_current
+    return
+  fi
+
+  local DVM_VERSION_DIR_NEW
+  DVM_VERSION_DIR_NEW="$(dvm_version_dir new)"
+  local DVM_VERSION_DIR_OLD
+  DVM_VERSION_DIR_OLD="$(dvm_version_dir old)"
+
+  if dvm_resolve_local_alias "${PATTERN}"; then
+    return
+  fi
+
+  if [ -d "$(dvm_version_path "${PATTERN}")" ]; then
+    VERSIONS="$PATTERN"
+  fi
+
+  if [ -z "$VERSIONS" ]; then
+    echo "N/A"
+    return 3
+  fi
+
+  echo "$VERSIONS"
+}
+
 dvm_ls_current() {
   local DVM_LS_CURRENT_DOCKER_PATH
   DVM_LS_CURRENT_DOCKER_PATH="$(command which docker 2> /dev/null)"
