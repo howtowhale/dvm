@@ -230,8 +230,6 @@ dvm_ls() {
 
   if [ -d "$(dvm_version_path "${PATTERN}")" ]; then
     VERSIONS="$PATTERN"
-  else
-    # TODO fancy find and sed magic
   fi
 
   if [ -z "$VERSIONS" ]; then
@@ -677,6 +675,7 @@ dvm() {
         hash -r
         echo "${DVM_DIR}/* removed from \$PATH"
       fi
+      ;;
 
     * )
         >&2 echo ""
