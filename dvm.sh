@@ -263,6 +263,14 @@ dvm_strip_path() {
     -e "s#${DVM_DIR}/[^/]*$2[^:]*##g"
 }
 
+dvm_prepend_path() {
+  if [ -z "$1" ]; then
+    echo "$2"
+  else
+    echo "$2:$1"
+  fi
+}
+
 # Make zsh glob matching behave same as bash
 # This fixes the "zsh: no matches found" errors
 if dvm_has "unsetopt"; then
@@ -658,6 +666,10 @@ dvm() {
         echo "Now using Docker ${VERSION}"
       fi
       ;;
+
+    "deactivate" )
+      local NEWPATH
+      NEWPATH="$(dvm_strip_path "$PATH" "/docker/")"
 
     * )
         >&2 echo ""
