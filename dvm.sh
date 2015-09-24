@@ -381,6 +381,82 @@ dvm() {
         return 127
       ;;
 
+    "use" )
+      local PROVIDED_VERSION
+      local DVM_USE_SILENT
+      DVM_USE_SILENT=0
+
+      shift # remove "use"
+      while [ $# -ne 0 ]
+      do
+        case "$1" in
+          --silent) DVM_USE_SILENT=1 ;;
+          *)
+            if [ -n "$1" ]; then
+              PROVIDED_VERSION="$1"
+            fi
+          ;;
+        esac
+        shift
+      done
+
+      # TODO support .dvmrc, or don't
+      if [ -n "${PROVIDED_VERSION}" ]; then
+        VERSION=$(dvm_match_version "${PROVIDED_VERSION}")
+      fi
+
+      if [ -z "${VERSION}" ]; then
+        >&2 dvm help
+        return 127
+      fi
+
+      if [ "_${VERSION}" = '_system' ]; then
+        if dvm_has_system_docker && dvm deactivate >/dev/null 2>&1; then
+          if [ $DVM_USE_SILENT -ne 1 ]; then
+            echo "Now using system version of Docker: $(docker version 2>/dev/null)"
+          fi
+          return
+        else
+          if [ $DVM_USE_SILENT -ne 1 ]; then
+            echo "System version of Docker not found." >&2
+          fi
+          return 127
+        fi
+      elif [ "_${VERSION}" = "_∞" ]; then
+        if [ $DVM_USE_SILENT -ne 1 ]; then
+          echo "The alias \"${PROVIDED_VERSION}\" loads to an infinite loop. Aborting." >&2
+        fi
+        return 8
+      fi
+
+      dvm_ensure_version_installed
+      EXIT_CODE=$?
+      if [ "${EXIT_CODE}" != "0" ]; then
+        return ${EXIT_CODE}
+      fi
+
+      local DVM_VERSION_DIR
+      DVM_VERSION_DIR="$(dvm_version_path ${VERSION})"
+
+      # Strip other versions from the PATH
+      PATH="$(dvm_strip_path "${PATH}" "/bin")"
+      # Prepend the current version
+      PATH="$(dvm_prepend_path "${PATH}" "${DVM_VERSION_DIR}/bin")"
+
+      export PATH
+      hash -r
+
+      export DVM_BIN="${DVM_VERSION_DIR}"
+
+      if [ "${DVM_SYMLINK_CURRENT}" = "true" ]; then
+        command rm -f "${DVM_DIR/current}" && ln -s "${DVM_VERSION_DIR}" "${DVM_DIR}/current"
+      fi
+
+      if [ $DVM_USE_SILENT -ne 1 ]; then
+        echo "Now using Docker ${VERSION}"
+      fi
+      ;;
+
     esac
 }
 
