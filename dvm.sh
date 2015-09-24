@@ -19,6 +19,25 @@ dvm_is_alias() {
   \alias "$1" > /dev/null 2>&1
 }
 
+dvm_tree_contains_path() {
+  local TREE
+  TREE=$1
+  local DOCKER_PATH
+  DOCKER_PATH="$2"
+
+  if [ "_${TREE}" = "_" ] || [ "_${DOCKER_PATH}_" ]; then
+    >&2 echo "Both the tree and Docker path are required by dvm_tree_contains_path."
+    return 2
+  fi
+
+  local PATHDIR
+  PATHDIR=$(dirname "${DOCKER_PATH}")
+  while [ "$PATHDIR" != "" ] && [ "$PATHDIR" != "." ] && [ "$PATHDIR" != "/" ] && [ "$PATHDIR" != "$TREE" ]; do
+    PATHDIR=$(dirname "$PATHDIR")
+  done
+  [ "$PATHDIR" = "$TREE" ]
+}
+
 # Get the latest version of dvm
 dvm_get_latest() {
   >&2 echo "Not implemented yet"
