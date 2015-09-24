@@ -164,6 +164,12 @@ dvm_install_docker_binary() {
       local url
       url="$DVM_GET_DOCKER_MIRROR/$DVM_OS/$DVM_ARCH/docker-$VERSION"
 
+      local checksum_url
+      checksum_url="${url}.sha256"
+
+      local sum
+      sum=`dvm_download -L -s $checksum_url -o - | command awk '{print $1}'`
+
       local binbin
       binbin="${VERSION_PATH}/${DOCKER_BINARY}"
 
@@ -173,15 +179,15 @@ dvm_install_docker_binary() {
       local tmpbin
       tmpbin="${tmpdir}/${DOCKER_BINARY}"
 
+      local DVM_INSTALL_ERRORED
+
       command mkdir -p "$tmpdir" && \
         dvm_download -L -C - --progress-bar $url -o "$tmpbin" || \
         DVM_INSTALL_ERRORED=true
 
-      # TODO: Check for 404 (tends to be an image of a container ship flailing)
-
-      # TODO: Checksum
       if (
         [ "$DVM_INSTALL_ERRORED" != true ] && \
+        dvm_checksum "$tmpbin" $sum && \
         command mkdir -p "$VERSION_PATH" && \
         command mv "$tmpbin" "$binbin"
         ); then
@@ -192,6 +198,28 @@ dvm_install_docker_binary() {
         return 1
       fi
     fi
+  fi
+}
+
+dvm_checksum() {
+  local DVM_CHECKSUM
+  if dvm_has "sha256sum" && ! dvm_is_alias "sha256sum"; then
+    DVM_CHECKSUM="$(command sha256sum "$1" | command awk '{print $1}')"
+  elif dvm_has "shasum" && ! dvm_is_alias "shasum"; then
+    DVM_CHECKSUM="$(shasum -a 256 "$1" | command awk '{print $1}')"
+  else
+    echo "Unaliased sha256sum, shasum not found." >&2
+    return 2
+  fi
+
+  if [ "_$DVM_CHECKSUM" = "_$2" ]; then
+    return
+  elif [ -z "$2" ]; then
+    echo 'Checksums empty'
+    return
+  else
+    echo 'Checksums do not match.' >&2
+    return 1
   fi
 }
 
