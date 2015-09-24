@@ -93,6 +93,20 @@ dvm_version() {
   fi
 }
 
+dvm_ls_current() {
+  local DVM_LS_CURRENT_DOCKER_PATH
+  DVM_LS_CURRENT_DOCKER_PATH="$(command which docker 2> /dev/null)"
+  if [ $? -ne 0 ]; then
+    echo 'none'
+  elif dvm_tree_contains_path "$DVM_DIR" "$DVM_LS_CURRENT_DOCKER_PATH"; then
+    local VERSION
+    VERSION="$(docker version -f '{{.Client.Version}}' 2>/dev/null)"
+    echo "${VERSION}"
+  else
+    echo "system"
+  fi
+}
+
 # Make zsh glob matching behave same as bash
 # This fixes the "zsh: no matches found" errors
 if dvm_has "unsetopt"; then
