@@ -10,6 +10,8 @@
 
 DVM_SCRIPT_SOURCE="$_"
 
+DVM_VERSION_DIR="${DVM_DIR}/bin/docker/"
+
 dvm_has() {
   type "$1" > /dev/null 2>&1
 }
@@ -25,10 +27,6 @@ dvm_get_latest() {
   return 1
 }
 
-dvm_version_dir() {
-  echo "${DVM_WHICH_DIR}/bin/docker/"
-}
-
 dvm_version_path() {
   local VERSION
   VERSION="$1"
@@ -37,7 +35,7 @@ dvm_version_path() {
     echo "version is required" >&2
     return 3
   else
-    echo "$(nvm_version_dir)/${VERSION}"
+    echo "${DVM_VERSION_DIR}/${VERSION}"
   fi
 }
 
