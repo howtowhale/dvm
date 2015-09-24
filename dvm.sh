@@ -374,12 +374,6 @@ dvm() {
         # fi
         return $?
       ;;
-      * )
-        >&2 echo ""
-        >&2 echo "dvm $1 is not a command"
-        >&2 dvm help
-        return 127
-      ;;
 
     "use" )
       local PROVIDED_VERSION
@@ -455,6 +449,13 @@ dvm() {
       if [ $DVM_USE_SILENT -ne 1 ]; then
         echo "Now using Docker ${VERSION}"
       fi
+      ;;
+
+    * )
+        >&2 echo ""
+        >&2 echo "dvm $1 is not a command"
+        >&2 dvm help
+        return 127
       ;;
 
     esac
