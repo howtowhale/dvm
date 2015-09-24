@@ -256,6 +256,13 @@ dvm_ls_current() {
   fi
 }
 
+dvm_strip_path() {
+  echo "$1" | command sed \
+    -e "s#${DVM_DIR}/[^/]*$2[^:]*:##g" \
+    -e "s#:${DVM_DIR}/[^/]*$2[^:]*##g" \
+    -e "s#${DVM_DIR}/[^/]*$2[^:]*##g"
+}
+
 # Make zsh glob matching behave same as bash
 # This fixes the "zsh: no matches found" errors
 if dvm_has "unsetopt"; then
@@ -634,9 +641,9 @@ dvm() {
       DVM_VERSION_DIR="$(dvm_version_path ${VERSION})"
 
       # Strip other versions from the PATH
-      PATH="$(dvm_strip_path "${PATH}" "/bin")"
+      PATH="$(dvm_strip_path "${PATH}" "/docker/")"
       # Prepend the current version
-      PATH="$(dvm_prepend_path "${PATH}" "${DVM_VERSION_DIR}/bin")"
+      PATH="$(dvm_prepend_path "${PATH}" "${DVM_VERSION_DIR}")"
 
       export PATH
       hash -r
