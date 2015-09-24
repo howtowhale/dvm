@@ -670,6 +670,13 @@ dvm() {
     "deactivate" )
       local NEWPATH
       NEWPATH="$(dvm_strip_path "$PATH" "/docker/")"
+      if [ "_${PATH}" = "_${NEWPATH}" ]; then
+        echo "Could not find ${DVM_DIR}/* in \$PATH" >&2
+      else
+        export PATH="$NEWPATH"
+        hash -r
+        echo "${DVM_DIR}/* removed from \$PATH"
+      fi
 
     * )
         >&2 echo ""
