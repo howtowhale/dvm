@@ -112,6 +112,26 @@ dvm_version() {
   fi
 }
 
+dvm_resolve_local_alias() {
+  if [ -z "$1" ]; then
+    return 1
+  fi
+
+  local VERSION
+  local EXIT_CODE
+  VERSION="$(dvm_resolve_alias "$1")"
+  EXIT_CODE=$?
+
+  if [ -z "${VERSION}" ]; then
+    return ${EXIT_CODE}
+  fi
+  if [ "_${VERSION}" != "_∞" ]; then
+    dvm_version "${VERSION}"
+  else
+    echo "${VERSION}"
+  fi
+}
+
 dvm_ls() {
   local PATTERN
   PATTERN="$1"
