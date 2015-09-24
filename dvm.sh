@@ -134,6 +134,7 @@ dvm_install_docker_binary() {
       command mkdir -p "$VERSION_PATH" && \
       command mv "$tmpbin" "$binbin"
       ); then
+      chmod a+x $binbin
       return 0
     else
       echo >&2 "Binary download failed."
