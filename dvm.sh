@@ -112,6 +112,54 @@ dvm_version() {
   fi
 }
 
+dvm_resolve_alias() {
+  if [ -z "$1" ]; then
+    return 1
+  fi
+
+  local PATTERN
+  PATTERN="$1"
+
+  local ALIAS
+  ALIAS="$PATTERN"
+  local ALIAS_TEMP
+
+  local SEEN_ALIASES
+  SEEN_ALIASES="$ALIAS"
+
+  while true; do
+    ALIAS_TEMP="$(dvm_alias "$ALIAS" 2> /dev/null)"
+
+    if [ -z "$ALIAS_TEMP" ]; then
+      break
+    fi
+
+    if [ -n "$ALIAS_TEMP" ] \
+      && command printf "$SEEN_ALIASES" | command grep -e "^$ALIAS_TEMP$" > /dev/null; then
+      ALIAS="∞"
+      break
+    fi
+
+    SEEN_ALIASES="${SEEN_ALIASES}\n${ALIAS_TEMP}"
+    ALIAS="$ALIAS_TEMP"
+  done
+
+  if [ -n "$ALIAS" ] && [ "_${ALIAS}" != "_${PATTERN}" ]; then
+    echo "$ALIAS"
+    return 0
+  fi
+
+  if dvm_validate_implicit_alias "$PATTERN" 2> /dev/null ; then
+    local IMPLICIT
+    IMPLICIT="$(dvm_print_implicit_alias local "$PATTERN" 2> /dev/null)"
+    if [ -n "$IMPLICIT" ]; then
+      echo "${IMPLICIT}"
+    fi
+  fi
+
+  return 2
+}
+
 dvm_resolve_local_alias() {
   if [ -z "$1" ]; then
     return 1
