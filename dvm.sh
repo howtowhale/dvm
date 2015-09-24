@@ -105,8 +105,15 @@ dvm_get_arch() {
 
 
 dvm_remote_version() {
-  # TODO: Work with remote
-  echo "$1"
+  local PATTERN
+  PATTERN="$1"
+  local VERSION
+  VERSION="$(dvm_ls_remote "$PATTERN" | tail -n1)"
+
+  echo "$VERSION"
+  if [ "_$VERSION" = '_N/A' ]; then
+    return 3
+  fi
 }
 
 dvm_version_greater() {
@@ -131,9 +138,10 @@ dvm_normalize_version() {
 
 dvm_binary_available() {
   # binaries started with docker 0.6.0
-  local FIRST_VERSION_WITH_BINARY
-  FIRST_VERSION_WITH_BINARY="0.6.0"
-  dvm_version_greater_than_or_equal_to "$1" "$FIRST_VERSION_WITH_BINARY"
+  # binaries + checksums started with docker 0.10.0
+  local FIRST_VERSION_WITH_BINARY_AND_CHECKSUM
+  FIRST_VERSION_WITH_BINARY_AND_CHECKSUM="0.10.0"
+  dvm_version_greater_than_or_equal_to "$1" "$FIRST_VERSION_WITH_BINARY_AND_CHECKSUM"
 }
 
 dvm_install_docker_binary() {
@@ -186,6 +194,32 @@ dvm_install_docker_binary() {
     fi
   fi
 }
+
+dvm_ls_remote() {
+  local PATTERN
+  PATTERN="$1"
+  local VERSIONS
+  local GREP_OPTIONS
+  GREP_OPTIONS=''
+
+  local RELEASES_URL
+  RELEASES_URL="https://api.github.com/repos/docker/docker/tags?per_page=100"
+
+  #TODO: Cache tags as tags.json possibly
+  VERSIONS=`dvm_download -L -s $RELEASES_URL -o - \
+            | \egrep -o 'v[0-9]+\.[0-9]+\.[0-9]+' \
+            | grep -v "^v0\.[0-9]\." \
+            | grep "^v${PATTERN}" \
+            | sort -t. -u -k 1.2,1n -k 2,2n -k 3,3n \
+            | cut -c 2-`
+
+  if [ -z "$VERSIONS" ]; then
+    echo "N/A"
+    return 3
+  fi
+  echo "$VERSIONS"
+}
+
 
 dvm() {
     if [ $# -lt 1 ]; then
@@ -248,6 +282,13 @@ dvm() {
         return 42
       ;;
 
+      "ls-remote" | "list-remote" )
+        local PATTERN
+        PATTERN="$2"
+
+        dvm_ls_remote "$PATTERN"
+      ;;
+
       "current" )
         dvm_version current
       ;;
@@ -257,8 +298,6 @@ dvm() {
         version_not_provided=0
 
         local provided_version
-        local DVM_OS
-        DVM_OS="$(dvm_get_os)"
 
         if ! dvm_has "curl" && ! dvm_has "wget"; then
           'dvm needs curl or wget to proceed.' >&2;
