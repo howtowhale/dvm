@@ -208,6 +208,19 @@ dvm() {
       ;;
 
       "install" | "i" )
+        # TODO: Any amount of sane error checking and input validation you'd
+        #       come to expect from a tool like this
+        #       (See nvm install)
+        if [ $# -lt 2 ]; then
+          version_not_provided=1
+          # TODO: .dvmrc handling (will we support this)
+          # dvm_rc_version
+          if [ -z "$DVM_RC_VERSION" ]; then
+            >&2 nvm help
+            return 127
+          fi
+        fi
+
         dvm_install_docker_binary $2
       ;;
       * )
