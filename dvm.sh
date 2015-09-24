@@ -112,6 +112,23 @@ dvm_version() {
   fi
 }
 
+dvm_alias() {
+  local ALIAS
+  ALIAS="$1"
+
+  if [ -z "$ALIAS" ]; then
+    echo >&2 "An alias is required."
+    return 1
+  fi
+
+  if [ ! -f ${DVM_ALIAS_PATH} ]; then
+    echo >&2 "Alias does not exist."
+    return 2
+  fi
+
+  cat "${DVM_ALIAS_PATH}"
+}
+
 dvm_resolve_alias() {
   if [ -z "$1" ]; then
     return 1
@@ -240,6 +257,7 @@ fi
 unset DVM_SCRIPT_SOURCE 2> /dev/null
 
 DVM_VERSION_DIR="${DVM_DIR}/bin/docker/"
+DVM_ALIAS_PATH="${DVM_DIR}/alias"
 
 # Setup mirror location if not already set
 if [ -z "$DVM_GET_DOCKER_MIRROR" ]; then
