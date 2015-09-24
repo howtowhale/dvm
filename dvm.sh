@@ -103,56 +103,86 @@ dvm_get_arch() {
   echo "$DVM_ARCH"
 }
 
+
+dvm_remote_version() {
+  # TODO: Work with remote
+  echo "$1"
+}
+
+dvm_version_greater() {
+  local LHS
+  LHS=$(dvm_normalize_version "$1")
+  local RHS
+  RHS=$(dvm_normalize_version "$2")
+  [ $LHS -gt $RHS ];
+}
+
+dvm_version_greater_than_or_equal_to() {
+  local LHS
+  LHS=$(dvm_normalize_version "$1")
+  local RHS
+  RHS=$(dvm_normalize_version "$2")
+  [ $LHS -ge $RHS ];
+}
+
+dvm_normalize_version() {
+  echo "${1#v}" | command awk -F. '{ printf("%d%06d%06d\n", $1,$2,$3); }'
+}
+
+dvm_binary_available() {
+  # binaries started with docker 0.6.0
+  local FIRST_VERSION_WITH_BINARY
+  FIRST_VERSION_WITH_BINARY="0.6.0"
+  dvm_version_greater_than_or_equal_to "$1" "$FIRST_VERSION_WITH_BINARY"
+}
+
 dvm_install_docker_binary() {
   local VERSION
   VERSION="$1"
 
-  # TODO: write dvm_version_path, accepts $VERSION
   local VERSION_PATH
-  VERSION_PATH="$DVM_DIR/bin/docker/${VERSION}"
+  VERSION_PATH="$(dvm_version_path ${VERSION})"
 
   local DVM_OS
   DVM_OS="$(dvm_get_os)"
-  local url
   if [ -n "$DVM_OS" ]; then
-    # TODO: if dvm_binary_available "$VERSION"; then
-    local DVM_ARCH
-    DVM_ARCH="$(dvm_get_arch)"
+    if dvm_binary_available "$VERSION"; then
+      local DVM_ARCH
+      DVM_ARCH="$(dvm_get_arch)"
 
-    local DOCKER_BINARY
-    DOCKER_BINARY="docker"
+      local DOCKER_BINARY
+      DOCKER_BINARY="docker"
 
-    url="$DVM_GET_DOCKER_MIRROR/$DVM_OS/$DVM_ARCH/docker-$VERSION"
+      local url
+      url="$DVM_GET_DOCKER_MIRROR/$DVM_OS/$DVM_ARCH/docker-$VERSION"
 
+      local binbin
+      binbin="${VERSION_PATH}/${DOCKER_BINARY}"
 
-    local binbin
-    binbin="${VERSION_PATH}/${DOCKER_BINARY}"
+      local tmpdir
+      tmpdir="$DVM_DIR/.tmpbin/docker/${VERSION}"
 
-    local tmpdir
-    tmpdir="$DVM_DIR/.tmpbin/docker/${VERSION}"
+      local tmpbin
+      tmpbin="${tmpdir}/${DOCKER_BINARY}"
 
-    local tmpbin
-    tmpbin="${tmpdir}/${DOCKER_BINARY}"
+      command mkdir -p "$tmpdir" && \
+        dvm_download -L -C - --progress-bar $url -o "$tmpbin" || \
+        DVM_INSTALL_ERRORED=true
 
-    ## TODO: Come back and finish here
+      # TODO: Check for 404 (tends to be an image of a container ship flailing)
 
-    command mkdir -p "$tmpdir" && \
-      dvm_download -L -C - --progress-bar $url -o "$tmpbin" || \
-      DVM_INSTALL_ERRORED=true
-
-    # TODO: Check for 404 (tends to be an image of a container ship flailing)
-
-    # TODO: Checksum
-    if (
-      [ "$DVM_INSTALL_ERRORED" != true ] && \
-      command mkdir -p "$VERSION_PATH" && \
-      command mv "$tmpbin" "$binbin"
-      ); then
-      chmod a+x $binbin
-      return 0
-    else
-      echo >&2 "Binary download failed."
-      return 1
+      # TODO: Checksum
+      if (
+        [ "$DVM_INSTALL_ERRORED" != true ] && \
+        command mkdir -p "$VERSION_PATH" && \
+        command mv "$tmpbin" "$binbin"
+        ); then
+        chmod a+x $binbin
+        return 0
+      else
+        echo >&2 "Binary download failed."
+        return 1
+      fi
     fi
   fi
 }
@@ -223,20 +253,59 @@ dvm() {
       ;;
 
       "install" | "i" )
-        # TODO: Any amount of sane error checking and input validation you'd
-        #       come to expect from a tool like this
-        #       (See nvm install)
+        local version_not_provided
+        version_not_provided=0
+
+        local provided_version
+        local DVM_OS
+        DVM_OS="$(dvm_get_os)"
+
+        if ! dvm_has "curl" && ! dvm_has "wget"; then
+          'dvm needs curl or wget to proceed.' >&2;
+          return 1
+        fi
+
         if [ $# -lt 2 ]; then
           version_not_provided=1
-          # TODO: .dvmrc handling (will we support this)
+          # TODO: .dvmrc handling (will we support this?)
           # dvm_rc_version
           if [ -z "$DVM_RC_VERSION" ]; then
-            >&2 nvm help
+            >&2 dvm help
             return 127
           fi
         fi
 
-        dvm_install_docker_binary $2
+        shift
+
+        provided_version="$1"
+        VERSION="$(dvm_remote_version ${provided_version})"
+
+        if [ "_$VERSION" == "_N/A" ]; then
+          echo "Version ${provided_version} not found - try \`dvm ls-remote\` to browse available versions." >&2
+          return 3
+        fi
+
+        local VERSION_PATH
+        VERSION_PATH="$(dvm_version_path ${VERSION})"
+
+        if [ -d "$VERSION_PATH" ]; then
+          echo "$VERSION is already installed." >&2
+          # TODO: dvm use "$VERSION"
+          return $?
+        fi
+
+        local DVM_INSTALL_SUCCESS
+        if dvm_binary_available "$VERSION"; then
+          if dvm_install_docker_binary $VERSION; then
+            DVM_INSTALL_SUCCESS=true
+          fi
+        fi
+
+        # TODO: dvm use after successful install
+        # if [ "$DVM_INSTALL_SUCCESS" = true ]; then
+        #   dvm use "$VERSION"
+        # fi
+        return $?
       ;;
       * )
         >&2 echo ""
