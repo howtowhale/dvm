@@ -29,6 +29,18 @@ dvm_version_dir() {
   echo "${DVM_WHICH_DIR}/bin/docker/"
 }
 
+dvm_version_path() {
+  local VERSION
+  VERSION="$1"
+
+  if [ -z "${VERSION}" ]; then
+    echo "version is required" >&2
+    return 3
+  else
+    echo "$(nvm_version_dir)/${VERSION}"
+  fi
+}
+
 dvm_download() {
   if dvm_has "curl"; then
     curl -q $*
