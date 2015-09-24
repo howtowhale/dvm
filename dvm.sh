@@ -69,6 +69,30 @@ dvm_match_version() {
   esac
 }
 
+# Expand a version using the version cache.
+dvm_version() {
+  local PATTERN
+  PATTERN=$1
+
+  # The default pattern is the current one
+  if [ -z "${PATTERN}" ]; then
+    PATTERN='current'
+  fi
+
+  if [ "${PATTERN}" = "current" ]; then
+    dvm_ls_current
+    return $?
+  fi
+
+  VERSION="$(dvm_ls "${PATTERN}" | command tail -n1)"
+  if [ -z "${VERSION}" ] || [ "_${VERSION}" = "_N/A" ]; then
+    echo "N/A"
+    return 3
+  else
+    echo "${VERSION}"
+  fi
+}
+
 # Make zsh glob matching behave same as bash
 # This fixes the "zsh: no matches found" errors
 if dvm_has "unsetopt"; then
