@@ -90,6 +90,13 @@ dvm_get_arch() {
 }
 
 dvm_install_docker_binary() {
+  local VERSION
+  VERSION="$1"
+
+  # TODO: write dvm_version_path, accepts $VERSION
+  local VERSION_PATH
+  VERSION_PATH="$DVM_DIR/bin/docker/${VERSION}"
+
   local DVM_OS
   DVM_OS="$(dvm_get_os)"
   local url
@@ -103,8 +110,7 @@ dvm_install_docker_binary() {
 
     url="$DVM_GET_DOCKER_MIRROR/$DVM_OS/$DVM_ARCH/docker-$VERSION"
 
-    local VERSION_PATH
-    VERSION_PATH="$DVM_DIR/bin/docker/${VERSION}"
+
     local binbin
     binbin="${VERSION_PATH}/${DOCKER_BINARY}"
 
@@ -202,7 +208,7 @@ dvm() {
       ;;
 
       "install" | "i" )
-        dvm_install_docker_binary
+        dvm_install_docker_binary $2
       ;;
       * )
         >&2 echo ""
