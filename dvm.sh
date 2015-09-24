@@ -56,6 +56,19 @@ dvm_has_system_docker() {
   [ "$(dvm deactivate >/dev/null 2>&1 && command -v docker)" != '' ]
 }
 
+dvm_match_version() {
+  local PROVIDED_VERSION
+  PROVIDED_VERSION="$1"
+  case "_${PROVIDED_VERSION}" in
+    "_system" )
+      echo "system"
+      ;;
+    * )
+      echo "$(dvm_version ${PROVIDED_VERSION})"
+      ;;
+  esac
+}
+
 # Make zsh glob matching behave same as bash
 # This fixes the "zsh: no matches found" errors
 if dvm_has "unsetopt"; then
