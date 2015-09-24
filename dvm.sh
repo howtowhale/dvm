@@ -25,6 +25,10 @@ dvm_get_latest() {
   return 1
 }
 
+dvm_version_dir() {
+  echo "${DVM_WHICH_DIR}/bin/docker/"
+}
+
 dvm_download() {
   if dvm_has "curl"; then
     curl -q $*
