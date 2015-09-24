@@ -89,6 +89,52 @@ dvm_get_arch() {
   echo "$DVM_ARCH"
 }
 
+dvm_install_docker_binary() {
+  local DVM_OS
+  DVM_OS="$(dvm_get_os)"
+  local url
+  if [ -n "$DVM_OS" ]; then
+    # TODO: if dvm_binary_available "$VERSION"; then
+    local DVM_ARCH
+    DVM_ARCH="$(dvm_get_arch)"
+
+    local DOCKER_BINARY
+    DOCKER_BINARY="docker"
+
+    url="$DVM_GET_DOCKER_MIRROR/$DVM_OS/$DVM_ARCH/docker-$VERSION"
+
+    local VERSION_PATH
+    VERSION_PATH="$DVM_DIR/bin/docker/${VERSION}"
+    local binbin
+    binbin="${VERSION_PATH}/${DOCKER_BINARY}"
+
+    local tmpdir
+    tmpdir="$DVM_DIR/.tmpbin/docker/${VERSION}"
+
+    local tmpbin
+    tmpbin="${tmpdir}/${DOCKER_BINARY}"
+
+    ## TODO: Come back and finish here
+
+    command mkdir -p "$tmpdir" && \
+      dvm_download -L -C - --progress-bar $url -o "$tmpbin" || \
+      DVM_INSTALL_ERRORED=true
+
+    # TODO: Check for 404 (tends to be an image of a container ship flailing)
+
+    # TODO: Checksum
+    if (
+      [ "$DVM_INSTALL_ERRORED" != true ] && \
+      command mkdir -p "$VERSION_PATH" && \
+      command mv "$tmpbin" "$binbin"
+      ); then
+      return 0
+    else
+      echo >&2 "Binary download failed."
+      return 1
+    fi
+  fi
+}
 
 dvm() {
     if [ $# -lt 1 ]; then
@@ -155,6 +201,9 @@ dvm() {
         dvm_version current
       ;;
 
+      "install" | "i" )
+        dvm_install_docker_binary
+      ;;
       * )
         >&2 echo ""
         >&2 echo "dvm $1 is not a command"

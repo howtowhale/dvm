@@ -22,3 +22,9 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+# Temporary downloads
+.tmpbin
+
+# Downloads
+bin
