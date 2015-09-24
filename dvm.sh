@@ -10,8 +10,6 @@
 
 DVM_SCRIPT_SOURCE="$_"
 
-DVM_VERSION_DIR="${DVM_DIR}/bin/docker/"
-
 dvm_has() {
   type "$1" > /dev/null 2>&1
 }
@@ -73,6 +71,8 @@ if [ -z "$DVM_DIR" ]; then
   export DVM_DIR=$(cd $DVM_CD_FLAGS $(dirname "${DVM_SCRIPT_SOURCE:-$0}") > /dev/null && \pwd)
 fi
 unset DVM_SCRIPT_SOURCE 2> /dev/null
+
+DVM_VERSION_DIR="${DVM_DIR}/bin/docker/"
 
 # Setup mirror location if not already set
 if [ -z "$DVM_GET_DOCKER_MIRROR" ]; then
