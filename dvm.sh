@@ -166,14 +166,6 @@ dvm_resolve_alias() {
     return 0
   fi
 
-  if dvm_validate_implicit_alias "$PATTERN" 2> /dev/null ; then
-    local IMPLICIT
-    IMPLICIT="$(dvm_print_implicit_alias local "$PATTERN" 2> /dev/null)"
-    if [ -n "$IMPLICIT" ]; then
-      echo "${IMPLICIT}"
-    fi
-  fi
-
   return 2
 }
 
