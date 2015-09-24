@@ -25,6 +25,18 @@ dvm_get_latest() {
   return 1
 }
 
+dvm_version_path() {
+  local VERSION
+  VERSION="$1"
+
+  if [ -z "${VERSION}" ]; then
+    echo "version is required" >&2
+    return 3
+  else
+    echo "${DVM_VERSION_DIR}/${VERSION}"
+  fi
+}
+
 dvm_download() {
   if dvm_has "curl"; then
     curl -q $*
@@ -59,6 +71,8 @@ if [ -z "$DVM_DIR" ]; then
   export DVM_DIR=$(cd $DVM_CD_FLAGS $(dirname "${DVM_SCRIPT_SOURCE:-$0}") > /dev/null && \pwd)
 fi
 unset DVM_SCRIPT_SOURCE 2> /dev/null
+
+DVM_VERSION_DIR="${DVM_DIR}/bin/docker/"
 
 # Setup mirror location if not already set
 if [ -z "$DVM_GET_DOCKER_MIRROR" ]; then
