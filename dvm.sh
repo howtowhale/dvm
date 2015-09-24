@@ -19,6 +19,12 @@ dvm_is_alias() {
   \alias "$1" > /dev/null 2>&1
 }
 
+# Get the latest version of dvm
+dvm_get_latest() {
+  >&2 echo "Not implemented yet"
+  return 1
+}
+
 dvm_download() {
   if dvm_has "curl"; then
     curl -q $*
@@ -56,10 +62,32 @@ unset DVM_SCRIPT_SOURCE 2> /dev/null
 
 # Setup mirror location if not already set
 if [ -z "$DVM_GET_DOCKER_MIRROR" ]; then
-  export DVM_GET_DOCKER_MIRROR="https://get.docker.com/builds/"
+  export DVM_GET_DOCKER_MIRROR="https://get.docker.com/builds"
 fi
 
-## Skippy skip
+dvm_get_os() {
+  local DVM_UNAME
+  DVM_UNAME="$(uname -a)"
+  local DVM_OS
+  case "$DVM_UNAME" in
+    Linux\ *) DVM_OS=Linux ;;
+    Darwin\ *) DVM_OS=Darwin ;;
+    FreeBSD\ *) DVM_OS=FreeBSD ;; # Whoa, this is available actually
+  esac
+  echo "$DVM_OS"
+}
+
+dvm_get_arch() {
+  local DVM_UNAME
+  DVM_UNAME="$(uname -m)"
+  local DVM_ARCH
+  case "$DVM_UNAME" in
+    x86_64) DVM_ARCH="x86_64" ;;
+    i*86) DVM_ARCH="i386" ;;
+    *) DVM_ARCH="$DVM_UNAME" ;;
+  esac
+  echo "$DVM_ARCH"
+}
 
 
 dvm() {
@@ -128,6 +156,8 @@ dvm() {
       ;;
 
       * )
+        >&2 echo ""
+        >&2 echo "dvm $1 is not a command"
         >&2 dvm help
         return 127
       ;;
