@@ -646,6 +646,56 @@ dvm() {
         return $?
       ;;
 
+    "uninstall" )
+      if [ $# -ne 2 ]; then
+        >&2 echo "dvm uninstall requires an argument."
+        >&2 echo
+        >&2 dvm help
+        return 127
+      fi
+
+      local PATTERN
+      local VERSION
+      local INFERRED_MSG
+
+      PATTERN="$2"
+      VERSION="$(dvm_version "${PATTERN}")"
+
+      INFERRED_MSG=""
+      if [ "_${VERSION}" != "_${PATTERN}" ]; then
+        INFERRED_MSG=" (inferred from ${PATTERN})"
+      fi
+
+      if [ "_${VERSION}" = "_$(dvm_ls_current)" ]; then
+        echo "Cannot uninstall currently-active Docker version, ${VERSION}${INFERRED_MSG}." >&2
+        return 1
+      fi
+
+      local VERSION_DIR
+      VERSION_DIR="$(dvm_version_path "${VERSION}")"
+      if [ ! -d "${VERSION_DIR}" ]; then
+        echo "${VERSION}${INFERRED_MSG} is not installed." >&2
+        return
+      fi
+
+      if [ -z "${VERSION_DIR}" ]; then
+        echo "No version directory found." >&2
+        return 1
+      fi
+
+      VERSION_DIR=$(cd ${VERSION_DIR} && pwd)
+
+      # This keeps things like "dvm uninstall ../../.." from working.
+      if ! dvm_tree_contains_path "${DVM_VERSION_DIR}" "${VERSION_DIR}" ; then
+        echo "Version directory ${VERSION_DIR} is not beneath ${DVM_VERSION_DIR}." >&2
+        return 1
+      fi
+
+      # Delete all files related to the target version
+      command rm -rf "${VERSION_DIR}"
+      echo "Uninstalled Docker version ${VERSION}${INFERRED_MSG}."
+      ;;
+
     "use" )
       local PROVIDED_VERSION
       local DVM_USE_SILENT
