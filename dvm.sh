@@ -290,8 +290,8 @@ dvm() {
         echo "Example:"
         echo "  dvm install 1.8.1                     Install a specific version number"
         echo "  dvm use 1.6                           Use the latest available 1.6.x release"
-        echo "  dvm run 1.6.1 -it ubuntu /bin/bash    Run an ubuntu container using Docker 1.6.1"
-        echo "  dvm exec 1.6.1 nginx                  Run the nginx image the PATH pointing to Docker 1.6.1"
+        echo "  dvm run 1.6.1 run -it ubuntu bash     Run an ubuntu container using Docker 1.6.1"
+        echo "  dvm exec 1.6.1 run nginx              Run the nginx image the PATH pointing to Docker 1.6.1"
         echo "  dvm alias default 1.8.1               Set default Docker version on a shell"
         echo
         echo "Note:"
