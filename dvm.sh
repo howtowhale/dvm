@@ -858,6 +858,14 @@ dvm() {
       fi
       ;;
 
+    "run" | "exec" | "which" )
+      >&2 echo ""
+      >&2 echo "dvm $1 is not implemented - raise an issue and see if you can implement it ;)"
+      >&2 dvm help
+      return 126
+      ;;
+
+
     * )
         >&2 echo ""
         >&2 echo "dvm $1 is not a command"
