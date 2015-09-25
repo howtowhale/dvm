@@ -263,9 +263,8 @@ dvm_ls_current() {
   if [ $? -ne 0 ]; then
     echo 'none'
   elif dvm_tree_contains_path "$DVM_DIR" "$DVM_LS_CURRENT_DOCKER_PATH"; then
-    local VERSION
     # docker version -f is not supported in older docker clients.
-    VERSION="$(command docker version |
+    echo "$(command docker version |
       command grep 'Client version:' |
       command sed -e "s#^Client version: ##")"
   else
