@@ -33,7 +33,7 @@ To install the 1.8.2 release of docker, do this:
 
     dvm install 1.8.2
 
-Now in any new shell use the installed version
+Now in any new shell use the installed version:
 
     dvm use 1.8.2
 
@@ -45,7 +45,7 @@ If you want to see what versions are available to install:
 
     dvm ls-remote
 
-To restore your PATH, you can deactivate it.
+To restore your PATH, you can deactivate it:
 
     dvm deactivate
 
