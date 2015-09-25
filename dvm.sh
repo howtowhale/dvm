@@ -726,6 +726,44 @@ dvm() {
       fi
       ;;
 
+    "alias" )
+      command mkdir -p ${DVM_ALIAS_PATH}
+      if [ $# -le 2 ]; then
+        local DEST
+        for ALIAS_PATH in "${DVM_ALIAS_PATH}"/"$2"*; do
+          ALIAS=$(command basename "${ALIAS_PATH}")
+          DEST=$(nvm_alias "$ALIAS" 2> /dev/null)
+          if [ -n "${DEST}" ]; then
+            VERSION="$(dvm_version "${DEST}")"
+            if [ "_${DEST}" = "_${VERSION}" ]; then
+              echo "${ALIAS} -> ${DEST}"
+            else
+              echo "${ALIAS} -> ${DEST} (-> ${VERSION})"
+            fi
+          fi
+        done
+
+        return
+      fi
+
+      if [ -z "$3" ]; then
+        command rm -f "${DVM_ALIAS_PATH}/${2}"
+        echo "${2} -> *poof*"
+        return
+      fi
+
+      VERSION="$(dvm_version "${3}")"
+      if [ $? -ne 0 ]; then
+        echo "! WARNING: Version '${3}' does not exist." >&2
+      fi
+      echo "${3}" | tee "${DVM_ALIAS_PATH}/${2}" > /dev/null
+      if [ "_${3}" != "_${VERSION}" ]; then
+        echo "${2} -> ${3} (-> ${VERSION})"
+      else
+        echo "${2} -> ${3}"
+      fi
+      ;;
+
     "deactivate" )
       local NEWPATH
       NEWPATH="$(dvm_strip_path "$PATH" "/docker/")"
