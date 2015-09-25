@@ -145,12 +145,12 @@ dvm_alias() {
     return 1
   fi
 
-  if [ ! -f ${DVM_ALIAS_PATH} ]; then
+  if [ ! -f ${DVM_ALIAS_DIR} ]; then
     echo >&2 "Alias does not exist."
     return 2
   fi
 
-  cat "${DVM_ALIAS_PATH}"
+  cat "${DVM_ALIAS_DIR}"
 }
 
 dvm_resolve_alias() {
@@ -312,7 +312,7 @@ fi
 unset DVM_SCRIPT_SOURCE 2> /dev/null
 
 DVM_VERSION_DIR="${DVM_DIR}/bin/docker"
-DVM_ALIAS_PATH="${DVM_DIR}/alias"
+DVM_ALIAS_DIR="${DVM_DIR}/alias"
 
 # Setup mirror location if not already set
 if [ -z "$DVM_GET_DOCKER_MIRROR" ]; then
@@ -727,10 +727,10 @@ dvm() {
       ;;
 
     "alias" )
-      command mkdir -p ${DVM_ALIAS_PATH}
+      command mkdir -p ${DVM_ALIAS_DIR}
       if [ $# -le 2 ]; then
         local DEST
-        for ALIAS_PATH in "${DVM_ALIAS_PATH}"/"$2"*; do
+        for ALIAS_PATH in "${DVM_ALIAS_DIR}"/"$2"*; do
           ALIAS=$(command basename "${ALIAS_PATH}")
           DEST=$(nvm_alias "$ALIAS" 2> /dev/null)
           if [ -n "${DEST}" ]; then
@@ -747,7 +747,7 @@ dvm() {
       fi
 
       if [ -z "$3" ]; then
-        command rm -f "${DVM_ALIAS_PATH}/${2}"
+        command rm -f "${DVM_ALIAS_DIR}/${2}"
         echo "${2} -> *poof*"
         return
       fi
@@ -756,7 +756,7 @@ dvm() {
       if [ $? -ne 0 ]; then
         echo "! WARNING: Version '${3}' does not exist." >&2
       fi
-      echo "${3}" | tee "${DVM_ALIAS_PATH}/${2}" > /dev/null
+      echo "${3}" | tee "${DVM_ALIAS_DIR}/${2}" > /dev/null
       if [ "_${3}" != "_${VERSION}" ]; then
         echo "${2} -> ${3} (-> ${VERSION})"
       else
