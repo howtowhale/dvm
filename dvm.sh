@@ -145,12 +145,15 @@ dvm_alias() {
     return 1
   fi
 
-  if [ ! -f ${DVM_ALIAS_DIR} ]; then
+  local DVM_ALIAS_PATH
+  DVM_ALIAS_PATH="${DVM_ALIAS_DIR}/${ALIAS}"
+
+  if [ ! -f "${DVM_ALIAS_PATH}"]; then
     echo >&2 "Alias does not exist."
     return 2
   fi
 
-  cat "${DVM_ALIAS_DIR}"
+  cat "${DVM_ALIAS_PATH}"
 }
 
 dvm_resolve_alias() {
