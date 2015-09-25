@@ -770,6 +770,32 @@ dvm() {
       fi
       ;;
 
+    "unalias" )
+      command mkdir -p "${DVM_ALIAS_DIR}"
+      if [ $# -ne 2 ]; then
+        >&2 dvm help
+        return 127
+      fi
+
+      local DVM_ALIAS_PATH
+      DVM_ALIAS_PATH="${DVM_ALIAS_DIR}/${2}"
+
+      if [ ! -f "${DVM_ALIAS_PATH}" ]; then
+        echo "Alias ${2} doesn't exist!" >&2
+        return
+      fi
+
+      local REAL_ALIAS_DIR
+      REAL_ALIAS_DIR=$(cd $(dirname ${DVM_ALIAS_PATH}) && pwd)
+      if ! dvm_tree_contains_path "${DVM_ALIAS_DIR}" "${REAL_ALIAS_DIR}})"; then
+        echo "Alias path ${DVM_ALIAS_PATH} is not beneath ${DVM_ALIAS_DIR}." >&2
+        return 1
+      fi
+
+      command rm -f "${DVM_ALIAS_DIR}/{$2}"
+      echo "Deleted alias ${2}."
+      ;;
+
     "deactivate" )
       local NEWPATH
       NEWPATH="$(dvm_strip_path "$PATH" "/docker/")"
