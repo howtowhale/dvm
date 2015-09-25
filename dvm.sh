@@ -145,7 +145,10 @@ dvm_alias() {
     return 1
   fi
 
-  if [ ! -f ${DVM_ALIAS_PATH} ]; then
+  local DVM_ALIAS_PATH
+  DVM_ALIAS_PATH="${DVM_ALIAS_DIR}/${ALIAS}"
+
+  if [ ! -f "${DVM_ALIAS_PATH}"]; then
     echo >&2 "Alias does not exist."
     return 2
   fi
@@ -312,7 +315,7 @@ fi
 unset DVM_SCRIPT_SOURCE 2> /dev/null
 
 DVM_VERSION_DIR="${DVM_DIR}/bin/docker"
-DVM_ALIAS_PATH="${DVM_DIR}/alias"
+DVM_ALIAS_DIR="${DVM_DIR}/alias"
 
 # Setup mirror location if not already set
 if [ -z "$DVM_GET_DOCKER_MIRROR" ]; then
@@ -581,7 +584,10 @@ dvm() {
         DVM_LS_EXIT_CODE=$?
 
         dvm_print_versions "$DVM_LS_OUTPUT"
-        # TODO dvm alias
+
+        if [ $# -eq 1 ]; then
+          dvm alias
+        fi
         return $DVM_LS_EXIT_CODE
       ;;
 
@@ -724,6 +730,70 @@ dvm() {
       if [ $DVM_USE_SILENT -ne 1 ]; then
         echo "Now using Docker ${VERSION}"
       fi
+      ;;
+
+    "alias" )
+      command mkdir -p ${DVM_ALIAS_DIR}
+      if [ $# -le 2 ]; then
+        local DEST
+        for ALIAS_PATH in "${DVM_ALIAS_DIR}"/"$2"*; do
+          ALIAS=$(command basename "${ALIAS_PATH}")
+          DEST=$(dvm_alias "$ALIAS" 2> /dev/null)
+          if [ -n "${DEST}" ]; then
+            VERSION="$(dvm_version "${DEST}")"
+            if [ "_${DEST}" = "_${VERSION}" ]; then
+              echo "${ALIAS} -> ${DEST}"
+            else
+              echo "${ALIAS} -> ${DEST} (-> ${VERSION})"
+            fi
+          fi
+        done
+
+        return
+      fi
+
+      if [ -z "$3" ]; then
+        command rm -f "${DVM_ALIAS_DIR}/${2}"
+        echo "${2} -> *poof*"
+        return
+      fi
+
+      VERSION="$(dvm_version "${3}")"
+      if [ $? -ne 0 ]; then
+        echo "! WARNING: Version '${3}' does not exist." >&2
+      fi
+      echo "${3}" | tee "${DVM_ALIAS_DIR}/${2}" > /dev/null
+      if [ "_${3}" != "_${VERSION}" ]; then
+        echo "${2} -> ${3} (-> ${VERSION})"
+      else
+        echo "${2} -> ${3}"
+      fi
+      ;;
+
+    "unalias" )
+      command mkdir -p "${DVM_ALIAS_DIR}"
+      if [ $# -ne 2 ]; then
+        >&2 dvm help
+        return 127
+      fi
+
+      local DVM_ALIAS_PATH
+      DVM_ALIAS_PATH="${DVM_ALIAS_DIR}/${2}"
+
+      if [ ! -f "${DVM_ALIAS_PATH}" ]; then
+        echo "Alias ${2} doesn't exist!" >&2
+        return
+      fi
+
+      local REAL_ALIAS_DIR
+      REAL_ALIAS_DIR=$(cd $(dirname ${DVM_ALIAS_PATH}) && pwd)
+      if [ "_${REAL_ALIAS_DIR}" != "_${DVM_ALIAS_DIR}" ] && ! dvm_tree_contains_path "${DVM_ALIAS_DIR}" "${REAL_ALIAS_DIR}})"; then
+        echo "Alias path ${DVM_ALIAS_PATH} is not beneath ${DVM_ALIAS_DIR}." >&2
+        return 1
+      fi
+
+      command rm -f "${DVM_ALIAS_PATH}"
+      echo "Deleted alias ${2}."
       ;;
 
     "deactivate" )
