@@ -25,7 +25,7 @@ dvm_tree_contains_path() {
   local DOCKER_PATH
   DOCKER_PATH="$2"
 
-  if [ "_${TREE}" = "_" ] || [ "_${DOCKER_PATH}_" ]; then
+  if [ "_${TREE}" = "_" ] || [ "_${DOCKER_PATH}" = "_" ]; then
     >&2 echo "Both the tree and Docker path are required by dvm_tree_contains_path."
     return 2
   fi
