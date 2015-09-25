@@ -228,11 +228,28 @@ dvm_ls() {
     return
   fi
 
-  if [ -d "$(dvm_version_path "${PATTERN}")" ]; then
+  if [ -n "${PATTERN}" ] && [ -d "$(dvm_version_path "${PATTERN}")" ]; then
     VERSIONS="$PATTERN"
   fi
 
   if [ -z "$VERSIONS" ]; then
+    VERSIONS="$(command find ${DVM_VERSION_DIR} -maxdepth 1 -type d -name "${PATTERN}*" \
+      | command sed "
+        s#^${DVM_VERSION_DIR}/##;
+        \#^${DVM_VERSION_DIR}# d;
+      " \
+      | command sort -t. -u -k 2.2,2n -k 3,3n -k 4,4n)"
+  fi
+
+  if dvm_has_system_docker; then
+    if [ -z "$PATTERN" ]; then
+      VERSIONS="$VERSIONS$(command printf '\n%s' 'system')"
+    elif [ "$PATTERN" = 'system' ]; then
+      VERSIONS="$(command printf '%s' 'system')"
+    fi
+  fi
+
+  if [ -z "${VERSIONS}" ]; then
     echo "N/A"
     return 3
   fi
@@ -247,7 +264,16 @@ dvm_ls_current() {
     echo 'none'
   elif dvm_tree_contains_path "$DVM_DIR" "$DVM_LS_CURRENT_DOCKER_PATH"; then
     local VERSION
-    VERSION="$(docker version -f '{{.Client.Version}}' 2>/dev/null)"
+
+    VERSION="$(command docker version -f '{{.Client.Version}}' 2>/dev/null)"
+
+    if [ $? -ne 0 ]; then
+      # docker version -f is not supported in older docker clients.
+      VERSION="$(command docker version |
+        command grep 'Client version:' |
+        command sed -e "s#^Client version: ##")"
+    fi
+
     echo "${VERSION}"
   else
     echo "system"
@@ -462,6 +488,25 @@ dvm_ls_remote() {
   echo "$VERSIONS"
 }
 
+dvm_print_versions() {
+  local VERSION
+  local FORMAT
+  local DVM_CURRENT
+
+  DVM_CURRENT=$(dvm_ls_current)
+  echo "$1" | while read VERSION; do
+    if [ "_${VERSION}" = "_${DVM_CURRENT}" ]; then
+      FORMAT='\033[0;32m-> %12s\033[0m'
+    elif [ "$VERSION" = "system" ]; then
+      FORMAT='\033[0;33m%15s\033[0m'
+    elif [ -d "$(dvm_version_path "$VERSION" 2> /dev/null)" ]; then
+      FORMAT='\033[0;34m%15s\033[0m'
+    else
+      FORMAT='%15s'
+    fi
+    command printf "$FORMAT\n" $VERSION
+  done
+}
 
 dvm() {
     if [ $# -lt 1 ]; then
@@ -522,6 +567,18 @@ dvm() {
           echo >&2 "$DVM_DEBUG_COMMAND: ${DVM_DEBUG_OUTPUT}"
         done
         return 42
+      ;;
+
+      "ls" | "list" )
+        local DVM_LS_OUTPUT
+        local DVM_LS_EXIT_CODE
+
+        DVM_LS_OUTPUT=$(dvm_ls "$2")
+        DVM_LS_EXIT_CODE=$?
+
+        dvm_print_versions "$DVM_LS_OUTPUT"
+        # TODO dvm alias
+        return $DVM_LS_EXIT_CODE
       ;;
 
       "ls-remote" | "list-remote" )
