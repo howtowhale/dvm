@@ -858,7 +858,7 @@ dvm() {
       fi
       ;;
 
-    "run" | "exec" | "which" )
+    "run" | "exec" | "which" | "clear-cache" )
       >&2 echo ""
       >&2 echo "dvm $1 is not implemented - raise an issue and see if you can implement it ;)"
       >&2 dvm help
