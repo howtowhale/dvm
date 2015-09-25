@@ -559,7 +559,7 @@ dvm() {
       ;;
 
       "--version" | "-v" )
-        echo "$(cd $DVM_DIR && command git describe --always HEAD)"
+        echo "$(cd $DVM_DIR && command git describe --tags --always HEAD)"
       ;;
 
       "debug" )
