@@ -1,0 +1,3 @@
+language: c # defaults to ruby
+script:
+- bash -n dvm.sh
