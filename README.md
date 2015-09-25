@@ -48,3 +48,31 @@ If you want to see what versions are available to install:
 To restore your PATH, you can deactivate it.
 
     dvm deactivate
+
+## Bash completion
+
+To activate, you need to source `bash_completion`:
+
+  	[[ -r $DVM_DIR/bash_completion ]] && . $DVM_DIR/bash_completion
+
+Put the above sourcing line just below the sourcing line for DVM in your profile (`.bashrc`, `.bash_profile`).
+
+### Usage
+
+dvm
+
+    $ dvm [tab][tab]
+    alias        exec         list-remote  unalias      version
+    clear-cache  help         ls           uninstall    which
+    current      install      ls-remote    unload
+    deactivate   list         run          use
+
+dvm use
+
+    $ dvm use [tab][tab]
+    1.6.1        1.8.2
+
+dvm uninstall
+
+    $ dvm uninstall [tab][tab]
+    1.6.1        1.8.2
