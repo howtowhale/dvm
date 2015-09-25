@@ -462,6 +462,25 @@ dvm_ls_remote() {
   echo "$VERSIONS"
 }
 
+dvm_print_versions() {
+  local VERSION
+  local FORMAT
+  local DVM_CURRENT
+
+  DVM_CURRENT=$(dvm_ls_current)
+  echo "$1" | while read VERSION; do
+    if [ "_${VERSION}" = "_${DVM_CURRENT}" ]; then
+      FORMAT='\033[0;32m-> %12s\033[0m'
+    elif [ "$VERSION" = "system" ]; then
+      FORMAT='\033[0;33m%15s\033[0m'
+    elif [ -d "$(dvm_version_path "$VERSION" 2> /dev/null)" ]; then
+      FORMAT='\033[0;34m%15s\033[0m'
+    else
+      FORMAT='%15s'
+    fi
+    command printf "$FORMAT\n" $VERSION
+  done
+}
 
 dvm() {
     if [ $# -lt 1 ]; then
