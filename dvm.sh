@@ -233,8 +233,11 @@ dvm_ls() {
   fi
 
   if [ -z "$VERSIONS" ]; then
-    VERSIONS="$(command find $DVM_VERSION_DIR -maxdepth 1 -type d -name "${PATTERN}*" \
-      | command sed "s#^${DVM_VERSION_DIR}/##;" \
+    VERSIONS="$(command find ${DVM_VERSION_DIR} -maxdepth 1 -type d -name "${PATTERN}*" \
+      | command sed "
+        s#^${DVM_VERSION_DIR}/##;
+        s#^${DVM_VERSION_DIR}##;
+      " \
       | command sort -t. -u -k 2.2,2n -k 3,3n -k 4,4n)"
   fi
 
