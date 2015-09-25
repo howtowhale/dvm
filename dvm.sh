@@ -228,7 +228,7 @@ dvm_ls() {
     return
   fi
 
-  if [ -d "$(dvm_version_path "${PATTERN}")" ]; then
+  if [ -n "${PATTERN}" ] && [ -d "$(dvm_version_path "${PATTERN}")" ]; then
     VERSIONS="$PATTERN"
   fi
 
