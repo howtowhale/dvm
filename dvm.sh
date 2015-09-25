@@ -558,6 +558,10 @@ dvm() {
         echo
       ;;
 
+      "--version" | "-v" )
+        echo "$(cd $DVM_DIR && command git describe --tags --always HEAD)"
+      ;;
+
       "debug" )
         echo >&2 "\$SHELL: $SHELL"
         echo >&2 "\$DVM_DIR: $(echo $DVM_DIR | sed "s#$HOME#\$HOME#g")"
