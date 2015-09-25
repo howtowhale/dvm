@@ -558,7 +558,7 @@ dvm() {
         echo
       ;;
 
-      "--version" )
+      "--version" | "-v" )
         echo "$(cd $DVM_DIR && command git describe --always HEAD)"
       ;;
 
