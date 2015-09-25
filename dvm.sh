@@ -735,7 +735,7 @@ dvm() {
         local DEST
         for ALIAS_PATH in "${DVM_ALIAS_DIR}"/"$2"*; do
           ALIAS=$(command basename "${ALIAS_PATH}")
-          DEST=$(nvm_alias "$ALIAS" 2> /dev/null)
+          DEST=$(dvm_alias "$ALIAS" 2> /dev/null)
           if [ -n "${DEST}" ]; then
             VERSION="$(dvm_version "${DEST}")"
             if [ "_${DEST}" = "_${VERSION}" ]; then
