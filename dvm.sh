@@ -233,6 +233,20 @@ dvm_ls() {
   fi
 
   if [ -z "$VERSIONS" ]; then
+    VERSIONS="$(command find $DVM_VERSION_DIR -maxdepth 1 -type d -name "${PATTERN}*" \
+      | command sed "s#^${DVM_VERSION_DIR}/##;" \
+      | command sort -t. -u -k 2.2,2n -k 3,3n -k 4,4n)"
+  fi
+
+  if dvm_has_system_docker; then
+    if [ -z "$PATTERN" ]; then
+      VERSIONS="$VERSIONS$(command printf '\n%s' 'system')"
+    elif [ "$PATTERN" = 'system' ]; then
+      VERSIONS="$(command printf '%s' 'system')"
+    fi
+  fi
+
+  if [ -z "${VERSIONS}" ]; then
     echo "N/A"
     return 3
   fi
