@@ -23,7 +23,9 @@ git clone https://github.com/rgbkrk/dvm.git ~/.dvm
 
 To activate dvm, you need to source it from your shell:
 
+```
 . ~/.dvm/dvm.sh
+```
 
 Add this line to your `~/.bashrc`, `~/.profile`, or `~/.zshrc` file to have it automatically sourced upon login.
 
