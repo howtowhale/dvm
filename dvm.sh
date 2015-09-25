@@ -787,12 +787,12 @@ dvm() {
 
       local REAL_ALIAS_DIR
       REAL_ALIAS_DIR=$(cd $(dirname ${DVM_ALIAS_PATH}) && pwd)
-      if ! dvm_tree_contains_path "${DVM_ALIAS_DIR}" "${REAL_ALIAS_DIR}})"; then
+      if [ "_${REAL_ALIAS_DIR}" != "_${DVM_ALIAS_DIR}" ] && ! dvm_tree_contains_path "${DVM_ALIAS_DIR}" "${REAL_ALIAS_DIR}})"; then
         echo "Alias path ${DVM_ALIAS_PATH} is not beneath ${DVM_ALIAS_DIR}." >&2
         return 1
       fi
 
-      command rm -f "${DVM_ALIAS_DIR}/{$2}"
+      command rm -f "${DVM_ALIAS_PATH}"
       echo "Deleted alias ${2}."
       ;;
 
