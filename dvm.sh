@@ -524,6 +524,18 @@ dvm() {
         return 42
       ;;
 
+      "ls" | "list" )
+        local DVM_LS_OUTPUT
+        local DVM_LS_EXIT_CODE
+
+        DVM_LS_OUTPUT=$(dvm_ls "$2")
+        DVM_LS_EXIT_CODE=$?
+
+        dvm_print_versions "$DVM_LS_OUTPUT"
+        # TODO dvm alias
+        return $DVM_LS_EXIT_CODE
+      ;;
+
       "ls-remote" | "list-remote" )
         local PATTERN
         PATTERN="$2"
