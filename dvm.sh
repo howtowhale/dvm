@@ -84,7 +84,7 @@ dvm_ensure_version_installed() {
   if [ "_${EXIT_CODE}" = "_0" ]; then
     DVM_VERSION_DIR="$(dvm_version_path "$LOCAL_VERSION")"
   fi
-  if [ "_${EXIT_CODE}" != "_0" ] || [ -d "${DVM_VERSION_DIR}" ]; then
+  if [ "_${EXIT_CODE}" != "_0" ] || [ ! -d "${DVM_VERSION_DIR}" ]; then
     VERSION="$(dvm_resolve_alias "$PROVIDED_VERSION")"
     if [ $? -eq 0 ]; then
       echo "N/A: version \"${PROVIDED_VERSION} -> ${VERSION}\" is not yet installed" >&2
