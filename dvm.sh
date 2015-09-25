@@ -19,6 +19,25 @@ dvm_is_alias() {
   \alias "$1" > /dev/null 2>&1
 }
 
+dvm_tree_contains_path() {
+  local TREE
+  TREE=$1
+  local DOCKER_PATH
+  DOCKER_PATH="$2"
+
+  if [ "_${TREE}" = "_" ] || [ "_${DOCKER_PATH}" = "_" ]; then
+    >&2 echo "Both the tree and Docker path are required by dvm_tree_contains_path."
+    return 2
+  fi
+
+  local PATHDIR
+  PATHDIR=$(dirname "${DOCKER_PATH}")
+  while [ "$PATHDIR" != "" ] && [ "$PATHDIR" != "." ] && [ "$PATHDIR" != "/" ] && [ "$PATHDIR" != "$TREE" ]; do
+    PATHDIR=$(dirname "$PATHDIR")
+  done
+  [ "$PATHDIR" = "$TREE" ]
+}
+
 # Get the latest version of dvm
 dvm_get_latest() {
   >&2 echo "Not implemented yet"
@@ -52,8 +71,202 @@ dvm_download() {
   fi
 }
 
+dvm_ensure_version_installed() {
+  local PROVIDED_VERSION
+  PROVIDED_VERSION="$1"
+  local LOCAL_VERSION
+  local EXIT_CODE
+
+  LOCAL_VERSION="$(dvm_version "${PROVIDED_VERSION}")"
+  EXIT_CODE="$?"
+
+  local DVM_CHOSEN_DIR
+  if [ "_${EXIT_CODE}" = "_0" ]; then
+    DVM_CHOSEN_DIR="$(dvm_version_path "$LOCAL_VERSION")"
+  fi
+  if [ "_${EXIT_CODE}" != "_0" ] || [ ! -d "${DVM_CHOSEN_DIR}" ]; then
+    VERSION="$(dvm_resolve_alias "$PROVIDED_VERSION")"
+    if [ $? -eq 0 ]; then
+      echo "N/A: version \"${PROVIDED_VERSION} -> ${VERSION}\" is not yet installed" >&2
+    else
+      echo "N/A: version \"${PROVIDED_VERSION}\" is not yet installed" >&2
+    fi
+    return 1
+  fi
+}
+
 dvm_has_system_docker() {
   [ "$(dvm deactivate >/dev/null 2>&1 && command -v docker)" != '' ]
+}
+
+dvm_match_version() {
+  local PROVIDED_VERSION
+  PROVIDED_VERSION="$1"
+  case "_${PROVIDED_VERSION}" in
+    "_system" )
+      echo "system"
+      ;;
+    * )
+      echo "$(dvm_version ${PROVIDED_VERSION})"
+      ;;
+  esac
+}
+
+# Expand a version using the version cache.
+dvm_version() {
+  local PATTERN
+  PATTERN=$1
+
+  # The default pattern is the current one
+  if [ -z "${PATTERN}" ]; then
+    PATTERN='current'
+  fi
+
+  if [ "${PATTERN}" = "current" ]; then
+    dvm_ls_current
+    return $?
+  fi
+
+  VERSION="$(dvm_ls "${PATTERN}" | command tail -n1)"
+  if [ -z "${VERSION}" ] || [ "_${VERSION}" = "_N/A" ]; then
+    echo "N/A"
+    return 3
+  else
+    echo "${VERSION}"
+  fi
+}
+
+dvm_alias() {
+  local ALIAS
+  ALIAS="$1"
+
+  if [ -z "$ALIAS" ]; then
+    echo >&2 "An alias is required."
+    return 1
+  fi
+
+  if [ ! -f ${DVM_ALIAS_PATH} ]; then
+    echo >&2 "Alias does not exist."
+    return 2
+  fi
+
+  cat "${DVM_ALIAS_PATH}"
+}
+
+dvm_resolve_alias() {
+  if [ -z "$1" ]; then
+    return 1
+  fi
+
+  local PATTERN
+  PATTERN="$1"
+
+  local ALIAS
+  ALIAS="$PATTERN"
+  local ALIAS_TEMP
+
+  local SEEN_ALIASES
+  SEEN_ALIASES="$ALIAS"
+
+  while true; do
+    ALIAS_TEMP="$(dvm_alias "$ALIAS" 2> /dev/null)"
+
+    if [ -z "$ALIAS_TEMP" ]; then
+      break
+    fi
+
+    if [ -n "$ALIAS_TEMP" ] \
+      && command printf "$SEEN_ALIASES" | command grep -e "^$ALIAS_TEMP$" > /dev/null; then
+      ALIAS="∞"
+      break
+    fi
+
+    SEEN_ALIASES="${SEEN_ALIASES}\n${ALIAS_TEMP}"
+    ALIAS="$ALIAS_TEMP"
+  done
+
+  if [ -n "$ALIAS" ] && [ "_${ALIAS}" != "_${PATTERN}" ]; then
+    echo "$ALIAS"
+    return 0
+  fi
+
+  return 2
+}
+
+dvm_resolve_local_alias() {
+  if [ -z "$1" ]; then
+    return 1
+  fi
+
+  local VERSION
+  local EXIT_CODE
+  VERSION="$(dvm_resolve_alias "$1")"
+  EXIT_CODE=$?
+
+  if [ -z "${VERSION}" ]; then
+    return ${EXIT_CODE}
+  fi
+  if [ "_${VERSION}" != "_∞" ]; then
+    dvm_version "${VERSION}"
+  else
+    echo "${VERSION}"
+  fi
+}
+
+dvm_ls() {
+  local PATTERN
+  PATTERN="$1"
+  local VERSIONS
+  VERSIONS=''
+
+  if [ "${PATTERNS}" = 'current' ]; then
+    dvm_ls_current
+    return
+  fi
+
+  if dvm_resolve_local_alias "${PATTERN}"; then
+    return
+  fi
+
+  if [ -d "$(dvm_version_path "${PATTERN}")" ]; then
+    VERSIONS="$PATTERN"
+  fi
+
+  if [ -z "$VERSIONS" ]; then
+    echo "N/A"
+    return 3
+  fi
+
+  echo "$VERSIONS"
+}
+
+dvm_ls_current() {
+  local DVM_LS_CURRENT_DOCKER_PATH
+  DVM_LS_CURRENT_DOCKER_PATH="$(command which docker 2> /dev/null)"
+  if [ $? -ne 0 ]; then
+    echo 'none'
+  elif dvm_tree_contains_path "$DVM_DIR" "$DVM_LS_CURRENT_DOCKER_PATH"; then
+    local VERSION
+    VERSION="$(docker version -f '{{.Client.Version}}' 2>/dev/null)"
+    echo "${VERSION}"
+  else
+    echo "system"
+  fi
+}
+
+dvm_strip_path() {
+  echo "$1" | command sed \
+    -e "s#${DVM_DIR}/[^/]*$2[^:]*:##g" \
+    -e "s#:${DVM_DIR}/[^/]*$2[^:]*##g" \
+    -e "s#${DVM_DIR}/[^/]*$2[^:]*##g"
+}
+
+dvm_prepend_path() {
+  if [ -z "$1" ]; then
+    echo "$2"
+  else
+    echo "$2:$1"
+  fi
 }
 
 # Make zsh glob matching behave same as bash
@@ -72,7 +285,8 @@ if [ -z "$DVM_DIR" ]; then
 fi
 unset DVM_SCRIPT_SOURCE 2> /dev/null
 
-DVM_VERSION_DIR="${DVM_DIR}/bin/docker/"
+DVM_VERSION_DIR="${DVM_DIR}/bin/docker"
+DVM_ALIAS_PATH="${DVM_DIR}/alias"
 
 # Setup mirror location if not already set
 if [ -z "$DVM_GET_DOCKER_MIRROR" ]; then
@@ -374,7 +588,96 @@ dvm() {
         # fi
         return $?
       ;;
-      * )
+
+    "use" )
+      local PROVIDED_VERSION
+      local DVM_USE_SILENT
+      DVM_USE_SILENT=0
+
+      shift # remove "use"
+      while [ $# -ne 0 ]
+      do
+        case "$1" in
+          --silent) DVM_USE_SILENT=1 ;;
+          *)
+            if [ -n "$1" ]; then
+              PROVIDED_VERSION="$1"
+            fi
+          ;;
+        esac
+        shift
+      done
+
+      # TODO support .dvmrc, or don't
+      if [ -n "${PROVIDED_VERSION}" ]; then
+        VERSION=$(dvm_match_version "${PROVIDED_VERSION}")
+      fi
+
+      if [ -z "${VERSION}" ]; then
+        >&2 dvm help
+        return 127
+      fi
+
+      if [ "_${VERSION}" = '_system' ]; then
+        if dvm_has_system_docker && dvm deactivate >/dev/null 2>&1; then
+          if [ $DVM_USE_SILENT -ne 1 ]; then
+            echo "Now using system version of Docker: $(docker version 2>/dev/null)"
+          fi
+          return
+        else
+          if [ $DVM_USE_SILENT -ne 1 ]; then
+            echo "System version of Docker not found." >&2
+          fi
+          return 127
+        fi
+      elif [ "_${VERSION}" = "_∞" ]; then
+        if [ $DVM_USE_SILENT -ne 1 ]; then
+          echo "The alias \"${PROVIDED_VERSION}\" loads to an infinite loop. Aborting." >&2
+        fi
+        return 8
+      fi
+
+      dvm_ensure_version_installed "${VERSION}"
+      EXIT_CODE=$?
+      if [ "${EXIT_CODE}" != "0" ]; then
+        return ${EXIT_CODE}
+      fi
+
+      local DVM_CHOSEN_DIR
+      DVM_CHOSEN_DIR="$(dvm_version_path ${VERSION})"
+
+      # Strip other versions from the PATH
+      PATH="$(dvm_strip_path "${PATH}" "/docker/")"
+      # Prepend the current version
+      PATH="$(dvm_prepend_path "${PATH}" "${DVM_CHOSEN_DIR}")"
+
+      export PATH
+      hash -r
+
+      export DVM_BIN="${DVM_CHOSEN_DIR}"
+
+      if [ "${DVM_SYMLINK_CURRENT}" = "true" ]; then
+        command rm -f "${DVM_DIR/current}" && ln -s "${DVM_CHOSEN_DIR}" "${DVM_DIR}/current"
+      fi
+
+      if [ $DVM_USE_SILENT -ne 1 ]; then
+        echo "Now using Docker ${VERSION}"
+      fi
+      ;;
+
+    "deactivate" )
+      local NEWPATH
+      NEWPATH="$(dvm_strip_path "$PATH" "/docker/")"
+      if [ "_${PATH}" = "_${NEWPATH}" ]; then
+        echo "Could not find ${DVM_DIR}/* in \$PATH" >&2
+      else
+        export PATH="$NEWPATH"
+        hash -r
+        echo "${DVM_DIR}/* removed from \$PATH"
+      fi
+      ;;
+
+    * )
         >&2 echo ""
         >&2 echo "dvm $1 is not a command"
         >&2 dvm help
