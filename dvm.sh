@@ -584,7 +584,10 @@ dvm() {
         DVM_LS_EXIT_CODE=$?
 
         dvm_print_versions "$DVM_LS_OUTPUT"
-        # TODO dvm alias
+
+        if [ $# -eq 1 ]; then
+          dvm alias
+        fi
         return $DVM_LS_EXIT_CODE
       ;;
 
