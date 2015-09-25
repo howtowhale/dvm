@@ -241,7 +241,7 @@ dvm_ls() {
         s#^${DVM_VERSION_DIR}/##;
         \#^${DVM_VERSION_DIR}# d;
       " \
-      | command sort -t. -u -k 2.2,2n -k 3,3n -k 4,4n)"
+      | command sort -t.)"
   fi
 
   if dvm_has_system_docker; then
