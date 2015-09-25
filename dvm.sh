@@ -80,11 +80,11 @@ dvm_ensure_version_installed() {
   LOCAL_VERSION="$(dvm_version "${PROVIDED_VERSION}")"
   EXIT_CODE="$?"
 
-  local DVM_VERSION_DIR
+  local DVM_CHOSEN_DIR
   if [ "_${EXIT_CODE}" = "_0" ]; then
-    DVM_VERSION_DIR="$(dvm_version_path "$LOCAL_VERSION")"
+    DVM_CHOSEN_DIR="$(dvm_version_path "$LOCAL_VERSION")"
   fi
-  if [ "_${EXIT_CODE}" != "_0" ] || [ ! -d "${DVM_VERSION_DIR}" ]; then
+  if [ "_${EXIT_CODE}" != "_0" ] || [ ! -d "${DVM_CHOSEN_DIR}" ]; then
     VERSION="$(dvm_resolve_alias "$PROVIDED_VERSION")"
     if [ $? -eq 0 ]; then
       echo "N/A: version \"${PROVIDED_VERSION} -> ${VERSION}\" is not yet installed" >&2
@@ -285,7 +285,7 @@ if [ -z "$DVM_DIR" ]; then
 fi
 unset DVM_SCRIPT_SOURCE 2> /dev/null
 
-DVM_VERSION_DIR="${DVM_DIR}/bin/docker/"
+DVM_VERSION_DIR="${DVM_DIR}/bin/docker"
 DVM_ALIAS_PATH="${DVM_DIR}/alias"
 
 # Setup mirror location if not already set
@@ -637,27 +637,27 @@ dvm() {
         return 8
       fi
 
-      dvm_ensure_version_installed
+      dvm_ensure_version_installed "${VERSION}"
       EXIT_CODE=$?
       if [ "${EXIT_CODE}" != "0" ]; then
         return ${EXIT_CODE}
       fi
 
-      local DVM_VERSION_DIR
-      DVM_VERSION_DIR="$(dvm_version_path ${VERSION})"
+      local DVM_CHOSEN_DIR
+      DVM_CHOSEN_DIR="$(dvm_version_path ${VERSION})"
 
       # Strip other versions from the PATH
       PATH="$(dvm_strip_path "${PATH}" "/docker/")"
       # Prepend the current version
-      PATH="$(dvm_prepend_path "${PATH}" "${DVM_VERSION_DIR}")"
+      PATH="$(dvm_prepend_path "${PATH}" "${DVM_CHOSEN_DIR}")"
 
       export PATH
       hash -r
 
-      export DVM_BIN="${DVM_VERSION_DIR}"
+      export DVM_BIN="${DVM_CHOSEN_DIR}"
 
       if [ "${DVM_SYMLINK_CURRENT}" = "true" ]; then
-        command rm -f "${DVM_DIR/current}" && ln -s "${DVM_VERSION_DIR}" "${DVM_DIR}/current"
+        command rm -f "${DVM_DIR/current}" && ln -s "${DVM_CHOSEN_DIR}" "${DVM_DIR}/current"
       fi
 
       if [ $DVM_USE_SILENT -ne 1 ]; then
