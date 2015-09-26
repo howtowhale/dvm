@@ -553,7 +553,7 @@ dvm() {
         echo "  dvm install 1.8.1                     Install a specific version number"
         echo "  dvm use 1.6                           Use the latest available 1.6.x release"
         echo "  dvm run 1.6.1 run -it ubuntu bash     Run an ubuntu container using Docker 1.6.1"
-        echo "  dvm exec 1.6.1 run nginx              Run the nginx image the PATH pointing to Docker 1.6.1"
+        echo "  dvm exec 1.8.2 docker run nginx       Run the nginx image with the PATH pointing to Docker 1.8.2"
         echo "  dvm alias default 1.8.1               Set default Docker version on a shell"
         echo
         echo "Note:"
@@ -857,6 +857,14 @@ dvm() {
         echo "${DVM_DIR}/* removed from \$PATH"
       fi
       ;;
+
+    "run" | "exec" | "which" | "clear-cache" )
+      >&2 echo ""
+      >&2 echo "dvm $1 is not implemented - raise an issue and see if you can implement it ;)"
+      >&2 dvm help
+      return 126
+      ;;
+
 
     * )
         >&2 echo ""
