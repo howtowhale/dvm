@@ -537,7 +537,6 @@ dvm() {
         echo "  dvm install <version>                 Download and install a <version>. Uses \$DOCKER_VERSION if available"
         echo "  dvm uninstall <version>               Uninstall a version"
         echo "  dvm use <version>                     Modify PATH to use <version>. Uses \$DOCKER_VERSION if available"
-        echo "  dvm run <version> [<args>]            Run <version> with <args> as arguments. Uses .dvmrc if available for <version>"
         echo "  dvm current                           Display currently activated version"
         echo "  dvm ls                                List installed versions"
         echo "  dvm ls <version>                      List versions matching a given description"
@@ -547,13 +546,11 @@ dvm() {
         echo "  dvm alias <name> <version>            Set an alias named <name> pointing to <version>"
         echo "  dvm unalias <name>                    Deletes the alias named <name>"
         echo "  dvm unload                            Unload \`dvm\` from shell"
-        echo "  dvm which [<version>]                 Display path to installed docker version. Uses .dvmrc if available"
+        echo "  dvm which [<version>]                 Display path to installed docker version."
         echo
         echo "Example:"
         echo "  dvm install 1.8.1                     Install a specific version number"
         echo "  dvm use 1.6                           Use the latest available 1.6.x release"
-        echo "  dvm run 1.6.1 run -it ubuntu bash     Run an ubuntu container using Docker 1.6.1"
-        echo "  dvm exec 1.8.2 docker run nginx       Run the nginx image with the PATH pointing to Docker 1.8.2"
         echo "  dvm alias default 1.8.1               Set default Docker version on a shell"
         echo
         echo "Note:"
@@ -865,7 +862,7 @@ dvm() {
       fi
       ;;
 
-    "run" | "exec" | "which" | "clear-cache" )
+    "which" )
       >&2 echo ""
       >&2 echo "dvm $1 is not implemented - raise an issue and see if you can implement it ;)"
       >&2 dvm help

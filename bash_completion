@@ -18,10 +18,10 @@ __dvm_commands ()
   current_word="${COMP_WORDS[COMP_CWORD]}"
 
   COMMANDS='\
-    help install uninstall use run exec \
+    help install uninstall use \
     alias unalias \
     current list ls list-remote ls-remote \
-    clear-cache deactivate unload \
+    deactivate unload \
     version which'
 
     if [ ${#COMP_WORDS[@]} == 4 ]; then
@@ -73,7 +73,7 @@ __dvm ()
   previous_word="${COMP_WORDS[COMP_CWORD-1]}"
 
   case "$previous_word" in
-  use|run|exec|ls|list|uninstall) __dvm_installed_dockers ;;
+  use|ls|list|uninstall) __dvm_installed_dockers ;;
   alias|unalias)  __dvm_alias ;;
   *)              __dvm_commands ;;
   esac
