@@ -638,7 +638,7 @@ dvm() {
 
         if [ -d "$VERSION_PATH" ]; then
           echo "$VERSION is already installed." >&2
-          # TODO: dvm use "$VERSION"
+          dvm use "$VERSION"
           return $?
         fi
 
@@ -649,10 +649,9 @@ dvm() {
           fi
         fi
 
-        # TODO: dvm use after successful install
-        # if [ "$DVM_INSTALL_SUCCESS" = true ]; then
-        #   dvm use "$VERSION"
-        # fi
+        if [ "$DVM_INSTALL_SUCCESS" = true ]; then
+          dvm use "$VERSION"
+        fi
         return $?
       ;;
 
