@@ -2,9 +2,15 @@
 
 [![Build Status](https://travis-ci.org/rgbkrk/dvm.svg?branch=master)](https://travis-ci.org/rgbkrk/dvm)
 
-Version management for your Docker clients. Heavily influenced by [nvm]() (ok, "borrowed" from)
+Version management for your Docker clients. Heavily influenced by [nvm](https://github.com/creationix/nvm) (ok, "borrowed" from)
 
-Put together to deal with version drift between docker machine versions.
+![Sample dvm run](https://cloud.githubusercontent.com/assets/836375/10118445/d4b821dc-643d-11e5-803c-91c79b93aa6c.png)
+
+Escape from this error for a little bit longer:
+
+```
+Error response from daemon: client and server don't have same version (client : 1.18, server: 1.16)
+```
 
 ## Installation
 
