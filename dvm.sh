@@ -534,10 +534,9 @@ dvm() {
         echo "Usage:"
         echo "  dvm help                              Show this message"
         echo "  dvm --version                         Print out the latest released version of dvm"
-        echo "  dvm install <version>                 Download and install a <version>. Uses .dvmrc if available"
+        echo "  dvm install <version>                 Download and install a <version>. Uses \$DOCKER_VERSION if available"
         echo "  dvm uninstall <version>               Uninstall a version"
-        echo "  dvm use <version>                     Modify PATH to use <version>. Uses .dvmrc if available"
-        echo "  dvm run <version> [<args>]            Run <version> with <args> as arguments. Uses .dvmrc if available for <version>"
+        echo "  dvm use <version>                     Modify PATH to use <version>. Uses \$DOCKER_VERSION if available"
         echo "  dvm current                           Display currently activated version"
         echo "  dvm ls                                List installed versions"
         echo "  dvm ls <version>                      List versions matching a given description"
@@ -547,13 +546,11 @@ dvm() {
         echo "  dvm alias <name> <version>            Set an alias named <name> pointing to <version>"
         echo "  dvm unalias <name>                    Deletes the alias named <name>"
         echo "  dvm unload                            Unload \`dvm\` from shell"
-        echo "  dvm which [<version>]                 Display path to installed docker version. Uses .dvmrc if available"
+        echo "  dvm which [<version>]                 Display path to installed docker version."
         echo
         echo "Example:"
         echo "  dvm install 1.8.1                     Install a specific version number"
         echo "  dvm use 1.6                           Use the latest available 1.6.x release"
-        echo "  dvm run 1.6.1 run -it ubuntu bash     Run an ubuntu container using Docker 1.6.1"
-        echo "  dvm exec 1.8.2 docker run nginx       Run the nginx image with the PATH pointing to Docker 1.8.2"
         echo "  dvm alias default 1.8.1               Set default Docker version on a shell"
         echo
         echo "Note:"
@@ -613,19 +610,22 @@ dvm() {
           return 1
         fi
 
-        if [ $# -lt 2 ]; then
-          version_not_provided=1
-          # TODO: .dvmrc handling (will we support this?)
-          # dvm_rc_version
-          if [ -z "$DVM_RC_VERSION" ]; then
+        shift # remove "install"
+
+        if [ $# -lt 1 ]; then
+          # Support DOCKER_VERSION as the version
+          if [ -n "$DOCKER_VERSION" ]; then
+            provided_version=$DOCKER_VERSION
+          else
+            version_not_provided=1
             >&2 dvm help
             return 127
           fi
+        else
+          provided_version="$1"
+          shift
         fi
 
-        shift
-
-        provided_version="$1"
         VERSION="$(dvm_remote_version ${provided_version})"
 
         if [ "_$VERSION" == "_N/A" ]; then
@@ -711,6 +711,7 @@ dvm() {
       DVM_USE_SILENT=0
 
       shift # remove "use"
+
       while [ $# -ne 0 ]
       do
         case "$1" in
@@ -724,9 +725,13 @@ dvm() {
         shift
       done
 
-      # TODO support .dvmrc, or don't
       if [ -n "${PROVIDED_VERSION}" ]; then
         VERSION=$(dvm_match_version "${PROVIDED_VERSION}")
+      else
+        # Support DOCKER_VERSION as the version
+        if [ -n "$DOCKER_VERSION" ]; then
+          VERSION=$(dvm_match_version "$DOCKER_VERSION")
+        fi
       fi
 
       if [ -z "${VERSION}" ]; then
@@ -857,7 +862,7 @@ dvm() {
       fi
       ;;
 
-    "run" | "exec" | "which" | "clear-cache" )
+    "which" )
       >&2 echo ""
       >&2 echo "dvm $1 is not implemented - raise an issue and see if you can implement it ;)"
       >&2 dvm help

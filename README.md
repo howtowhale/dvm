@@ -70,10 +70,10 @@ Put the above sourcing line just below the sourcing line for DVM in your profile
 dvm
 
     $ dvm [tab][tab]
-    alias        exec         list-remote  unalias      version
-    clear-cache  help         ls           uninstall    which
+    alias        list-remote  unalias      version
+    help         ls           uninstall    which
     current      install      ls-remote    unload
-    deactivate   list         run          use
+    deactivate   list         use
 
 dvm use
 
