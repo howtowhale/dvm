@@ -321,6 +321,9 @@ DVM_ALIAS_DIR="${DVM_DIR}/alias"
 if [ -z "$DVM_GET_DOCKER_MIRROR" ]; then
   export DVM_GET_DOCKER_MIRROR="https://get.docker.com/builds"
 fi
+if [ -z "$DVM_GET_EXPERIMENTAL_DOCKER_MIRROR" ]; then
+  export DVM_GET_EXPERIMENTAL_DOCKER_MIRROR="https://experimental.docker.com/builds"
+fi
 
 dvm_get_os() {
   local DVM_UNAME
@@ -380,6 +383,11 @@ dvm_normalize_version() {
 }
 
 dvm_binary_available() {
+  # If they're trying to install experimental, assume it's available
+  if [ "$1" == "experimental" ]; then
+    return 0
+  fi
+
   # binaries started with docker 0.6.0
   # binaries + checksums started with docker 0.10.0
   local FIRST_VERSION_WITH_BINARY_AND_CHECKSUM
@@ -405,7 +413,11 @@ dvm_install_docker_binary() {
       DOCKER_BINARY="docker"
 
       local url
-      url="$DVM_GET_DOCKER_MIRROR/$DVM_OS/$DVM_ARCH/docker-$VERSION"
+      if [ "$VERSION" == "experimental" ]; then
+        url="$DVM_GET_EXPERIMENTAL_DOCKER_MIRROR/$DVM_OS/$DVM_ARCH/docker-latest"
+      else
+        url="$DVM_GET_DOCKER_MIRROR/$DVM_OS/$DVM_ARCH/docker-$VERSION"
+      fi
 
       local checksum_url
       checksum_url="${url}.sha256"
@@ -476,13 +488,15 @@ dvm_ls_remote() {
   local RELEASES_URL
   RELEASES_URL="https://api.github.com/repos/docker/docker/tags?per_page=100"
 
-  #TODO: Cache tags as tags.json possibly
   VERSIONS=`dvm_download -L -s $RELEASES_URL -o - \
             | \egrep -o 'v[0-9]+\.[0-9]+\.[0-9]+' \
             | grep -v "^v0\.[0-9]\." \
             | grep "^v${PATTERN}" \
             | sort -t. -u -k 1.2,1n -k 2,2n -k 3,3n \
             | cut -c 2-`
+
+  # Sneak experimental in
+  VERSIONS=`echo -e ${VERSIONS} experimental | grep "$PATTERN"`
 
   if [ -z "$VERSIONS" ]; then
     echo "N/A"
