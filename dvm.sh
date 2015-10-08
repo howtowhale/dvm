@@ -653,8 +653,28 @@ dvm() {
 
         if [ -d "$VERSION_PATH" ]; then
           if [ "$VERSION" == "experimental" ]; then
-            # TODO: Pull the checksum to see if we've already downloaded it
-            echo "$VERSION is already installed, but we'll assume you want the latest experimental"
+            local DVM_ARCH
+            local DVM_OS
+            local DOCKER_BINARY
+
+            local checksum_url
+
+            DOCKER_BINARY="docker"
+            DVM_ARCH="$(dvm_get_arch)"
+            DVM_OS="$(dvm_get_os)"
+
+            checksum_url="$DVM_GET_EXPERIMENTAL_DOCKER_MIRROR/$DVM_OS/$DVM_ARCH/docker-latest.sha256"
+
+            local sum
+            sum=`dvm_download -L -s $checksum_url -o - | command awk '{print $1}'`
+
+            if ( dvm_checksum "$VERSION_PATH/docker" $sum ); then
+              echo "experimental is already installed and has the latest checksum"
+              dvm use experimental
+              return $?
+            else
+              echo "$VERSION is already installed, but we'll assume you want the latest experimental"
+            fi
           else
             echo "$VERSION is already installed." >&2
             dvm use "$VERSION"
