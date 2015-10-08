@@ -496,7 +496,7 @@ dvm_ls_remote() {
             | cut -c 2-`
 
   # Sneak experimental in
-  VERSIONS=`echo -e ${VERSIONS} experimental | grep "$PATTERN"`
+  VERSIONS=`echo -e "${VERSIONS}\nexperimental" | grep "$PATTERN"`
 
   if [ -z "$VERSIONS" ]; then
     echo "N/A"
