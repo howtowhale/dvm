@@ -650,10 +650,16 @@ dvm() {
         local VERSION_PATH
         VERSION_PATH="$(dvm_version_path ${VERSION})"
 
+
         if [ -d "$VERSION_PATH" ]; then
-          echo "$VERSION is already installed." >&2
-          dvm use "$VERSION"
-          return $?
+          if [ "$VERSION" == "experimental" ]; then
+            # TODO: Pull the checksum to see if we've already downloaded it
+            echo "$VERSION is already installed, but we'll assume you want the latest experimental"
+          else
+            echo "$VERSION is already installed." >&2
+            dvm use "$VERSION"
+            return $?
+          fi
         fi
 
         local DVM_INSTALL_SUCCESS
