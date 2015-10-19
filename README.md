@@ -23,7 +23,7 @@ Note: `dvm` does not support Windows or Fish shell.
 If you have `git` installed, then clone this repository to `~/.dvm`.
 
 ```
-git clone https://github.com/rgbkrk/dvm.git ~/.dvm
+git clone https://github.com/getcarina/dvm.git ~/.dvm
 # TODO: git checkout `git describe --abbrev=0 --tags`
 ```
 
