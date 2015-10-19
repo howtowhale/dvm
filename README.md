@@ -1,6 +1,6 @@
 # Docker Version Manager
 
-[![Build Status](https://travis-ci.org/rgbkrk/dvm.svg?branch=master)](https://travis-ci.org/rgbkrk/dvm)
+[![Build Status](https://travis-ci.org/getcarina/dvm.svg?branch=master)](https://travis-ci.org/getcarina/dvm)
 
 Version management for your Docker clients. Heavily influenced by [nvm](https://github.com/creationix/nvm) (ok, "borrowed" from)
 
