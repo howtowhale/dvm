@@ -5,33 +5,63 @@ import "io"
 import "net/http"
 import "os"
 import "path"
+import "regexp"
+import "runtime"
 import "github.com/codegangsta/cli"
+import "github.com/kardianos/osext"
+
+var shell string
+var dvmDir string
+var debug bool
+var silent bool
 
 func main() {
   app := cli.NewApp()
   app.Name = "Docker Version Manager"
   app.Usage = "Manage multiple versions of the Docker client"
   app.EnableBashCompletion = true
+  app.Flags = []cli.Flag{
+    cli.StringFlag { Name: "dvm-dir", EnvVar: "DVM_DIR", Usage: "Specify an alternate DVM home directory, defaults to the current directory." },
+    cli.StringFlag { Name: "shell", EnvVar: "SHELL", Usage: "Specify the shell format in which environment variables should be output, e.g. powershell, cmd or sh/bash. Defaults to sh/bash."},
+    cli.BoolFlag { Name: "debug", Usage: "Print additional debug information." },
+    cli.BoolFlag{ Name: "silent", EnvVar: "DVM_SILENT", Usage: "Suppress output. Errors will still be displayed."},
+  }
   app.Commands = []cli.Command{
       {
           Name:    "install",
           Aliases: []string{"i"},
           Usage:   "Download and install a <version>. Uses $DOCKER_VERSION if available",
           Action: func(c *cli.Context) {
-              install(c.Args().First())
+            setGlobalVars(c)
+            install(c.Args().First())
           },
       },
       {
           Name:    "use",
           Usage:   "Modify PATH to use <version>. Uses $DOCKER_VERSION if available",
           Action: func(c *cli.Context) {
-              println("completed task: ", c.Args().First())
+            setGlobalVars(c)
+            use(c.Args().First())
           },
       },
   }
 
   app.Run(os.Args)
+}
 
+func setGlobalVars(c *cli.Context) {
+  debug = c.GlobalBool("debug")
+  shell = c.GlobalString("shell")
+  silent = c.GlobalBool("silent")
+  dvmDir = c.GlobalString("dvm-dir")
+  if dvmDir == "" {
+    var err error
+    dvmDir, err = osext.ExecutableFolder()
+    if err != nil {
+      fmt.Fprintln(os.Stderr, "Unable to determine DVM home directory")
+      os.Exit(1)
+    }
+  }
 }
 
 func install(version string) {
@@ -54,15 +84,15 @@ func install(version string) {
   // TODO: Support experimental
 
   if _, err := os.Stat(versionDir); err == nil {
-    fmt.Fprintf(os.Stderr, "%s is already installed\n", version)
+    if !silent { fmt.Fprintf(os.Stderr, "%s is already installed\n", version) }
     use(version)
     return
   }
 
-  fmt.Printf("Installing %s\n", version)
+  if debug { fmt.Printf("Installing %s\n", version) }
 
   url := fmt.Sprintf("https://get.docker.com/builds/%s/%s/docker-%s", getOS(), getArch(), version)
-  tmpPath := path.Join(getDvmDir(), ".tmpbin/docker", version, getBinaryName())
+  tmpPath := path.Join(getDvmDir(), ".tmp/docker", version, getBinaryName())
   downloadFile(url, tmpPath)
   binaryPath := path.Join(getDvmDir(), "bin/docker", version, getBinaryName())
   ensureParentDirectoryExists(binaryPath)
@@ -70,10 +100,40 @@ func install(version string) {
   if err != nil {
     fmt.Fprintf(os.Stderr, "Unable to copy %s to %s.\n%s\n", tmpPath, binaryPath, err)
   }
+
+  if debug {
+    fmt.Printf("Installed Docker %s to %s", version, binaryPath)
+  }
+}
+
+func use(version string) {
+  if version == "" {
+    version = os.Getenv("DOCKER_VERSION")
+  }
+
+  if version == "" {
+    fmt.Fprintln(os.Stderr, "The use command requires that a version is specified or the DOCKER_VERSION environment variable is set")
+    os.Exit(127)
+  }
+
+  if !versionExists(version) {
+    fmt.Fprintf(os.Stderr, "Version %s not found - try `dvm ls-remote` to browse available versions.\n", version)
+    os.Exit(3)
+  }
+
+  // TODO: Handle system version
+
+  ensureVersionIsInstalled(version)
+  removePreviousDvmVersionFromPath()
+  prependDvmVersionToPath(version)
+
+  if !silent {
+    fmt.Printf("Now using Docker %s\n", version)
+  }
 }
 
 func getDvmDir() string {
-  return "/Users/caro8994/.dvm"
+  return dvmDir
 }
 
 func getBinaryName() string {
@@ -83,9 +143,66 @@ func getBinaryName() string {
     return "docker"
 }
 
-func use(version string) {
-  // TODO: implement
-  fmt.Printf("Using %s\n", version)
+func prependDvmVersionToPath(version string) {
+    if runtime.GOOS == "windows" && shell == "" {
+      fmt.Fprintf(os.Stderr, "The --shell flag or SHELL environment variable must be set when running on Windows. Available values are sh, powershell and cmd.")
+      os.Exit(127)
+    }
+    versionDir := getVersionDir(version)
+    path := os.Getenv("PATH")
+
+    var shellScript string
+    if shell == "powershell" {
+      shellScript = fmt.Sprintf("$env:PATH=%s;%s", versionDir, path)
+    } else if shell == "cmd" {
+      shellScript = fmt.Sprintf("PATH=%s;%s", versionDir, path)
+    } else { // default to bash
+      shellScript = fmt.Sprintf("export PATH=%s:%s", versionDir, path)
+    }
+
+    writeShellScript(shellScript)
+}
+
+func writeShellScript(contents string) {
+    // Write to a shell script for the calling wrapper to execute
+    scriptPath := path.Join(dvmDir, ".tmp", "dvm-output.sh")
+
+    if debug {
+      fmt.Printf("Writing wrapper shell script to %s\n%s", scriptPath, contents)
+    }
+
+    ensureParentDirectoryExists(scriptPath)
+    scriptFile, err := os.Create(scriptPath)
+    if err != nil {
+      fmt.Fprintf(os.Stderr, "Unable to create %s\n%s\n", scriptPath, err)
+      os.Exit(1)
+    }
+
+    _, err = io.WriteString(scriptFile, contents)
+    if err != nil {
+      fmt.Fprintf(os.Stderr, "Unable to write to %s\n%s\n", scriptPath, err)
+      os.Exit(1)
+    }
+
+    scriptFile.Close()
+}
+
+func removePreviousDvmVersionFromPath() {
+  regex, _ := regexp.Compile(fmt.Sprintf(`%s/bin/docker/\d+\.\d+\.\d+:`, dvmDir))
+  path := regex.ReplaceAllString(os.Getenv("PATH"), "")
+  os.Setenv("PATH", path)
+}
+
+func ensureVersionIsInstalled(version string) {
+    versionDir := getVersionDir(version)
+    if _, err := os.Stat(versionDir); err == nil {
+      return
+    }
+
+    if debug {
+      fmt.Printf("%s is not installed. Install now...", version)
+      install(version)
+    }
 }
 
 func downloadFile(url string, destPath string) {
@@ -99,7 +216,8 @@ func downloadFile(url string, destPath string) {
   defer destFile.Close()
   os.Chmod(destPath, 0755)
 
-  fmt.Printf("Downloading %s\n", url)
+  if debug { fmt.Printf("Downloading %s\n", url) }
+
   response, err := http.Get(url)
   if err != nil {
     fmt.Fprintf(os.Stderr, "Unable to download %s.\n%s\n", url, err)
@@ -107,13 +225,11 @@ func downloadFile(url string, destPath string) {
   }
   defer response.Body.Close()
 
-  bytes, err := io.Copy(destFile, response.Body)
+  _, err = io.Copy(destFile, response.Body)
   if err != nil {
     fmt.Fprintf(os.Stderr, "Unable to write to %s.\n%s\n", destPath, err)
     os.Exit(1)
   }
-
-  fmt.Printf("Download complete (%d) to %s!\n", bytes, destPath)
 }
 
 func versionExists(version string) bool {
@@ -143,7 +259,7 @@ func getAvailableVersions(userPattern string) []string {
 
 func getVersionDir(version string) string {
   // TODO: implement
-  return fmt.Sprintf("/Users/caro8994/.dvm/bin/docker/%s", version)
+  return fmt.Sprintf("%s/bin/docker/%s", dvmDir, version)
 }
 
 func getOS() string {
