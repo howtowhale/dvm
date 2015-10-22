@@ -7,7 +7,9 @@ import "os"
 import "path/filepath"
 import "regexp"
 import "runtime"
+import "sort"
 import "strings"
+import "github.com/google/go-github/github"
 import "github.com/codegangsta/cli"
 import "github.com/kardianos/osext"
 
@@ -28,23 +30,32 @@ func main() {
     cli.BoolFlag{ Name: "silent", EnvVar: "DVM_SILENT", Usage: "Suppress output. Errors will still be displayed."},
   }
   app.Commands = []cli.Command{
-      {
-          Name:    "install",
-          Aliases: []string{"i"},
-          Usage:   "Download and install a <version>. Uses $DOCKER_VERSION if available",
-          Action: func(c *cli.Context) {
-            setGlobalVars(c)
-            install(c.Args().First())
-          },
+    {
+      Name:    "install",
+      Aliases: []string{"i"},
+      Usage:   "dvm install <version>. Uses $DOCKER_VERSION if available",
+      Action: func(c *cli.Context) {
+        setGlobalVars(c)
+        install(c.Args().First())
       },
-      {
-          Name:    "use",
-          Usage:   "Modify PATH to use <version>. Uses $DOCKER_VERSION if available",
-          Action: func(c *cli.Context) {
-            setGlobalVars(c)
-            use(c.Args().First())
-          },
+    },
+    {
+      Name:    "use",
+      Usage:   "dvm use <version>. Uses $DOCKER_VERSION if available",
+      Action: func(c *cli.Context) {
+        setGlobalVars(c)
+        use(c.Args().First())
       },
+    },
+    {
+      Name: "list-remote",
+      Aliases: []string{"ls-remote"},
+      Usage: "dvm list-remote [<pattern>]",
+      Action: func(c *cli.Context) {
+        setGlobalVars(c)
+        listRemote(c.Args().First())
+      },
+    },
   }
 
   app.Run(os.Args)
@@ -279,8 +290,43 @@ func ensureParentDirectoryExists(filePath string) {
   }
 }
 
-func getAvailableVersions(userPattern string) []string {
-  return []string {"1.8.2", "1.8.3"}
+func listRemote(pattern string) {
+    versions := getAvailableVersions(pattern)
+    for _, version := range versions {
+      fmt.Println(version)
+    }
+}
+
+func getAvailableVersions(pattern string) []string {
+  gh := github.NewClient(nil)
+	tags, response, err := gh.Repositories.ListTags("docker", "docker", nil)
+  if err != nil {
+    fmt.Fprintf(os.Stderr, "Unable to retrieve list of Docker tags from GitHub.\n%s\n", err)
+    os.Exit(1)
+  }
+  if response.StatusCode != 200 {
+    fmt.Fprintf(os.Stderr, "Unable to retrieve list of Docker tags from GitHub.\nStatus Code:%d\n", response.StatusCode)
+    os.Exit(1)
+  }
+
+  versionRegex := regexp.MustCompile(`^v([1-9]+\.\d+\.\d+)$`)
+  patternRegex, err := regexp.Compile(pattern)
+  if err != nil {
+    fmt.Fprintf(os.Stderr, "Invalid pattern.\n%s\n", err)
+    os.Exit(3)
+  }
+
+  var results []string
+  for _, tag := range tags {
+    version := *tag.Name
+    match := versionRegex.FindStringSubmatch(version)
+    if len(match) > 1 && patternRegex.MatchString(version) {
+      results = append(results, match[1])
+    }
+  }
+
+  sort.Strings(results)
+  return results
 }
 
 func getVersionDir(version string) string {
