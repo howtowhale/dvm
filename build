@@ -4,6 +4,10 @@ if [ -e 'dvm' ]; then
   rm dvm
 fi
 
+if [ -e 'dvm.exe' ]; then
+  rm dvm.exe
+fi
+
 GOOS=windows GOARCH=amd64 go build -o bin/windows/amd64/dvm.exe
 GOOS=windows GOARCH=386 go build -o bin/windows/386/dvm.exe
 
