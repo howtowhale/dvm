@@ -1,10 +1,10 @@
 cd $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-# Remove previously any downloaded dvm-helper binaries
-if [ -e 'dvm' ]; then
+# Remove previously downloaded dvm-helper binaries
+if [ -e 'dvm-helper' ]; then
   rm dvm-helper
 fi
-if [ -e 'dvm.exe' ]; then
+if [ -e 'dvm-helper.exe' ]; then
   rm dvm-helper.exe
 fi
 
