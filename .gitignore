@@ -23,8 +23,8 @@ _testmain.go
 *.test
 *.prof
 
-# Temporary downloads
-.tmpbin
+# Temporary files
+.tmp
 
 # Downloads
 bin

@@ -89,9 +89,9 @@ func install(version string) {
     return
   }
 
-  if debug { fmt.Printf("Installing %s\n", version) }
+  if !silent { fmt.Printf("Installing %s\n", version) }
 
-  url := fmt.Sprintf("https://get.docker.com/builds/%s/%s/docker-%s", getOS(), getArch(), version)
+  url := fmt.Sprintf("https://get.docker.com/builds/%s/%s/%s", getDockerOS(), getDockerArch(), getDockerBinaryName(version))
   tmpPath := path.Join(getDvmDir(), ".tmp/docker", version, getBinaryName())
   downloadFile(url, tmpPath)
   binaryPath := path.Join(getDvmDir(), "bin/docker", version, getBinaryName())
@@ -136,8 +136,15 @@ func getDvmDir() string {
   return dvmDir
 }
 
+func getDockerBinaryName(version string) string {
+    if runtime.GOOS == "windows" {
+      return fmt.Sprintf("docker-%s.exe", version)
+    }
+    return fmt.Sprintf("docker-%s", version)
+}
+
 func getBinaryName() string {
-    if getOS() == "Windows" {
+    if runtime.GOOS == "windows" {
       return "docker.exe"
     }
     return "docker"
@@ -152,23 +159,27 @@ func prependDvmVersionToPath(version string) {
     path := os.Getenv("PATH")
 
     var shellScript string
+    var shellScriptExt string
     if shell == "powershell" {
-      shellScript = fmt.Sprintf("$env:PATH=%s;%s", versionDir, path)
+      shellScript = fmt.Sprintf(`$env:PATH="%s;%s"`, versionDir, path)
+      shellScriptExt = "ps1"
     } else if shell == "cmd" {
       shellScript = fmt.Sprintf("PATH=%s;%s", versionDir, path)
+      shellScriptExt = "cmd"
     } else { // default to bash
       shellScript = fmt.Sprintf("export PATH=%s:%s", versionDir, path)
+      shellScriptExt = "sh"
     }
 
-    writeShellScript(shellScript)
+    writeShellScript(shellScript, shellScriptExt)
 }
 
-func writeShellScript(contents string) {
+func writeShellScript(contents string, fileExtension string) {
     // Write to a shell script for the calling wrapper to execute
-    scriptPath := path.Join(dvmDir, ".tmp", "dvm-output.sh")
+    scriptPath := path.Join(dvmDir, ".tmp", ("dvm-output." + fileExtension))
 
     if debug {
-      fmt.Printf("Writing wrapper shell script to %s\n%s", scriptPath, contents)
+      fmt.Printf("Writing wrapper shell script to %s\n%s\n", scriptPath, contents)
     }
 
     ensureParentDirectoryExists(scriptPath)
@@ -199,8 +210,8 @@ func ensureVersionIsInstalled(version string) {
       return
     }
 
-    if debug {
-      fmt.Printf("%s is not installed. Install now...", version)
+    if !silent {
+      fmt.Printf("%s is not installed. Installing now...\n", version)
       install(version)
     }
 }
@@ -221,6 +232,10 @@ func downloadFile(url string, destPath string) {
   response, err := http.Get(url)
   if err != nil {
     fmt.Fprintf(os.Stderr, "Unable to download %s.\n%s\n", url, err)
+    os.Exit(1)
+  }
+  if response.StatusCode != 200 {
+    fmt.Fprintf(os.Stderr, "Unable to download %s.\nStatus Code: %d\n", url, response.StatusCode)
     os.Exit(1)
   }
   defer response.Body.Close()
@@ -258,18 +273,35 @@ func getAvailableVersions(userPattern string) []string {
 }
 
 func getVersionDir(version string) string {
-  // TODO: implement
   return fmt.Sprintf("%s/bin/docker/%s", dvmDir, version)
 }
 
-func getOS() string {
-  // TODO: implement
-  return "Darwin"
+func getDockerOS() string {
+  switch runtime.GOOS {
+    case "windows":
+      return "Windows"
+    case "darwin":
+      return "Darwin"
+    case "linux":
+      return "Linux"
+    }
+
+  fmt.Fprintf(os.Stderr, "Unsupported OS: %s\n", runtime.GOOS)
+  os.Exit(1)
+  return ""
 }
 
-func getArch() string {
-  // TODO: implement
-  return "x86_64"
+func getDockerArch() string {
+  switch runtime.GOARCH {
+    case "amd64":
+      return "x86_64"
+    case "386":
+      return "i386"
+    }
+
+  fmt.Fprintf(os.Stderr, "Unsupported ARCH: %s\n", runtime.GOARCH)
+  os.Exit(1)
+  return ""
 }
 /*
 func help() {
