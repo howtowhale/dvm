@@ -5,10 +5,10 @@
 function dvm()
 {
   $dvmDir = $PSScriptRoot
-  if( !(Test-Path (Join-Path $dvmDir dvm.exe)) )
+  if( !(Test-Path (Join-Path $dvmDir dvm-helper.exe)) )
   {
     # TODO: Download the binary instead of grabbing it from a local build
-    cp $dvmDir\bin\windows\amd64\dvm.exe $dvmDir
+    cp $dvmDir\bin\windows\amd64\dvm-helper.exe $dvmDir
   }
 
   $dvmOutput = Join-Path $dvmDir .tmp\dvm-output.ps1
@@ -20,7 +20,7 @@ function dvm()
   $env:DVM_DIR = $dvmDir
 
   $rawArgs = $MyInvocation.Line.Substring(3).Trim()
-  $dvmCall = "$dvmDir\dvm.exe --shell powershell $rawArgs"
+  $dvmCall = "$dvmDir\dvm-helper.exe --shell powershell $rawArgs"
   iex $dvmCall
 
   if( Test-Path $dvmOutput )
