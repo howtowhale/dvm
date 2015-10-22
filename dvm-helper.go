@@ -4,9 +4,10 @@ import "fmt"
 import "io"
 import "net/http"
 import "os"
-import "path"
+import "path/filepath"
 import "regexp"
 import "runtime"
+import "strings"
 import "github.com/codegangsta/cli"
 import "github.com/kardianos/osext"
 
@@ -92,9 +93,9 @@ func install(version string) {
   if !silent { fmt.Printf("Installing %s\n", version) }
 
   url := fmt.Sprintf("https://get.docker.com/builds/%s/%s/%s", getDockerOS(), getDockerArch(), getDockerBinaryName(version))
-  tmpPath := path.Join(getDvmDir(), ".tmp/docker", version, getBinaryName())
+  tmpPath := filepath.Join(getDvmDir(), ".tmp/docker", version, getBinaryName())
   downloadFile(url, tmpPath)
-  binaryPath := path.Join(getDvmDir(), "bin/docker", version, getBinaryName())
+  binaryPath := filepath.Join(getDvmDir(), "bin/docker", version, getBinaryName())
   ensureParentDirectoryExists(binaryPath)
   err := os.Rename(tmpPath, binaryPath)
   if err != nil {
@@ -176,7 +177,7 @@ func prependDvmVersionToPath(version string) {
 
 func writeShellScript(contents string, fileExtension string) {
     // Write to a shell script for the calling wrapper to execute
-    scriptPath := path.Join(dvmDir, ".tmp", ("dvm-output." + fileExtension))
+    scriptPath := filepath.Join(dvmDir, ".tmp", ("dvm-output." + fileExtension))
 
     if debug {
       fmt.Printf("Writing wrapper shell script to %s\n%s\n", scriptPath, contents)
@@ -199,7 +200,17 @@ func writeShellScript(contents string, fileExtension string) {
 }
 
 func removePreviousDvmVersionFromPath() {
-  regex, _ := regexp.Compile(fmt.Sprintf(`%s/bin/docker/\d+\.\d+\.\d+:`, dvmDir))
+  versionDir := getVersionDir("")
+
+  var pathRegex string
+  if runtime.GOOS == "windows" {
+    escapedVersionDir := strings.Replace(versionDir, `\`, `\\`, -1)
+    pathRegex = escapedVersionDir + `\\\d+\.\d+\.\d+;`
+  } else {
+    pathRegex = versionDir + `\d+\.\d+\.\d+:`
+  }
+
+  regex, _ := regexp.Compile(pathRegex)
   path := regex.ReplaceAllString(os.Getenv("PATH"), "")
   os.Setenv("PATH", path)
 }
@@ -259,7 +270,7 @@ func versionExists(version string) bool {
 }
 
 func ensureParentDirectoryExists(filePath string) {
-  dir := path.Dir(filePath)
+  dir := filepath.Dir(filePath)
 
   err := os.MkdirAll(dir, 0777)
   if err != nil {
@@ -273,7 +284,7 @@ func getAvailableVersions(userPattern string) []string {
 }
 
 func getVersionDir(version string) string {
-  return fmt.Sprintf("%s/bin/docker/%s", dvmDir, version)
+  return filepath.Join(dvmDir, "bin", "docker", version)
 }
 
 func getDockerOS() string {
