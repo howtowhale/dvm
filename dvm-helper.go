@@ -135,9 +135,30 @@ func setGlobalVars(c *cli.Context) {
 
 func list(pattern string) {
   versions := getInstalledVersions(pattern)
+  systemDockerPath, err := getSystemDockerPath()
+
+  var current string
+  currentDockerPath, err := getCurrentDockerPath()
+  if err == nil {
+    current, _ = getDockerVersion(currentDockerPath)
+  }
+
+  isSystemCurrent := currentDockerPath == systemDockerPath
+
+  writeDebug("system docker path: %s", systemDockerPath)
+  writeDebug("current docker path: %s", currentDockerPath)
+  writeDebug("current docker version: %s", current)
 
   for _, version := range versions {
-    writeInfo(version)
+    isSystem := strings.Contains(version, "system")
+    isCurrent := isSystemCurrent && isSystem ||
+                !isSystemCurrent && current == version
+
+    if isCurrent {
+      color.Green("->\t%s", version)
+    } else {
+      writeInfo("\t%s", version)
+    }
   }
 }
 
@@ -190,11 +211,12 @@ func use(version string) {
 
   // dvm use system undoes changes to the PATH and uses installed version of DOcker
   if version == "system" {
-    systemDockerVersion, err := useSystemDocker()
+    systemDockerVersion, err := getSystemDockerVersion()
     if err != nil {
       die("System version of Docker not found.", nil, INVALID_OPERATION)
     }
 
+    removePreviousDvmVersionFromPath()
     writeInfo("Now using system version of Docker: %s", systemDockerVersion)
     writeShellScript()
     return
@@ -327,8 +349,7 @@ func downloadFile(url string, destPath string) {
   }
 
   if response.StatusCode != 200 {
-    writeError("Unable to download %s.", nil)
-    die("Status Code: %d", nil, RUNTIME_ERROR, response.StatusCode)
+    die("Unable to download %s. (Status %d)", nil, RUNTIME_ERROR, url, response.StatusCode)
   }
   defer response.Body.Close()
 
@@ -358,17 +379,44 @@ func ensureParentDirectoryExists(filePath string) {
   }
 }
 
-func useSystemDocker() (string, error) {
-  removePreviousDvmVersionFromPath()
-  systemDockerPath, _ := exec.LookPath("docker")
-  rawVersion, _ := exec.Command(systemDockerPath, "-v").Output()
+func getCurrentDockerPath() (string, error) {
+  currentDockerPath, err := exec.LookPath("docker")
+  return currentDockerPath, err
+}
 
-  writeDebug("docker -v output: %s", rawVersion)
+func getCurrentDockerVersion() (string, error) {
+  currentDockerPath, err := getCurrentDockerPath()
+  if err != nil {
+    return "", err
+  }
+  return getDockerVersion(currentDockerPath)
+}
+
+func getSystemDockerPath() (string, error) {
+  originalPath := os.Getenv("PATH")
+  removePreviousDvmVersionFromPath()
+  systemDockerPath, err := exec.LookPath("docker")
+  os.Setenv("PATH", originalPath)
+  return systemDockerPath, err
+}
+
+func getSystemDockerVersion() (string, error) {
+  systemDockerPath, err := getSystemDockerPath()
+  if err != nil {
+    return "", err
+  }
+  return getDockerVersion(systemDockerPath)
+}
+
+func getDockerVersion(dockerPath string) (string, error) {
+  rawVersion, _ := exec.Command(dockerPath, "-v").Output()
+
+  writeDebug("%s -v output: %s", dockerPath, rawVersion)
 
   versionRegex := regexp.MustCompile(`^Docker version (.*),`)
   match := versionRegex.FindSubmatch(rawVersion)
   if len(match) < 2 {
-    return "", errors.New("No system installation of Docker detected.")
+    return "", errors.New("Could not detect docker version.")
   }
 
   return string(match[1][:]), nil
@@ -389,6 +437,12 @@ func getInstalledVersions(pattern string) []string {
     results = append(results, filepath.Base(versionDir))
   }
 
+  systemVersion, err := getSystemDockerVersion()
+  if err == nil {
+    results = append(results, systemVersion + " (system)")
+  }
+
+  sort.Strings(results)
   return results
 }
 
