@@ -11,6 +11,7 @@ import "regexp"
 import "runtime"
 import "sort"
 import "strings"
+import "github.com/fatih/color"
 import "github.com/google/go-github/github"
 import "github.com/codegangsta/cli"
 import "github.com/kardianos/osext"
@@ -19,6 +20,12 @@ var shell string
 var dvmDir string
 var debug bool
 var silent bool
+
+const (
+    INVALID_ARGUMENT = 127
+    INVALID_OPERATION = 3
+    RUNTIME_ERROR = 1
+)
 
 func main() {
   app := cli.NewApp()
@@ -80,6 +87,38 @@ func main() {
   app.Run(os.Args)
 }
 
+func writeDebug(format string, a ...interface{}) {
+  if !debug { return }
+
+  color.Cyan(format, a...)
+}
+
+func writeInfo(format string, a ...interface{}) {
+  if silent { return }
+
+  color.White(format, a...)
+}
+
+func writeWarning(format string, a ...interface{}) {
+  if silent { return }
+
+  color.Yellow(format, a...)
+}
+
+func writeError(format string, err error, a ...interface{}) {
+  color.Set(color.FgRed)
+  fmt.Fprintf(os.Stderr, format + "\n", a...)
+  if err != nil {
+    fmt.Fprintln(os.Stderr, err)
+  }
+  color.Unset()
+}
+
+func die(format string, err error, exitCode int, a ...interface{}) {
+  writeError(format, err, a...)
+  os.Exit(exitCode)
+}
+
 func setGlobalVars(c *cli.Context) {
   debug = c.GlobalBool("debug")
   shell = c.GlobalString("shell")
@@ -89,8 +128,7 @@ func setGlobalVars(c *cli.Context) {
     var err error
     dvmDir, err = osext.ExecutableFolder()
     if err != nil {
-      fmt.Fprintln(os.Stderr, "Unable to determine DVM home directory")
-      os.Exit(1)
+      die("Unable to determine DVM home directory", nil, 1)
     }
   }
 }
@@ -99,7 +137,7 @@ func list(pattern string) {
   versions := getInstalledVersions(pattern)
 
   for _, version := range versions {
-    fmt.Println(version)
+    writeInfo(version)
   }
 }
 
@@ -109,13 +147,11 @@ func install(version string) {
   }
 
   if version == "" {
-    fmt.Fprintln(os.Stderr, "The install command requires that a version is specified or the DOCKER_VERSION environment variable is set")
-    os.Exit(127)
+    die("The install command requires that a version is specified or the DOCKER_VERSION environment variable is set.", nil, INVALID_ARGUMENT)
   }
 
   if !versionExists(version) {
-    fmt.Fprintf(os.Stderr, "Version %s not found - try `dvm ls-remote` to browse available versions.\n", version)
-    os.Exit(3)
+    die("Version %s not found - try `dvm ls-remote` to browse available versions.", nil, INVALID_OPERATION, version)
   }
 
   versionDir := getVersionDir(version)
@@ -123,12 +159,12 @@ func install(version string) {
   // TODO: Support experimental
 
   if _, err := os.Stat(versionDir); err == nil {
-    if !silent { fmt.Fprintf(os.Stderr, "%s is already installed\n", version) }
+    writeWarning("%s is already installed", version)
     use(version)
     return
   }
 
-  if !silent { fmt.Printf("Installing %s\n", version) }
+  writeInfo("Installing %s...", version)
 
   url := fmt.Sprintf("https://get.docker.com/builds/%s/%s/%s", getDockerOS(), getDockerArch(), getDockerBinaryName(version))
   tmpPath := filepath.Join(getDvmDir(), ".tmp/docker", version, getBinaryName())
@@ -137,12 +173,10 @@ func install(version string) {
   ensureParentDirectoryExists(binaryPath)
   err := os.Rename(tmpPath, binaryPath)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Unable to copy %s to %s.\n%s\n", tmpPath, binaryPath, err)
+    die("Unable to copy %s to %s.", err, RUNTIME_ERROR, tmpPath, binaryPath)
   }
 
-  if debug {
-    fmt.Printf("Installed Docker %s to %s", version, binaryPath)
-  }
+  writeDebug("Installed Docker %s to %s", version, binaryPath)
 }
 
 func use(version string) {
@@ -151,26 +185,23 @@ func use(version string) {
   }
 
   if version == "" {
-    fmt.Fprintln(os.Stderr, "The use command requires that a version is specified or the DOCKER_VERSION environment variable is set")
-    os.Exit(127)
+    die("The use command requires that a version is specified or the DOCKER_VERSION environment variable is set.", nil, INVALID_OPERATION)
   }
 
   // dvm use system undoes changes to the PATH and uses installed version of DOcker
   if version == "system" {
     systemDockerVersion, err := useSystemDocker()
     if err != nil {
-      fmt.Fprintln(os.Stderr, "System version of Docker not found.")
-      os.Exit(3)
+      die("System version of Docker not found.", nil, INVALID_OPERATION)
     }
 
-    if !silent { fmt.Printf("Now using system version of Docker: %s\n", systemDockerVersion) }
+    writeInfo("Now using system version of Docker: %s", systemDockerVersion)
     writeShellScript()
     return
   }
 
   if !versionExists(version) {
-    fmt.Fprintf(os.Stderr, "Version %s not found - try `dvm ls-remote` to browse available versions.\n", version)
-    os.Exit(3)
+    die("Version %s not found - try `dvm ls-remote` to browse available versions.", nil, INVALID_OPERATION, version)
   }
 
   ensureVersionIsInstalled(version)
@@ -178,9 +209,7 @@ func use(version string) {
   prependDvmVersionToPath(version)
   writeShellScript()
 
-  if !silent {
-    fmt.Printf("Now using Docker %s\n", version)
-  }
+  writeInfo("Now using Docker %s", version)
 }
 
 func getDvmDir() string {
@@ -216,8 +245,7 @@ func prependDvmVersionToPath(version string) {
 
 func writeShellScript() {
   if runtime.GOOS == "windows" && shell == "" {
-    fmt.Fprintf(os.Stderr, "The --shell flag or SHELL environment variable must be set when running on Windows. Available values are sh, powershell and cmd.")
-    os.Exit(127)
+    die("The --shell flag or SHELL environment variable must be set when running on Windows. Available values are sh, powershell and cmd.", nil, INVALID_ARGUMENT)
   }
 
   path := os.Getenv("PATH")
@@ -238,21 +266,18 @@ func writeShellScript() {
   // Write to a shell script for the calling wrapper to execute
   scriptPath := filepath.Join(dvmDir, ".tmp", ("dvm-output." + fileExtension))
 
-  if debug {
-    fmt.Printf("Writing wrapper shell script to %s\n%s\n", scriptPath, contents)
-  }
+  writeDebug("Writing wrapper shell script to %s", scriptPath, contents)
+  writeDebug(contents)
 
   ensureParentDirectoryExists(scriptPath)
   scriptFile, err := os.Create(scriptPath)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Unable to create %s\n%s\n", scriptPath, err)
-    os.Exit(1)
+    die("Unable to create %s", err, RUNTIME_ERROR, scriptPath)
   }
 
   _, err = io.WriteString(scriptFile, contents)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Unable to write to %s\n%s\n", scriptPath, err)
-    os.Exit(1)
+    die("Unable to write to %s", err, RUNTIME_ERROR, scriptPath)
   }
 
   scriptFile.Close()
@@ -280,10 +305,8 @@ func ensureVersionIsInstalled(version string) {
       return
     }
 
-    if !silent {
-      fmt.Printf("%s is not installed. Installing now...\n", version)
-      install(version)
-    }
+    writeInfo("%s is not installed. Installing now...", version)
+    install(version)
 }
 
 func downloadFile(url string, destPath string) {
@@ -291,29 +314,27 @@ func downloadFile(url string, destPath string) {
 
   destFile, err := os.Create(destPath)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Unable to create to %s.\n%s\n", destPath, err)
-    os.Exit(1)
+    die("Unable to create to %s.", err, RUNTIME_ERROR, destPath)
   }
   defer destFile.Close()
   os.Chmod(destPath, 0755)
 
-  if debug { fmt.Printf("Downloading %s\n", url) }
+  writeDebug("Downloading %s", url)
 
   response, err := http.Get(url)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Unable to download %s.\n%s\n", url, err)
-    os.Exit(1)
+    die("Unable to download %s.", err, RUNTIME_ERROR, url)
   }
+
   if response.StatusCode != 200 {
-    fmt.Fprintf(os.Stderr, "Unable to download %s.\nStatus Code: %d\n", url, response.StatusCode)
-    os.Exit(1)
+    writeError("Unable to download %s.", nil)
+    die("Status Code: %d", nil, RUNTIME_ERROR, response.StatusCode)
   }
   defer response.Body.Close()
 
   _, err = io.Copy(destFile, response.Body)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Unable to write to %s.\n%s\n", destPath, err)
-    os.Exit(1)
+    die("Unable to write to %s.", err, RUNTIME_ERROR, destPath)
   }
 }
 
@@ -333,8 +354,7 @@ func ensureParentDirectoryExists(filePath string) {
 
   err := os.MkdirAll(dir, 0777)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Unable to create directory %s\n", dir)
-    os.Exit(1)
+    die("Unable to create directory %s.", err, RUNTIME_ERROR, dir)
   }
 }
 
@@ -343,7 +363,7 @@ func useSystemDocker() (string, error) {
   systemDockerPath, _ := exec.LookPath("docker")
   rawVersion, _ := exec.Command(systemDockerPath, "-v").Output()
 
-  if debug { fmt.Printf("docker -v output: %s\n", rawVersion)}
+  writeDebug("docker -v output: %s", rawVersion)
 
   versionRegex := regexp.MustCompile(`^Docker version (.*),`)
   match := versionRegex.FindSubmatch(rawVersion)
@@ -357,7 +377,7 @@ func useSystemDocker() (string, error) {
 func listRemote(pattern string) {
     versions := getAvailableVersions(pattern)
     for _, version := range versions {
-      fmt.Println(version)
+      writeInfo(version)
     }
 }
 
@@ -376,19 +396,16 @@ func getAvailableVersions(pattern string) []string {
   gh := github.NewClient(nil)
 	tags, response, err := gh.Repositories.ListTags("docker", "docker", nil)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Unable to retrieve list of Docker tags from GitHub.\n%s\n", err)
-    os.Exit(1)
+    die("Unable to retrieve list of Docker tags from GitHub", err, RUNTIME_ERROR)
   }
   if response.StatusCode != 200 {
-    fmt.Fprintf(os.Stderr, "Unable to retrieve list of Docker tags from GitHub.\nStatus Code:%d\n", response.StatusCode)
-    os.Exit(1)
+    die("Unable to retrieve list of Docker tags from GitHub (Status %s).", nil, RUNTIME_ERROR, response.StatusCode)
   }
 
   versionRegex := regexp.MustCompile(`^v([1-9]+\.\d+\.\d+)$`)
   patternRegex, err := regexp.Compile(pattern)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Invalid pattern.\n%s\n", err)
-    os.Exit(3)
+    die("Invalid pattern.", err, INVALID_OPERATION)
   }
 
   var results []string
@@ -418,8 +435,7 @@ func getDockerOS() string {
       return "Linux"
     }
 
-  fmt.Fprintf(os.Stderr, "Unsupported OS: %s\n", runtime.GOOS)
-  os.Exit(1)
+  die("Unsupported OS: %s", nil, RUNTIME_ERROR, runtime.GOOS)
   return ""
 }
 
@@ -431,38 +447,6 @@ func getDockerArch() string {
       return "i386"
     }
 
-  fmt.Fprintf(os.Stderr, "Unsupported ARCH: %s\n", runtime.GOARCH)
-  os.Exit(1)
+  die("Unsupported ARCH: %s", nil, RUNTIME_ERROR, runtime.GOARCH)
   return ""
 }
-/*
-func help() {
-  echo
-  echo "Docker Version Manager"
-  echo
-  echo "Usage:"
-  echo "  dvm help                              Show this message"
-  echo "  dvm --version                         Print out the latest released version of dvm"
-  echo "  dvm install <version>                 Download and install a <version>. Uses \$DOCKER_VERSION if available"
-  echo "  dvm uninstall <version>               Uninstall a version"
-  echo "  dvm use <version>                     Modify PATH to use <version>. Uses \$DOCKER_VERSION if available"
-  echo "  dvm current                           Display currently activated version"
-  echo "  dvm ls                                List installed versions"
-  echo "  dvm ls <version>                      List versions matching a given description"
-  echo "  dvm ls-remote                         List remote versions available for install"
-  echo "  dvm deactivate                        Undo effects of \`dvm\` on current shell"
-  echo "  dvm alias [<pattern>]                 Show all aliases beginning with <pattern>"
-  echo "  dvm alias <name> <version>            Set an alias named <name> pointing to <version>"
-  echo "  dvm unalias <name>                    Deletes the alias named <name>"
-  echo "  dvm unload                            Unload \`dvm\` from shell"
-  echo "  dvm which [<version>]                 Display path to installed docker version."
-  echo
-  echo "Example:"
-  echo "  dvm install 1.8.1                     Install a specific version number"
-  echo "  dvm use 1.6                           Use the latest available 1.6.x release"
-  echo "  dvm alias default 1.8.1               Set default Docker version on a shell"
-  echo
-  echo "Note:"
-  echo "  to remove, delete, or uninstall dvm - remove ~/.dvm"
-  echo
-}*/
