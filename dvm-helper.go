@@ -56,6 +56,14 @@ func main() {
         listRemote(c.Args().First())
       },
     },
+    {
+      Name: "deactivate",
+      Usage: "dvm deactivate. Undo effects of `dvm` on current shell",
+      Action: func(c *cli.Context) {
+        setGlobalVars(c)
+        deactivate()
+      },
+    },
   }
 
   app.Run(os.Args)
@@ -138,6 +146,7 @@ func use(version string) {
   ensureVersionIsInstalled(version)
   removePreviousDvmVersionFromPath()
   prependDvmVersionToPath(version)
+  writeShellScript()
 
   if !silent {
     fmt.Printf("Now using Docker %s\n", version)
@@ -162,52 +171,61 @@ func getBinaryName() string {
     return "docker"
 }
 
-func prependDvmVersionToPath(version string) {
-    if runtime.GOOS == "windows" && shell == "" {
-      fmt.Fprintf(os.Stderr, "The --shell flag or SHELL environment variable must be set when running on Windows. Available values are sh, powershell and cmd.")
-      os.Exit(127)
-    }
-    versionDir := getVersionDir(version)
-    path := os.Getenv("PATH")
-
-    var shellScript string
-    var shellScriptExt string
-    if shell == "powershell" {
-      shellScript = fmt.Sprintf(`$env:PATH="%s;%s"`, versionDir, path)
-      shellScriptExt = "ps1"
-    } else if shell == "cmd" {
-      shellScript = fmt.Sprintf("PATH=%s;%s", versionDir, path)
-      shellScriptExt = "cmd"
-    } else { // default to bash
-      shellScript = fmt.Sprintf("export PATH=%s:%s", versionDir, path)
-      shellScriptExt = "sh"
-    }
-
-    writeShellScript(shellScript, shellScriptExt)
+func deactivate() {
+  removePreviousDvmVersionFromPath()
+  writeShellScript()
 }
 
-func writeShellScript(contents string, fileExtension string) {
-    // Write to a shell script for the calling wrapper to execute
-    scriptPath := filepath.Join(dvmDir, ".tmp", ("dvm-output." + fileExtension))
+func prependDvmVersionToPath(version string) {
+  var pathSep string
+  if runtime.GOOS == "windows" { pathSep = ";" } else { pathSep = ":" }
+  versionDir := getVersionDir(version)
+  path := fmt.Sprintf("%s%s%s", versionDir, pathSep, os.Getenv("PATH"))
+  os.Setenv("PATH", path)
+}
 
-    if debug {
-      fmt.Printf("Writing wrapper shell script to %s\n%s\n", scriptPath, contents)
-    }
+func writeShellScript() {
+  if runtime.GOOS == "windows" && shell == "" {
+    fmt.Fprintf(os.Stderr, "The --shell flag or SHELL environment variable must be set when running on Windows. Available values are sh, powershell and cmd.")
+    os.Exit(127)
+  }
 
-    ensureParentDirectoryExists(scriptPath)
-    scriptFile, err := os.Create(scriptPath)
-    if err != nil {
-      fmt.Fprintf(os.Stderr, "Unable to create %s\n%s\n", scriptPath, err)
-      os.Exit(1)
-    }
+  path := os.Getenv("PATH")
 
-    _, err = io.WriteString(scriptFile, contents)
-    if err != nil {
-      fmt.Fprintf(os.Stderr, "Unable to write to %s\n%s\n", scriptPath, err)
-      os.Exit(1)
-    }
+  var contents string
+  var fileExtension string
+  if shell == "powershell" {
+    contents = fmt.Sprintf(`$env:PATH="%s"`, path)
+    fileExtension = "ps1"
+  } else if shell == "cmd" {
+    contents = fmt.Sprintf("PATH=%s", path)
+    fileExtension = "cmd"
+  } else { // default to bash
+    contents = fmt.Sprintf("export PATH=%s", path)
+    fileExtension = "sh"
+  }
 
-    scriptFile.Close()
+  // Write to a shell script for the calling wrapper to execute
+  scriptPath := filepath.Join(dvmDir, ".tmp", ("dvm-output." + fileExtension))
+
+  if debug {
+    fmt.Printf("Writing wrapper shell script to %s\n%s\n", scriptPath, contents)
+  }
+
+  ensureParentDirectoryExists(scriptPath)
+  scriptFile, err := os.Create(scriptPath)
+  if err != nil {
+    fmt.Fprintf(os.Stderr, "Unable to create %s\n%s\n", scriptPath, err)
+    os.Exit(1)
+  }
+
+  _, err = io.WriteString(scriptFile, contents)
+  if err != nil {
+    fmt.Fprintf(os.Stderr, "Unable to write to %s\n%s\n", scriptPath, err)
+    os.Exit(1)
+  }
+
+  scriptFile.Close()
 }
 
 func removePreviousDvmVersionFromPath() {
