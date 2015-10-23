@@ -1,9 +1,11 @@
 package main
 
+import "errors"
 import "fmt"
 import "io"
 import "net/http"
 import "os"
+import "os/exec"
 import "path/filepath"
 import "regexp"
 import "runtime"
@@ -41,7 +43,7 @@ func main() {
     },
     {
       Name:    "use",
-      Usage:   "dvm use <version>. Uses $DOCKER_VERSION if available",
+      Usage:   "dvm use <version>. dvm use system reverts to the system installation of Docker. Uses $DOCKER_VERSION if available",
       Action: func(c *cli.Context) {
         setGlobalVars(c)
         use(c.Args().First())
@@ -136,12 +138,23 @@ func use(version string) {
     os.Exit(127)
   }
 
+  // dvm use system undoes changes to the PATH and uses installed version of DOcker
+  if version == "system" {
+    systemDockerVersion, err := useSystemDocker()
+    if err != nil {
+      fmt.Fprintln(os.Stderr, "System version of Docker not found.")
+      os.Exit(3)
+    }
+
+    if !silent { fmt.Printf("Now using system version of Docker: %s\n", systemDockerVersion) }
+    writeShellScript()
+    return
+  }
+
   if !versionExists(version) {
     fmt.Fprintf(os.Stderr, "Version %s not found - try `dvm ls-remote` to browse available versions.\n", version)
     os.Exit(3)
   }
-
-  // TODO: Handle system version
 
   ensureVersionIsInstalled(version)
   removePreviousDvmVersionFromPath()
@@ -306,6 +319,22 @@ func ensureParentDirectoryExists(filePath string) {
     fmt.Fprintf(os.Stderr, "Unable to create directory %s\n", dir)
     os.Exit(1)
   }
+}
+
+func useSystemDocker() (string, error) {
+  removePreviousDvmVersionFromPath()
+  systemDockerPath, _ := exec.LookPath("docker")
+  rawVersion, _ := exec.Command(systemDockerPath, "-v").Output()
+
+  if debug { fmt.Printf("docker -v output: %s\n", rawVersion)}
+
+  versionRegex := regexp.MustCompile(`^Docker version (.*),`)
+  match := versionRegex.FindSubmatch(rawVersion)
+  if len(match) < 2 {
+    return "", errors.New("No system installation of Docker detected.")
+  }
+
+  return string(match[1][:]), nil
 }
 
 func listRemote(pattern string) {
