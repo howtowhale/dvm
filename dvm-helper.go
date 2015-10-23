@@ -218,7 +218,7 @@ func removePreviousDvmVersionFromPath() {
     escapedVersionDir := strings.Replace(versionDir, `\`, `\\`, -1)
     pathRegex = escapedVersionDir + `\\\d+\.\d+\.\d+;`
   } else {
-    pathRegex = versionDir + `\d+\.\d+\.\d+:`
+    pathRegex = versionDir + `/\d+\.\d+\.\d+:`
   }
 
   regex, _ := regexp.Compile(pathRegex)
