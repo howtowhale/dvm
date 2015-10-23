@@ -57,6 +57,14 @@ func main() {
       },
     },
     {
+      Name: "current",
+      Usage: "dvm current",
+      Action: func(c *cli.Context) {
+        setGlobalVars(c)
+        current()
+      },
+    },
+    {
       Name: "list",
       Aliases: []string{"ls"},
       Usage: "dvm list [<pattern>]",
@@ -130,6 +138,25 @@ func setGlobalVars(c *cli.Context) {
     if err != nil {
       die("Unable to determine DVM home directory", nil, 1)
     }
+  }
+}
+
+func current() {
+  var current string
+  currentDockerPath, err := getCurrentDockerPath()
+  if err == nil {
+    current, _ = getDockerVersion(currentDockerPath)
+  }
+
+  systemDockerPath, _ := getSystemDockerPath()
+  isSystemCurrent := currentDockerPath == systemDockerPath
+
+  if err != nil {
+    writeWarning("N/A")
+  } else if isSystemCurrent {
+      writeInfo("%s (system)", current)
+  } else {
+    writeInfo(current)
   }
 }
 
