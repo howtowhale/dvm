@@ -33,20 +33,29 @@ func main() {
   }
   app.Commands = []cli.Command{
     {
-      Name:    "install",
+      Name: "install",
       Aliases: []string{"i"},
-      Usage:   "dvm install <version>. Uses $DOCKER_VERSION if available",
+      Usage: "dvm install <version>. Uses $DOCKER_VERSION if available",
       Action: func(c *cli.Context) {
         setGlobalVars(c)
         install(c.Args().First())
       },
     },
     {
-      Name:    "use",
-      Usage:   "dvm use <version>. dvm use system reverts to the system installation of Docker. Uses $DOCKER_VERSION if available",
+      Name: "use",
+      Usage: "dvm use <version>. dvm use system reverts to the system installation of Docker. Uses $DOCKER_VERSION if available",
       Action: func(c *cli.Context) {
         setGlobalVars(c)
         use(c.Args().First())
+      },
+    },
+    {
+      Name: "list",
+      Aliases: []string{"ls"},
+      Usage: "dvm list [<pattern>]",
+      Action: func(c *cli.Context) {
+        setGlobalVars(c)
+        list(c.Args().First())
       },
     },
     {
@@ -83,6 +92,14 @@ func setGlobalVars(c *cli.Context) {
       fmt.Fprintln(os.Stderr, "Unable to determine DVM home directory")
       os.Exit(1)
     }
+  }
+}
+
+func list(pattern string) {
+  versions := getInstalledVersions(pattern)
+
+  for _, version := range versions {
+    fmt.Println(version)
   }
 }
 
@@ -342,6 +359,17 @@ func listRemote(pattern string) {
     for _, version := range versions {
       fmt.Println(version)
     }
+}
+
+func getInstalledVersions(pattern string) []string {
+  versions, _ := filepath.Glob(getVersionDir(pattern + "*"))
+
+  var results []string
+  for _, versionDir := range versions {
+    results = append(results, filepath.Base(versionDir))
+  }
+
+  return results
 }
 
 func getAvailableVersions(pattern string) []string {
