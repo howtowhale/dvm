@@ -191,7 +191,7 @@ func list(pattern string) {
 
 func install(version string) {
   if version == "" {
-    version = os.Getenv("DOCKER_VERSION")
+    version = getDockerVersionVar()
   }
 
   if version == "" {
@@ -229,7 +229,7 @@ func install(version string) {
 
 func use(version string) {
   if version == "" {
-    version = os.Getenv("DOCKER_VERSION")
+    version = getDockerVersionVar()
   }
 
   if version == "" {
@@ -530,4 +530,8 @@ func getDockerArch() string {
 
   die("Unsupported ARCH: %s", nil, RUNTIME_ERROR, runtime.GOARCH)
   return ""
+}
+
+func getDockerVersionVar() string {
+  return strings.TrimSpace(os.Getenv("DOCKER_VERSION"))
 }
