@@ -55,6 +55,14 @@ func main() {
       },
     },
     {
+      Name: "uninstall",
+      Usage: "dvm uninstall <version>",
+      Action : func(c *cli.Context) {
+        setGlobalVars(c)
+        uninstall(c.Args().First())
+      },
+    },
+    {
       Name: "use",
       Usage: "dvm use <version>. dvm use system reverts to the system installation of Docker. Uses $DOCKER_VERSION if available",
       Action: func(c *cli.Context) {
@@ -204,7 +212,31 @@ func install(version string) {
     die("Unable to copy %s to %s.", err, RUNTIME_ERROR, tmpPath, binaryPath)
   }
 
-  writeDebug("Installed Docker %s to %s", version, binaryPath)
+  writeDebug("Installed Docker %s to %s.", version, binaryPath)
+}
+
+func uninstall(version string) {
+    if version == "" {
+      die("The uninstall command requires that a version is specified.", nil, INVALID_ARGUMENT)
+    }
+
+    current, _ := getCurrentDockerVersion()
+    if current == version {
+      die("Cannot uninstall the currently active Docker version.", nil, INVALID_OPERATION)
+    }
+
+    versionDir := getVersionDir(version)
+    if _, err := os.Stat(versionDir); os.IsNotExist(err)  {
+      writeWarning("%s is not installed.", version)
+      return
+    }
+
+    err := os.RemoveAll(versionDir)
+    if err != nil {
+      die("Unable to uninstall Docker version %s located in %s.", err, RUNTIME_ERROR, version, versionDir)
+    }
+
+    writeInfo("Uninstalled Docker %s.", version)
 }
 
 func use(version string) {
