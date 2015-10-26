@@ -1,5 +1,20 @@
 cd $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
+get_commit() {
+  COMMIT=$(git rev-parse --verify --short HEAD)
+  RETURN_CODE=$?
+  export COMMIT
+  return $RETURN_CODE
+}
+
+get_version() {
+  # Version will be the most recent tag + "-dev" if working tree is dirty
+  # e.g.: "1.0.1"" or "1.0.1-dev"
+  VERSION=$(git describe --tags --dirty='-dev' 2> /dev/null)
+  export VERSION
+  return 0
+}
+
 # Remove previously downloaded dvm-helper binaries
 if [ -e 'dvm-helper' ]; then
   rm dvm-helper
@@ -8,12 +23,19 @@ if [ -e 'dvm-helper.exe' ]; then
   rm dvm-helper.exe
 fi
 
+# Use information about git repo to set the binary version and commit
+get_commit
+get_version
+
+LDFLAGS="-X main.dvmCommit=${COMMIT} \
+         -X main.dvmVersion=${VERSION}"
+
 # Build ALL THE THINGS!
-GOOS=windows GOARCH=amd64 go build -o bin/windows/amd64/dvm-helper.exe
-GOOS=windows GOARCH=386 go build -o bin/windows/386/dvm-helper.exe
+GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o bin/windows/amd64/dvm-helper.exe
+GOOS=windows GOARCH=386 go build -ldflags "${LDFLAGS}" -o bin/windows/386/dvm-helper.exe
 
-GOOS=darwin GOARCH=amd64 go build -o bin/darwin/amd64/dvm-helper
-GOOS=darwin GOARCH=386 go build -o bin/darwin/386/dvm-helper
+GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o bin/darwin/amd64/dvm-helper
+GOOS=darwin GOARCH=386 go build -ldflags "${LDFLAGS}" -o bin/darwin/386/dvm-helper
 
-GOOS=linux GOARCH=amd64 go build -o bin/linux/amd64/dvm-helper
-GOOS=linux GOARCH=386 go build -o bin/linux/386/dvm-helper
+GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o bin/linux/amd64/dvm-helper
+GOOS=linux GOARCH=386 go build -ldflags "${LDFLAGS}" -o bin/linux/386/dvm-helper

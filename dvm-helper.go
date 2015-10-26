@@ -16,10 +16,15 @@ import "github.com/google/go-github/github"
 import "github.com/codegangsta/cli"
 import "github.com/kardianos/osext"
 
+// These are global command line variables
 var shell string
 var dvmDir string
 var debug bool
 var silent bool
+
+// These are set during the build
+var dvmVersion string
+var dvmCommit string
 
 const (
     INVALID_ARGUMENT = 127
@@ -31,6 +36,7 @@ func main() {
   app := cli.NewApp()
   app.Name = "Docker Version Manager"
   app.Usage = "Manage multiple versions of the Docker client"
+  app.Version = fmt.Sprintf("%s (%s)", dvmVersion, dvmCommit)
   app.EnableBashCompletion = true
   app.Flags = []cli.Flag{
     cli.StringFlag { Name: "dvm-dir", EnvVar: "DVM_DIR", Usage: "Specify an alternate DVM home directory, defaults to the current directory." },
