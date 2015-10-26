@@ -104,6 +104,14 @@ func main() {
         deactivate()
       },
     },
+    {
+      Name: "which",
+      Usage: "dvm which. Print path to the current Docker version.",
+      Action : func(c *cli.Context) {
+        setGlobalVars(c)
+        which()
+      },
+    },
   }
 
   app.Run(os.Args)
@@ -271,6 +279,13 @@ func use(version string) {
   writeShellScript()
 
   writeInfo("Now using Docker %s", version)
+}
+
+func which() {
+  currentPath, err := getCurrentDockerPath()
+  if err == nil {
+    writeInfo(currentPath)
+  }
 }
 
 func getDvmDir() string {
