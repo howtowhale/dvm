@@ -148,19 +148,9 @@ func setGlobalVars(c *cli.Context) {
 }
 
 func current() {
-  var current string
-  currentDockerPath, err := getCurrentDockerPath()
-  if err == nil {
-    current, _ = getDockerVersion(currentDockerPath)
-  }
-
-  systemDockerPath, _ := getSystemDockerPath()
-  isSystemCurrent := currentDockerPath == systemDockerPath
-
+  current, err := getCurrentDockerVersion()
   if err != nil {
     writeWarning("N/A")
-  } else if isSystemCurrent {
-      writeInfo("%s (system)", current)
   } else {
     writeInfo(current)
   }
@@ -168,26 +158,10 @@ func current() {
 
 func list(pattern string) {
   versions := getInstalledVersions(pattern)
-  systemDockerPath, err := getSystemDockerPath()
-
-  var current string
-  currentDockerPath, err := getCurrentDockerPath()
-  if err == nil {
-    current, _ = getDockerVersion(currentDockerPath)
-  }
-
-  isSystemCurrent := currentDockerPath == systemDockerPath
-
-  writeDebug("system docker path: %s", systemDockerPath)
-  writeDebug("current docker path: %s", currentDockerPath)
-  writeDebug("current docker version: %s", current)
+  current, _ := getCurrentDockerVersion()
 
   for _, version := range versions {
-    isSystem := strings.Contains(version, "system")
-    isCurrent := isSystemCurrent && isSystem ||
-                !isSystemCurrent && current == version
-
-    if isCurrent {
+    if current == version {
       color.Green("->\t%s", version)
     } else {
       writeInfo("\t%s", version)
@@ -422,7 +396,14 @@ func getCurrentDockerVersion() (string, error) {
   if err != nil {
     return "", err
   }
-  return getDockerVersion(currentDockerPath)
+
+  current, _ := getDockerVersion(currentDockerPath)
+  systemDockerPath, _ := getSystemDockerPath()
+  if currentDockerPath == systemDockerPath {
+    current += " (system)"
+  }
+
+  return current, nil
 }
 
 func getSystemDockerPath() (string, error) {
