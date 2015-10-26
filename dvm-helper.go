@@ -3,6 +3,7 @@ package main
 import "errors"
 import "fmt"
 import "io"
+import "io/ioutil"
 import "net/http"
 import "os"
 import "os/exec"
@@ -71,11 +72,27 @@ func main() {
       },
     },
     {
+      Name: "deactivate",
+      Usage: "dvm deactivate. Undo effects of `dvm` on current shell",
+      Action: func(c *cli.Context) {
+        setGlobalVars(c)
+        deactivate()
+      },
+    },
+    {
       Name: "current",
       Usage: "dvm current",
       Action: func(c *cli.Context) {
         setGlobalVars(c)
         current()
+      },
+    },
+    {
+      Name: "which",
+      Usage: "dvm which. Print path to the current Docker version.",
+      Action: func(c *cli.Context) {
+        setGlobalVars(c)
+        which()
       },
     },
     {
@@ -97,19 +114,12 @@ func main() {
       },
     },
     {
-      Name: "deactivate",
-      Usage: "dvm deactivate. Undo effects of `dvm` on current shell",
+      Name: "list-alias",
+      Aliases: []string{"ls-alias"},
+      Usage: "dvm list-alias",
       Action: func(c *cli.Context) {
         setGlobalVars(c)
-        deactivate()
-      },
-    },
-    {
-      Name: "which",
-      Usage: "dvm which. Print path to the current Docker version.",
-      Action : func(c *cli.Context) {
-        setGlobalVars(c)
-        which()
+        listAlias()
       },
     },
   }
@@ -288,8 +298,37 @@ func which() {
   }
 }
 
+func listAlias() {
+  aliases := getAliases()
+  for alias, version := range aliases {
+    writeInfo("\t%s -> %s", alias, version)
+  }
+}
+
+func getAliases() map[string]string {
+  aliases, _ := filepath.Glob(getAliasPath("*"))
+
+  results := make(map[string]string)
+  for _, aliasPath := range aliases {
+    alias := filepath.Base(aliasPath)
+    version, err := ioutil.ReadFile(aliasPath)
+    if err != nil {
+      writeDebug("Excluding alias: %s.", err, RUNTIME_ERROR, alias)
+      continue
+    }
+
+    results[alias] = string(version)
+  }
+
+  return results
+}
+
 func getDvmDir() string {
   return dvmDir
+}
+
+func getAliasPath(alias string) string {
+  return filepath.Join(dvmDir, "alias", alias)
 }
 
 func getDockerBinaryName(version string) string {
