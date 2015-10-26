@@ -96,6 +96,14 @@ func main() {
       },
     },
     {
+      Name: "alias",
+      Usage: "dvm alias <alias> <version>",
+      Action: func(c *cli.Context) {
+        setGlobalVars(c)
+        alias(c.Args().Get(0), c.Args().Get(1))
+      },
+    },
+    {
       Name: "list",
       Aliases: []string{"ls"},
       Usage: "dvm list [<pattern>]",
@@ -125,6 +133,30 @@ func main() {
   }
 
   app.Run(os.Args)
+}
+
+func pathExists(path string) bool {
+  _, err := os.Stat(path)
+  return err == nil
+}
+
+func writeFile(path string, contents string) {
+  writeDebug("Writing to %s...", path)
+  writeDebug(contents)
+
+  ensureParentDirectoryExists(path)
+
+  file, err := os.Create(path)
+  if err != nil {
+    die("Unable to create %s", err, RUNTIME_ERROR, path)
+  }
+
+  _, err = io.WriteString(file, contents)
+  if err != nil {
+    die("Unable to write to %s", err, RUNTIME_ERROR, path)
+  }
+
+  file.Close()
 }
 
 func writeDebug(format string, a ...interface{}) {
@@ -298,6 +330,24 @@ func which() {
   }
 }
 
+func alias(alias string, version string) {
+  if alias == "" || version == "" {
+    die("The alias command requires both an alias name and a version.", nil, INVALID_ARGUMENT)
+  }
+
+  if !isVersionInstalled(version) {
+    die("The aliased version, %s, is not installed.", nil, INVALID_ARGUMENT, version)
+  }
+
+  aliasPath := getAliasPath(alias)
+  if _, err := os.Stat(aliasPath); err == nil {
+    writeDebug("Overwriting existing alias.")
+  }
+
+  writeFile(aliasPath, version)
+  writeInfo("Aliased %s to %s.", alias, version)
+}
+
 func listAlias() {
   aliases := getAliases()
   for alias, version := range aliases {
@@ -381,21 +431,7 @@ func writeShellScript() {
   // Write to a shell script for the calling wrapper to execute
   scriptPath := filepath.Join(dvmDir, ".tmp", ("dvm-output." + fileExtension))
 
-  writeDebug("Writing wrapper shell script to %s", scriptPath, contents)
-  writeDebug(contents)
-
-  ensureParentDirectoryExists(scriptPath)
-  scriptFile, err := os.Create(scriptPath)
-  if err != nil {
-    die("Unable to create %s", err, RUNTIME_ERROR, scriptPath)
-  }
-
-  _, err = io.WriteString(scriptFile, contents)
-  if err != nil {
-    die("Unable to write to %s", err, RUNTIME_ERROR, scriptPath)
-  }
-
-  scriptFile.Close()
+  writeFile(scriptPath, contents)
 }
 
 func removePreviousDvmVersionFromPath() {
@@ -415,8 +451,7 @@ func removePreviousDvmVersionFromPath() {
 }
 
 func ensureVersionIsInstalled(version string) {
-    versionDir := getVersionDir(version)
-    if _, err := os.Stat(versionDir); err == nil {
+    if isVersionInstalled(version) {
       return
     }
 
@@ -450,6 +485,18 @@ func downloadFile(url string, destPath string) {
   if err != nil {
     die("Unable to write to %s.", err, RUNTIME_ERROR, destPath)
   }
+}
+
+func isVersionInstalled(version string) bool {
+    installedVersions := getInstalledVersions("")
+
+    for _, installedVersion := range installedVersions {
+      if version == installedVersion {
+        return true
+      }
+    }
+
+    return false
 }
 
 func versionExists(version string) bool {
