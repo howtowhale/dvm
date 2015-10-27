@@ -250,7 +250,13 @@ func install(version string) {
 
   versionDir := getVersionDir(version)
 
-  // TODO: Support experimental
+  if version == "experimental" && pathExists(versionDir) {
+    // Always install latest of experimental build
+    err := os.Remove(versionDir)
+    if err != nil {
+      die("Unable to remove experimental version at %s.", err, RUNTIME_ERROR, versionDir)
+    }
+  }
 
   if _, err := os.Stat(versionDir); err == nil {
     writeWarning("%s is already installed", version)
@@ -260,7 +266,12 @@ func install(version string) {
 
   writeInfo("Installing %s...", version)
 
-  url := fmt.Sprintf("https://get.docker.com/builds/%s/%s/%s", getDockerOS(), getDockerArch(), getDockerBinaryName(version))
+  mirrorUrl := "https://get.docker.com/builds"
+  if version == "experimental" {
+    mirrorUrl = "https://experimental.docker.com/builds"
+  }
+
+  url := fmt.Sprintf("%s/%s/%s/%s", mirrorUrl, getDockerOS(), getDockerArch(), getDockerBinaryName(version))
   tmpPath := filepath.Join(getDvmDir(), ".tmp/docker", version, getBinaryName())
   downloadFile(url, tmpPath)
   binaryPath := filepath.Join(getDvmDir(), "bin/docker", version, getBinaryName())
@@ -421,10 +432,14 @@ func getAliasPath(alias string) string {
 }
 
 func getDockerBinaryName(version string) string {
-    if runtime.GOOS == "windows" {
-      return fmt.Sprintf("docker-%s.exe", version)
-    }
-    return fmt.Sprintf("docker-%s", version)
+  if version == "experimental" {
+    version = "latest"
+  }
+
+  if runtime.GOOS == "windows" {
+    return fmt.Sprintf("docker-%s.exe", version)
+  }
+  return fmt.Sprintf("docker-%s", version)
 }
 
 func getBinaryName() string {
@@ -479,9 +494,9 @@ func removePreviousDvmVersionFromPath() {
   var pathRegex string
   if runtime.GOOS == "windows" {
     escapedVersionDir := strings.Replace(versionDir, `\`, `\\`, -1)
-    pathRegex = escapedVersionDir + `\\\d+\.\d+\.\d+;`
+    pathRegex = escapedVersionDir + `\\(\d+\.\d+\.\d+|experimental);`
   } else {
-    pathRegex = versionDir + `/\d+\.\d+\.\d+:`
+    pathRegex = versionDir + `/(\d+\.\d+\.\d+|experimental):`
   }
 
   regex, _ := regexp.Compile(pathRegex)
@@ -539,6 +554,10 @@ func isVersionInstalled(version string) bool {
 }
 
 func versionExists(version string) bool {
+  if version == "experimental" {
+    return true
+  }
+
   availableVersions := getAvailableVersions(version)
 
   for _,availableVersion := range availableVersions {
@@ -620,7 +639,19 @@ func getInstalledVersions(pattern string) []string {
 
   var results []string
   for _, versionDir := range versions {
-    results = append(results, filepath.Base(versionDir))
+    version := filepath.Base(versionDir)
+
+    if version == "experimental" {
+      experimentalVersionPath := filepath.Join(versionDir, getBinaryName())
+      experimentalVersion, err := getDockerVersion(experimentalVersionPath)
+      if err != nil {
+        writeDebug("Unable to get version of installed experimental version at %s.\n%s", experimentalVersionPath, err)
+        continue
+      }
+      version = experimentalVersion + " (experimental)"
+    }
+
+    results = append(results, version)
   }
 
   systemVersion, err := getSystemDockerVersion()
