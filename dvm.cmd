@@ -8,8 +8,7 @@ SETLOCAL
 SET DVM_DIR=%~dp0
 
 IF NOT EXIST dvm-helper.exe (
-  :: TODO: Download the binary instead of grabbing it from a local build
-  COPY %DVM_DIR%\bin\windows\amd64\dvm-helper.exe %DVM_DIR% > nul
+  CALL powershell ". dvm.ps1; downloadDvm"
 )
 
 SET DVM_OUTPUT=%DVM_DIR%\.tmp\dvm-output.cmd

@@ -9,8 +9,13 @@ dvm() {
   DVM_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
   if [ ! -f "${DVM_DIR}/dvm-helper" ]; then
-    # TODO: Download the binary instead of grabbing it from a local build
-    cp $DVM_DIR/bin/darwin/amd64/dvm-helper $DVM_DIR
+    # Detect mac vs. linux and x86 vs. x64
+    DVM_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+    [ $(getconf LONG_BIT) == 64 ] && DVM_ARCH="amd64" || DVM_ARCH="386"
+
+    # Download latest release
+    LATEST_TAG=$(curl -s https://api.github.com/repos/getcarina/dvm/tags | grep name -m 1 | awk '{print $2}' | cut -d '"' -f2)
+    curl -L -s -o $DVM_DIR/dvm-helper https://github.com/getcarina/dvm/releases/download/$LATEST_TAG/dvm-helper-$DVM_OS-$DVM_ARCH
     chmod u+x $DVM_DIR/dvm-helper
   fi
 
