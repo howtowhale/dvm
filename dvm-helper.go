@@ -311,8 +311,11 @@ func use(version string) {
     return
   }
 
-  if !versionExists(version) {
-    die("Version %s not found - try `dvm ls-remote` to browse available versions.", nil, INVALID_OPERATION, version)
+  if aliasExists(version) {
+    alias := version
+    aliasedVersion, _ := ioutil.ReadFile(getAliasPath(alias))
+    version = string(aliasedVersion)
+    writeDebug("Using alias: %s -> %s", alias, version)
   }
 
   ensureVersionIsInstalled(version)
@@ -353,6 +356,15 @@ func listAlias() {
   for alias, version := range aliases {
     writeInfo("\t%s -> %s", alias, version)
   }
+}
+
+func aliasExists(alias string) bool {
+  aliasPath := getAliasPath(alias)
+  if _, err := os.Stat(aliasPath); err == nil {
+    return true
+  }
+
+  return false
 }
 
 func getAliases() map[string]string {
