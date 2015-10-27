@@ -104,6 +104,14 @@ func main() {
       },
     },
     {
+      Name: "unalias",
+      Usage: "dvm unalias <alias>",
+      Action: func(c *cli.Context) {
+        setGlobalVars(c)
+        unalias(c.Args().First())
+      },
+    },
+    {
       Name: "list",
       Aliases: []string{"ls"},
       Usage: "dvm list [<pattern>]",
@@ -349,6 +357,25 @@ func alias(alias string, version string) {
 
   writeFile(aliasPath, version)
   writeInfo("Aliased %s to %s.", alias, version)
+}
+
+func unalias(alias string) {
+  if alias == "" {
+    die("The unalias command requires an alias name.", nil, INVALID_ARGUMENT)
+  }
+
+  if !aliasExists(alias) {
+    writeWarning("%s is not an alias.", alias)
+    return
+  }
+
+  aliasPath := getAliasPath(alias)
+  err := os.Remove(aliasPath)
+  if err != nil  {
+    die("Unable to remove alias %s at %s.", err, RUNTIME_ERROR, alias, aliasPath)
+  }
+
+  writeInfo("Removed alias %s", alias)
 }
 
 func listAlias() {
