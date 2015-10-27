@@ -252,7 +252,7 @@ func install(version string) {
 
   if version == "experimental" && pathExists(versionDir) {
     // Always install latest of experimental build
-    err := os.Remove(versionDir)
+    err := os.RemoveAll(versionDir)
     if err != nil {
       die("Unable to remove experimental version at %s.", err, RUNTIME_ERROR, versionDir)
     }
@@ -542,15 +542,9 @@ func downloadFile(url string, destPath string) {
 }
 
 func isVersionInstalled(version string) bool {
-    installedVersions := getInstalledVersions("")
+    installedVersions := getInstalledVersions(version)
 
-    for _, installedVersion := range installedVersions {
-      if version == installedVersion {
-        return true
-      }
-    }
-
-    return false
+    return len(installedVersions) > 0
 }
 
 func versionExists(version string) bool {
@@ -587,11 +581,16 @@ func getCurrentDockerVersion() (string, error) {
   if err != nil {
     return "", err
   }
-
   current, _ := getDockerVersion(currentDockerPath)
+
   systemDockerPath, _ := getSystemDockerPath()
   if currentDockerPath == systemDockerPath {
-    current += " (system)"
+    current = fmt.Sprintf("system (%s)", current)
+  }
+
+  experimentalVersionPath, _ := getExperimentalDockerPath()
+  if currentDockerPath == experimentalVersionPath {
+    current = fmt.Sprintf("experimental (%s)", current)
   }
 
   return current, nil
@@ -611,6 +610,20 @@ func getSystemDockerVersion() (string, error) {
     return "", err
   }
   return getDockerVersion(systemDockerPath)
+}
+
+func getExperimentalDockerPath() (string, error) {
+  experimentalVersionPath := filepath.Join(getVersionDir("experimental"), getBinaryName())
+  _, err := os.Stat(experimentalVersionPath)
+  return experimentalVersionPath, err
+}
+
+func getExperimentalDockerVersion() (string, error) {
+  experimentalVersionPath, err := getExperimentalDockerPath()
+  if err != nil {
+    return "", err
+  }
+  return getDockerVersion(experimentalVersionPath)
 }
 
 func getDockerVersion(dockerPath string) (string, error) {
@@ -642,21 +655,22 @@ func getInstalledVersions(pattern string) []string {
     version := filepath.Base(versionDir)
 
     if version == "experimental" {
-      experimentalVersionPath := filepath.Join(versionDir, getBinaryName())
-      experimentalVersion, err := getDockerVersion(experimentalVersionPath)
+      experimentalVersion, err := getExperimentalDockerVersion()
       if err != nil {
-        writeDebug("Unable to get version of installed experimental version at %s.\n%s", experimentalVersionPath, err)
+        writeDebug("Unable to get version of installed experimental version at %s.\n%s", getVersionDir("experimental"), err)
         continue
       }
-      version = experimentalVersion + " (experimental)"
+      version = fmt.Sprintf("experimental (%s)", experimentalVersion)
     }
 
     results = append(results, version)
   }
 
-  systemVersion, err := getSystemDockerVersion()
-  if err == nil {
-    results = append(results, systemVersion + " (system)")
+  if pattern == "" || pattern == "system" {
+    systemVersion, err := getSystemDockerVersion()
+    if err == nil {
+      results = append(results, fmt.Sprintf("system (%s)", systemVersion))
+    }
   }
 
   sort.Strings(results)
