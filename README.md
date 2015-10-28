@@ -5,7 +5,7 @@
 Version management for your Docker clients. Heavily influenced by [nvm](https://github.com/creationix/nvm) (ok, "borrowed" from).
 This tool modifies your current PATH to switch between different Docker clients.
 
-![Sample dvm run](https://cloud.githubusercontent.com/assets/836375/10118445/d4b821dc-643d-11e5-803c-91c79b93aa6c.png)
+![dvm-usage](https://cloud.githubusercontent.com/assets/1368985/10800443/d3f0f39a-7d7f-11e5-87b5-1bda5ffe4859.png)
 
 Escape from this error for a little bit longer:
 
