@@ -31,11 +31,11 @@ LDFLAGS="-X main.dvmCommit=${COMMIT} \
          -X main.dvmVersion=${VERSION}"
 
 # Build ALL THE THINGS!
-GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o bin/windows/amd64/dvm-helper.exe
-GOOS=windows GOARCH=386 go build -ldflags "${LDFLAGS}" -o bin/windows/386/dvm-helper.exe
+GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o bin/dvm-helper-windows-amd64.exe
+GOOS=windows GOARCH=386 go build -ldflags "${LDFLAGS}" -o bin/dvm-helper-windows-386.exe
 
-GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o bin/darwin/amd64/dvm-helper
-GOOS=darwin GOARCH=386 go build -ldflags "${LDFLAGS}" -o bin/darwin/386/dvm-helper
+GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o bin/dvm-helper-darwin-amd64
+GOOS=darwin GOARCH=386 go build -ldflags "${LDFLAGS}" -o bin/dvm-helper-darwin-386
 
-GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o bin/linux/amd64/dvm-helper
-GOOS=linux GOARCH=386 go build -ldflags "${LDFLAGS}" -o bin/linux/386/dvm-helper
+GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o bin/dvm-helper-linux-amd64
+GOOS=linux GOARCH=386 go build -ldflags "${LDFLAGS}" -o bin/dvm-helper-linux-386
