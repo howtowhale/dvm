@@ -14,10 +14,10 @@ function installDvm()
   $webClient = New-Object net.webclient
 
   echo "Downloading dvm.ps1..."
-  $webClient.DownloadFile("https://rawgit.com/getcarina/dvm/master/dvm.ps1", "$dvmDir\dvm.ps1")
+  $webClient.DownloadFile("https://raw.githubusercontent.com/getcarina/dvm/master/dvm.ps1", "$dvmDir\dvm.ps1")
 
   echo "Downloading dvm.cmd..."
-  $webClient.DownloadFile("https://cdn.rawgit.com/getcarina/dvm/master/dvm.cmd", "$dvmDir\dvm.cmd")
+  $webClient.DownloadFile("https://raw.githubusercontent.com/getcarina/dvm/master/dvm.cmd", "$dvmDir\dvm.cmd")
 
   echo "Docker Version Manager (dvm) has been installed to $dvmDir"
   echo ""

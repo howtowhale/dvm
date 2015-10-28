@@ -13,7 +13,7 @@ if [ ! -d "$DVM_DIR" ]; then
 fi
 
 echo "Downloading dvm.sh..."
-curl -s -o $DVM_DIR/dvm.sh https://cdn.rawgit.com/getcarina/dvm/master/dvm.sh
+curl -s -o $DVM_DIR/dvm.sh https://raw.githubusercontent.com/getcarina/dvm/master/dvm.sh
 
 echo "Docker Version Manager (dvm) has been installed to ${DVM_DIR}"
 echo "Add the following command to your bash profile (e.g. ~/.bashrc or ~/.bash_profile) complete the installation:"
