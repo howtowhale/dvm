@@ -29,7 +29,7 @@ Downloading dvm.sh...
 Docker Version Manager (dvm) has been installed to /root/.dvm
 Add the following command to your bash profile (e.g. ~/.bashrc or ~/.bash_profile) complete the installation:
 
-	source /root/.dvm/dvm.sh
+	source /rgbkrk/.dvm/dvm.sh
 ```
 
 **Windows**
