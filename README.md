@@ -2,7 +2,8 @@
 
 [![Build Status](https://travis-ci.org/getcarina/dvm.svg?branch=master)](https://travis-ci.org/getcarina/dvm)
 
-Version management for your Docker clients. Heavily influenced by [nvm](https://github.com/creationix/nvm) (ok, "borrowed" from)
+Version management for your Docker clients. Heavily influenced by [nvm](https://github.com/creationix/nvm) (ok, "borrowed" from).
+This tool modifies your current PATH to switch between different Docker clients.
 
 ![Sample dvm run](https://cloud.githubusercontent.com/assets/836375/10118445/d4b821dc-643d-11e5-803c-91c79b93aa6c.png)
 
@@ -12,28 +13,45 @@ Escape from this error for a little bit longer:
 Error response from daemon: client and server don't have same version (client : 1.18, server: 1.16)
 ```
 
+## Prerequisites
+Mac OS X and Linux require curl.
+
 ## Installation
+After running the install script, follow the outputted instructions on how to permanently add the `dvm` command
+to your shell sessions.
 
-First, you'll need to make sure your system has `curl` or `wget` available. If you go the manual install route, you'll need `git` too.
+**Mac OS X and Linux**
 
-Note: `dvm` does not support Windows or Fish shell.
+```bash
+$ curl -s https://raw.githubusercontent.com/getcarina/dvm/master/install.sh | sh
 
-### Manual install
+Downloading dvm.sh...
+Docker Version Manager (dvm) has been installed to /root/.dvm
+Add the following command to your bash profile (e.g. ~/.bashrc or ~/.bash_profile) complete the installation:
 
-If you have `git` installed, then clone this repository to `~/.dvm`.
-
-```
-git clone https://github.com/getcarina/dvm.git ~/.dvm
-# TODO: git checkout `git describe --abbrev=0 --tags`
-```
-
-To activate dvm, you need to source it from your shell:
-
-```
-. ~/.dvm/dvm.sh
+	source /root/.dvm/dvm.sh
 ```
 
-Add this line to your `~/.bashrc`, `~/.profile`, or `~/.zshrc` file to have it automatically sourced upon login.
+**Windows**
+
+Open a PowerShell command prompt and execute the following command. We use PowerShell to do the initial
+installation but you can use `dvm` with PowerShell or CMD once it's installed.
+
+```powershell
+> iex (wget https://raw.githubusercontent.com/getcarina/dvm/master/install.ps1)
+
+Downloading dvm.ps1...
+Downloading dvm.cmd...
+
+Docker Version Manager (dvm) has been installed to C:\Users\caro8994\.dvm
+
+PowerShell Users: Add the following command to your PowerShell profile:
+        . C:\Users\caro8994\.dvm\dvm.ps1
+
+CMD Users: Run the following commands to add dvm.cmd to your PATH:
+        PATH=%PATH%;C:\Users\caro8994\.dvm
+        setx PATH "%PATH%;C:\Users\caro8994\.dvm"
+```
 
 ## Usage
 
@@ -56,31 +74,3 @@ If you want to see what versions are available to install:
 To restore your PATH, you can deactivate it:
 
     dvm deactivate
-
-## Bash completion
-
-To activate, you need to source `bash_completion`:
-
-  	[[ -r $DVM_DIR/bash_completion ]] && . $DVM_DIR/bash_completion
-
-Put the above sourcing line just below the sourcing line for DVM in your profile (`.bashrc`, `.bash_profile`).
-
-### Usage
-
-dvm
-
-    $ dvm [tab][tab]
-    alias        list-remote  unalias      version
-    help         ls           uninstall    which
-    current      install      ls-remote    unload
-    deactivate   list         use
-
-dvm use
-
-    $ dvm use [tab][tab]
-    1.6.1        1.8.2
-
-dvm uninstall
-
-    $ dvm uninstall [tab][tab]
-    1.6.1        1.8.2
