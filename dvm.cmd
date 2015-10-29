@@ -7,19 +7,20 @@ SETLOCAL
 
 SET DVM_DIR=%~dp0
 
-IF NOT EXIST dvm-helper.exe (
-  CALL powershell ". dvm.ps1; downloadDvm"
+IF NOT EXIST "%DVM_DIR%\dvm-helper.exe" (
+  echo Installation corrupt: dvm-helper.exe is missing. Please reinstall dvm.
+  EXIT /b 1
 )
 
-SET DVM_OUTPUT=%DVM_DIR%\.tmp\dvm-output.cmd
+SET DVM_OUTPUT="%DVM_DIR%\.tmp\dvm-output.cmd"
 
-IF EXIST %DVM_OUTPUT% (
-  DEL %DVM_OUTPUT%
+IF EXIST "%DVM_OUTPUT%" (
+  DEL "%DVM_OUTPUT%"
 )
 
 %DVM_DIR%\dvm-helper.exe --shell cmd %*
 
-IF EXIST %DVM_OUTPUT% (
+IF EXIST "%DVM_OUTPUT%" (
   ENDLOCAL
-  CALL %DVM_OUTPUT%
+  CALL "%DVM_OUTPUT%"
 )
