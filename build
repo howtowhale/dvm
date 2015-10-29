@@ -26,7 +26,7 @@ build() {
   [ "$GOOS" == "windows" ] && local FILE_EXT=".exe" || local FILE_EXT=""
   local BINARY="dvm-helper-${GOOS}-${GOARCH}${FILE_EXT}"
 
-  go build -ldflags "${LDFLAGS}" -o bin/$BINARY
+  GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "${LDFLAGS}" -o bin/$BINARY
   $(cd bin && shasum -a 256 $BINARY > $BINARY.sha256)
 }
 
