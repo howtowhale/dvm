@@ -14,22 +14,16 @@ Error response from daemon: client and server don't have same version (client : 
 ```
 
 ## Prerequisites
-Mac OS X and Linux require curl.
+Mac OS X and Linux require curl or wget.
 
 ## Installation
-After running the install script, follow the outputted instructions on how to permanently add the `dvm` command
-to your shell sessions.
+1. Run the one of the installation scripts below.
+2. Copy, paste and run the commands from the installation output to finalize the installation.
 
 **Mac OS X and Linux**
 
 ```bash
 $ curl -s https://raw.githubusercontent.com/getcarina/dvm/master/install.sh | sh
-
-Downloading dvm.sh...
-Docker Version Manager (dvm) has been installed to /root/.dvm
-Add the following command to your bash profile (e.g. ~/.bashrc or ~/.bash_profile) complete the installation:
-
-	source /rgbkrk/.dvm/dvm.sh
 ```
 
 **Windows**
@@ -39,18 +33,6 @@ installation but you can use `dvm` with PowerShell or CMD once it's installed.
 
 ```powershell
 > iex (wget https://raw.githubusercontent.com/getcarina/dvm/master/install.ps1)
-
-Downloading dvm.ps1...
-Downloading dvm.cmd...
-
-Docker Version Manager (dvm) has been installed to C:\Users\caro8994\.dvm
-
-PowerShell Users: Add the following command to your PowerShell profile:
-        . C:\Users\caro8994\.dvm\dvm.ps1
-
-CMD Users: Run the following commands to add dvm.cmd to your PATH:
-        PATH=%PATH%;C:\Users\caro8994\.dvm
-        setx PATH "%PATH%;C:\Users\caro8994\.dvm"
 ```
 
 ## Usage
