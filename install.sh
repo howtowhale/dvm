@@ -78,8 +78,9 @@ if [ ! -f "${DVM_DIR}/dvm-helper" ]; then
   install_dvm_helper
 fi
 
+echo ""
 echo "Docker Version Manager (dvm) has been installed to ${DVM_DIR}"
-echo "Add the following command to your bash profile (e.g. ~/.bashrc or ~/.bash_profile) to complete the installation:"
+echo "Run the following command to start using dvm. Then add it to your bash profile (e.g. ~/.bashrc or ~/.bash_profile) to complete the installation."
 echo ""
 echo "\tsource ${DVM_DIR}/dvm.sh"
 

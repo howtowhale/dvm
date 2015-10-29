@@ -50,14 +50,15 @@ function installDvm()
 
   downloadDvm $dvmDir
 
+  echo ""
   echo "Docker Version Manager (dvm) has been installed to $dvmDir"
   echo ""
-  echo "PowerShell Users: Add the following command to your PowerShell profile:"
+  echo "PowerShell Users: Run the following command to start using dvm. Then add it to your PowerShell profile to complete the installation."
   echo "`t. $dvmDir\dvm.ps1"
   echo ""
-  echo "CMD Users: Run the following commands to add dvm.cmd to your PATH:"
-  echo "`tPATH=%PATH%;$dvmDir"
-  echo "`tsetx PATH `"%PATH%;$dvmDir`""
+  echo "CMD Users: Run the first command to start using dvm. Then run the second command to add dvm to your PATH to complete the installation."
+  echo "`t1. PATH=%PATH%;$dvmDir"
+  echo "`t2. setx PATH `"%PATH%;$dvmDir`""
 }
 
 installDvm
