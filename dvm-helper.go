@@ -9,7 +9,6 @@ import "os"
 import "os/exec"
 import "path/filepath"
 import "regexp"
-import "runtime"
 import "sort"
 import "strings"
 import "github.com/fatih/color"
@@ -208,6 +207,8 @@ func die(format string, err error, exitCode int, a ...interface{}) {
 func setGlobalVars(c *cli.Context) {
 	debug = c.GlobalBool("debug")
 	shell = c.GlobalString("shell")
+	validateShellFlag()
+
 	silent = c.GlobalBool("silent")
 	dvmDir = c.GlobalString("dvm-dir")
 	if dvmDir == "" {
@@ -272,12 +273,7 @@ func install(version string) {
 
 	writeInfo("Installing %s...", version)
 
-	mirrorURL := "https://get.docker.com/builds"
-	if version == "experimental" {
-		mirrorURL = "https://experimental.docker.com/builds"
-	}
-
-	url := fmt.Sprintf("%s/%s/%s/%s", mirrorURL, getDockerOS(), getDockerArch(), getDockerBinaryName(version))
+	url := buildDownloadURL(version)
 	tmpPath := filepath.Join(getDvmDir(), ".tmp/docker", version, getBinaryName())
 	downloadFile(url, tmpPath)
 	binaryPath := filepath.Join(getDvmDir(), "bin/docker", version, getBinaryName())
@@ -288,6 +284,17 @@ func install(version string) {
 	}
 
 	writeDebug("Installed Docker %s to %s.", version, binaryPath)
+}
+
+func buildDownloadURL(version string) string {
+	mirrorURL := "https://get.docker.com/builds"
+
+	if version == "experimental" {
+		mirrorURL = "https://experimental.docker.com/builds"
+		version = "latest"
+	}
+
+	return fmt.Sprintf("%s/%s/%s/docker-%s%s", mirrorURL, dockerOS, dockerArch, version, binaryFileExt)
 }
 
 func uninstall(version string) {
@@ -442,17 +449,11 @@ func getDockerBinaryName(version string) string {
 		version = "latest"
 	}
 
-	if runtime.GOOS == "windows" {
-		return fmt.Sprintf("docker-%s.exe", version)
-	}
-	return fmt.Sprintf("docker-%s", version)
+	return fmt.Sprintf("docker-%s%s", version, binaryFileExt)
 }
 
 func getBinaryName() string {
-	if runtime.GOOS == "windows" {
-		return "docker.exe"
-	}
-	return "docker"
+	return fmt.Sprintf("docker%s", binaryFileExt)
 }
 
 func deactivate() {
@@ -461,22 +462,10 @@ func deactivate() {
 }
 
 func prependDvmVersionToPath(version string) {
-	var pathSep string
-	if runtime.GOOS == "windows" {
-		pathSep = ";"
-	} else {
-		pathSep = ":"
-	}
-	versionDir := getVersionDir(version)
-	path := fmt.Sprintf("%s%s%s", versionDir, pathSep, os.Getenv("PATH"))
-	os.Setenv("PATH", path)
+	dvmPath.Prepend(getVersionDir(version))
 }
 
 func writeShellScript() {
-	if runtime.GOOS == "windows" && shell == "" {
-		die("The --shell flag or SHELL environment variable must be set when running on Windows. Available values are sh, powershell and cmd.", nil, retCodeInvalidArgument)
-	}
-
 	path := os.Getenv("PATH")
 
 	var contents string
@@ -499,17 +488,7 @@ func writeShellScript() {
 }
 
 func removePreviousDvmVersionFromPath() {
-	versionDir := getVersionDir("")
-
-	var pathRegex string
-	if runtime.GOOS == "windows" {
-		escapedVersionDir := strings.Replace(versionDir, `\`, `\\`, -1)
-		pathRegex = escapedVersionDir + `\\(\d+\.\d+\.\d+|experimental);`
-	} else {
-		pathRegex = versionDir + `/(\d+\.\d+\.\d+|experimental):`
-	}
-
-	regex, _ := regexp.Compile(pathRegex)
+	regex, _ := regexp.Compile(getCleanDvmPathRegex())
 	path := regex.ReplaceAllString(os.Getenv("PATH"), "")
 	os.Setenv("PATH", path)
 }
@@ -718,32 +697,6 @@ func getAvailableVersions(pattern string) []string {
 
 func getVersionDir(version string) string {
 	return filepath.Join(dvmDir, "bin", "docker", version)
-}
-
-func getDockerOS() string {
-	switch runtime.GOOS {
-	case "windows":
-		return "Windows"
-	case "darwin":
-		return "Darwin"
-	case "linux":
-		return "Linux"
-	}
-
-	die("Unsupported OS: %s", nil, retCodeRuntimeError, runtime.GOOS)
-	return ""
-}
-
-func getDockerArch() string {
-	switch runtime.GOARCH {
-	case "amd64":
-		return "x86_64"
-	case "386":
-		return "i386"
-	}
-
-	die("Unsupported ARCH: %s", nil, retCodeRuntimeError, runtime.GOARCH)
-	return ""
 }
 
 func getDockerVersionVar() string {
