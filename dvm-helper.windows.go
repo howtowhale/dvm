@@ -3,19 +3,11 @@
 package main
 
 import (
-	"fmt"
-	"os"
 	"strings"
 )
 
 const dockerOS string = "Windows"
 const binaryFileExt string = ".exe"
-
-func prependDvmVersionToPath(version string) {
-	versionDir := getVersionDir(version)
-	path := fmt.Sprintf("%s;%s", versionDir, os.Getenv("PATH"))
-	os.Setenv("PATH", path)
-}
 
 func getCleanDvmPathRegex() string {
 	versionDir := getVersionDir("")

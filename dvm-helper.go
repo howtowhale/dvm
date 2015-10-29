@@ -11,6 +11,7 @@ import "path/filepath"
 import "regexp"
 import "sort"
 import "strings"
+import dvmPath "github.com/getcarina/dvm/path"
 import "github.com/fatih/color"
 import "github.com/google/go-github/github"
 import "github.com/codegangsta/cli"
@@ -488,9 +489,7 @@ func writeShellScript() {
 }
 
 func removePreviousDvmVersionFromPath() {
-	regex, _ := regexp.Compile(getCleanDvmPathRegex())
-	path := regex.ReplaceAllString(os.Getenv("PATH"), "")
-	os.Setenv("PATH", path)
+	dvmPath.Remove(getCleanDvmPathRegex())
 }
 
 func ensureVersionIsInstalled(version string) {
