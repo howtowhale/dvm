@@ -288,6 +288,7 @@ func install(version string) {
 	}
 
 	writeDebug("Installed Docker %s to %s.", version, binaryPath)
+	use(version)
 }
 
 func uninstall(version string) {
