@@ -73,13 +73,12 @@ fi
 echo "Downloading dvm.sh..."
 dvm_download -L -C - --progress-bar https://raw.githubusercontent.com/getcarina/dvm/master/dvm.sh -o $DVM_DIR/dvm.sh
 
-if [ ! -f "${DVM_DIR}/dvm-helper" ]; then
-  echo "Downloading dvm-helper..."
-  install_dvm_helper
-fi
+echo "Downloading dvm-helper..."
+install_dvm_helper
 
+echo ""
 echo "Docker Version Manager (dvm) has been installed to ${DVM_DIR}"
-echo "Add the following command to your bash profile (e.g. ~/.bashrc or ~/.bash_profile) to complete the installation:"
+echo "Run the following command to start using dvm. Then add it to your bash profile (e.g. ~/.bashrc or ~/.bash_profile) to complete the installation."
 echo ""
 echo "\tsource ${DVM_DIR}/dvm.sh"
 
