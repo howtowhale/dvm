@@ -49,7 +49,6 @@ install_dvm_helper() {
   local url
   local bin
 
-  echo "Downloading dvm-helper"
   # Detect mac vs. linux and x86 vs. x64
   DVM_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
   [ $(getconf LONG_BIT) == 64 ] && DVM_ARCH="amd64" || DVM_ARCH="386"
@@ -72,9 +71,10 @@ if [ ! -d "$DVM_DIR" ]; then
 fi
 
 echo "Downloading dvm.sh..."
-curl -s -o $DVM_DIR/dvm.sh https://raw.githubusercontent.com/getcarina/dvm/master/dvm.sh
+dvm_download -L -C - --progress-bar https://raw.githubusercontent.com/getcarina/dvm/master/dvm.sh -o $DVM_DIR/dvm.sh
 
 if [ ! -f "${DVM_DIR}/dvm-helper" ]; then
+  echo "Downloading dvm-helper..."
   install_dvm_helper
 fi
 
