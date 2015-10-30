@@ -302,6 +302,13 @@ func install(version string) {
 		die("Unable to copy %s to %s.", err, retCodeRuntimeError, tmpPath, binaryPath)
 	}
 
+	// Cleanup temp files
+	tmpDir := filepath.Dir(tmpPath)
+	writeDebug("Cleaning up temporary installation files in %s.", tmpDir)
+	if err = os.RemoveAll(tmpDir); err != nil {
+		writeWarning("Unable to remove temporary files in %s.", tmpDir)
+	}
+
 	writeDebug("Installed Docker %s to %s.", version, binaryPath)
 	use(version)
 }
