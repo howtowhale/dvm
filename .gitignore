@@ -28,7 +28,7 @@ _testmain.go
 
 # Downloads
 bin
-dvm-helper
+dvm-helper/dvm-helper
 
 # Aliases
 alias
