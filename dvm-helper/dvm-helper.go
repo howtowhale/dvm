@@ -11,7 +11,6 @@ import "path/filepath"
 import "regexp"
 import "sort"
 import "strings"
-import dvmPath "github.com/getcarina/dvm/path"
 import "github.com/getcarina/dvm/checksum"
 import "github.com/fatih/color"
 import "github.com/google/go-github/github"
@@ -489,7 +488,7 @@ func deactivate() {
 }
 
 func prependDvmVersionToPath(version string) {
-	dvmPath.Prepend(getVersionDir(version))
+	prependPath(getVersionDir(version))
 }
 
 func writeShellScript() {
@@ -515,7 +514,7 @@ func writeShellScript() {
 }
 
 func removePreviousDvmVersionFromPath() {
-	dvmPath.Remove(getCleanDvmPathRegex())
+	removePath(getCleanDvmPathRegex())
 }
 
 func ensureVersionIsInstalled(version string) {
