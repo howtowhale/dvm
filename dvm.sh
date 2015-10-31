@@ -8,7 +8,7 @@
 dvm() {
   local DVM_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-  if [ ! -f "${DVM_DIR}/dvm-helper" ]; then
+  if [ ! -f "${DVM_DIR}/dvm-helper/dvm-helper" ]; then
     echo "Installation corrupt: dvm-helper is missing. Please reinstall dvm."
     return 1
   fi
@@ -18,7 +18,7 @@ dvm() {
     rm $DVM_OUTPUT
   fi
 
-  DVM_DIR=$DVM_DIR $DVM_DIR/dvm-helper --shell sh $@
+  DVM_DIR=$DVM_DIR $DVM_DIR/dvm-helper/dvm-helper --shell sh $@
 
   if [ -e $DVM_OUTPUT ]; then
     source $DVM_OUTPUT

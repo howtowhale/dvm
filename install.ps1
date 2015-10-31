@@ -34,7 +34,7 @@ function downloadDvm([string] $dvmDir) {
     return 1
   }
 
-  mv "$tmpDir\dvm-helper-windows-$arch.exe" "$dvmDir\dvm-helper.exe"
+  mv "$tmpDir\dvm-helper-windows-$arch.exe" "$dvmDir\dvm-helper\dvm-helper.exe"
 }
 
 function installDvm()
