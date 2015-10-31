@@ -15,6 +15,13 @@ function downloadDvm([string] $dvmDir) {
     mkdir $tmpDir > $null
   }
 
+  # Ensure dvm-helper directory exists
+  $dvmHelperDir = Join-Path $dvmDir dvm-helper
+  if( !(Test-Path $dvmHelperDir ) ) {
+    mkdir $dvmHelperDir > $null
+  }
+
+
   # Detect x86 vs. x64
   if( [System.Environment]::Is64BitOperatingSystem ) { $arch = "amd64" } else { $arch = "386"}
 
