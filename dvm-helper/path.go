@@ -21,7 +21,7 @@ func Set(value string) {
 // Prepend the specified value to the PATH environment variable
 func Prepend(value string) {
 	originalPath := Get()
-	newPath := fmt.Sprintf("%s%s%s", value, separator, originalPath)
+	newPath := fmt.Sprintf("%s%c%s", value, os.PathListSeparator, originalPath)
 	Set(newPath)
 }
 
