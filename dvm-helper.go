@@ -12,6 +12,7 @@ import "regexp"
 import "sort"
 import "strings"
 import dvmPath "github.com/getcarina/dvm/path"
+import "github.com/getcarina/dvm/checksum"
 import "github.com/fatih/color"
 import "github.com/google/go-github/github"
 import "github.com/codegangsta/cli"
@@ -274,14 +275,38 @@ func install(version string) {
 
 	writeInfo("Installing %s...", version)
 
+	// Download to a temporary location
 	url := buildDownloadURL(version)
 	tmpPath := filepath.Join(getDvmDir(), ".tmp/docker", version, getBinaryName())
 	downloadFile(url, tmpPath)
+
+	// Download Checksum to verify the binary
+	checksumURL := url + ".sha256"
+	checksumPath := tmpPath + ".sha256"
+	downloadFile(checksumURL, checksumPath)
+
+	// Verify checksum
+	isValid, err := checksum.CompareChecksum(tmpPath, checksumPath)
+	if err != nil {
+		die("Unable to calculate checksum of %s.", err, retCodeRuntimeError, tmpPath)
+	}
+	if !isValid {
+		die("The checksum of %s failed to match %s.", nil, retCodeRuntimeError, tmpPath, checksumPath)
+	}
+
+	// Copy to final location
 	binaryPath := filepath.Join(getDvmDir(), "bin/docker", version, getBinaryName())
 	ensureParentDirectoryExists(binaryPath)
-	err := os.Rename(tmpPath, binaryPath)
+	err = os.Rename(tmpPath, binaryPath)
 	if err != nil {
 		die("Unable to copy %s to %s.", err, retCodeRuntimeError, tmpPath, binaryPath)
+	}
+
+	// Cleanup temp files
+	tmpDir := filepath.Dir(tmpPath)
+	writeDebug("Cleaning up temporary installation files in %s.", tmpDir)
+	if err = os.RemoveAll(tmpDir); err != nil {
+		writeWarning("Unable to remove temporary files in %s.", tmpDir)
 	}
 
 	writeDebug("Installed Docker %s to %s.", version, binaryPath)
