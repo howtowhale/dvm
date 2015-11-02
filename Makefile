@@ -52,7 +52,7 @@ checkout-tag:
 
 # This one is intended to be run inside the accompanying Docker container
 tagged-build: checkout-tag cross-build
-	./dvm-helper --version
+	dvm-helper/dvm-helper --version
 	mkdir -p /built/
 	cp -r bin /built/bin
 
