@@ -5,7 +5,7 @@
 function dvm() {
   $dvmDir = $PSScriptRoot
 
-  if( !(Test-Path (Join-Path $dvmDir dvm-helper dvm-helper.exe)) ) {
+  if( !(Test-Path (Join-Path $dvmDir dvm-helper\dvm-helper.exe)) ) {
     $host.ui.WriteErrorLine("Installation corrupt: dvm-helper.exe is missing. Please reinstall dvm.")
     return 1
   }
