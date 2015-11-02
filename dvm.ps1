@@ -5,7 +5,7 @@
 function dvm() {
   $dvmDir = $PSScriptRoot
 
-  if( !(Test-Path (Join-Path $dvmDir dvm-helper.exe)) ) {
+  if( !(Test-Path (Join-Path $dvmDir dvm-helper\dvm-helper.exe)) ) {
     $host.ui.WriteErrorLine("Installation corrupt: dvm-helper.exe is missing. Please reinstall dvm.")
     return 1
   }
@@ -18,7 +18,7 @@ function dvm() {
   $env:DVM_DIR = $dvmDir
 
   $rawArgs = $MyInvocation.Line.Substring(3).Trim()
-  $dvmCall = "$dvmDir\dvm-helper.exe --shell powershell $rawArgs"
+  $dvmCall = "$dvmDir\dvm-helper\dvm-helper.exe --shell powershell $rawArgs"
   iex $dvmCall
 
   if( Test-Path $dvmOutput ) {

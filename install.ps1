@@ -15,6 +15,13 @@ function downloadDvm([string] $dvmDir) {
     mkdir $tmpDir > $null
   }
 
+  # Ensure dvm-helper directory exists
+  $dvmHelperDir = Join-Path $dvmDir dvm-helper
+  if( !(Test-Path $dvmHelperDir ) ) {
+    mkdir $dvmHelperDir > $null
+  }
+
+
   # Detect x86 vs. x64
   if( [System.Environment]::Is64BitOperatingSystem ) { $arch = "amd64" } else { $arch = "386"}
 
@@ -34,7 +41,7 @@ function downloadDvm([string] $dvmDir) {
     return 1
   }
 
-  mv "$tmpDir\dvm-helper-windows-$arch.exe" "$dvmDir\dvm-helper.exe"
+  mv "$tmpDir\dvm-helper-windows-$arch.exe" "$dvmDir\dvm-helper\dvm-helper.exe"
 }
 
 function installDvm()

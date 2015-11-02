@@ -55,10 +55,11 @@ install_dvm_helper() {
 
   # Download latest release
   LATEST_TAG=$(curl -s https://api.github.com/repos/getcarina/dvm/tags | grep name -m 1 | awk '{print $2}' | cut -d '"' -f2)
-  bin="$DVM_DIR/dvm-helper"
+  mkdir -p "$DVM_DIR/dvm-helper"
+  bin="$DVM_DIR/dvm-helper/dvm-helper"
   url=https://github.com/getcarina/dvm/releases/download/$LATEST_TAG/dvm-helper-$DVM_OS-$DVM_ARCH
   dvm_download -L -C - --progress-bar $url -o "$bin"
-  chmod u+x $DVM_DIR/dvm-helper
+  chmod u+x $bin
 }
 
 

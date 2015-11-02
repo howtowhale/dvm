@@ -7,7 +7,7 @@ SETLOCAL
 
 SET DVM_DIR=%~dp0
 
-IF NOT EXIST "%DVM_DIR%\dvm-helper.exe" (
+IF NOT EXIST "%DVM_DIR%\dvm-helper\dvm-helper.exe" (
   echo Installation corrupt: dvm-helper.exe is missing. Please reinstall dvm.
   EXIT /b 1
 )
@@ -18,7 +18,7 @@ IF EXIST "%DVM_OUTPUT%" (
   DEL "%DVM_OUTPUT%"
 )
 
-%DVM_DIR%\dvm-helper.exe --shell cmd %*
+%DVM_DIR%\dvm-helper\dvm-helper.exe --shell cmd %*
 
 IF EXIST "%DVM_OUTPUT%" (
   ENDLOCAL
