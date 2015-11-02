@@ -1,0 +1,6 @@
+FROM golang:1.5
+
+ADD . $GOPATH/src/github.com/getcarina/dvm/
+WORKDIR $GOPATH/src/github.com/getcarina/dvm/
+
+RUN make get-deps
