@@ -4,10 +4,10 @@ function downloadDvm([string] $dvmDir) {
   $webClient = New-Object net.webclient
 
   echo "Downloading dvm.ps1..."
-  $webClient.DownloadFile("https://raw.githubusercontent.com/getcarina/dvm/master/dvm.ps1", "$dvmDir\dvm.ps1")
+  $webClient.DownloadFile("https://download.getcarina.com/getcarina/dvm/latest/dvm.ps1", "$dvmDir\dvm.ps1")
 
   echo "Downloading dvm.cmd..."
-  $webClient.DownloadFile("https://raw.githubusercontent.com/getcarina/dvm/master/dvm.cmd", "$dvmDir\dvm.cmd")
+  $webClient.DownloadFile("https://download.getcarina.com/getcarina/dvm/latest/dvm.cmd", "$dvmDir\dvm.cmd")
 
   echo "Downloading dvm-helper.exe..."
   $tmpDir = Join-Path $dvmDir .tmp
@@ -26,10 +26,8 @@ function downloadDvm([string] $dvmDir) {
   if( [System.Environment]::Is64BitOperatingSystem ) { $arch = "amd64" } else { $arch = "386"}
 
   # Download latest release
-  $latestTag = (ConvertFrom-Json (wget https://api.github.com/repos/getcarina/dvm/tags).Content) | select -ExpandProperty name | select -first 1
-
-  $webClient.DownloadFile("https://github.com/getcarina/dvm/releases/download/$latestTag/dvm-helper-windows-$arch.exe", "$tmpDir\dvm-helper-windows-$arch.exe")
-  $webClient.DownloadFile("https://github.com/getcarina/dvm/releases/download/$latestTag/dvm-helper-windows-$arch.exe.sha256", "$tmpDir\dvm-helper-windows-$arch.exe.256")
+  $webClient.DownloadFile("https://download.getcarina.com/getcarina/dvm/latest/dvm-helper-windows-$arch.exe", "$tmpDir\dvm-helper-windows-$arch.exe")
+  $webClient.DownloadFile("https://download.getcarina.com/getcarina/dvm/latest/dvm-helper-windows-$arch.exe.sha256", "$tmpDir\dvm-helper-windows-$arch.exe.256")
 
   # Verify the binary was downloaded successfully
   $checksum = (cat $tmpDir\dvm-helper-windows-$arch.exe.256).Split(' ')[0]
