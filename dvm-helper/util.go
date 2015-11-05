@@ -6,6 +6,7 @@ import "net/http"
 import "os"
 import "path/filepath"
 import "github.com/fatih/color"
+import "github.com/getcarina/dvm/dvm-helper/checksum"
 
 func pathExists(path string) bool {
 	_, err := os.Stat(path)
@@ -46,6 +47,39 @@ func downloadFile(url string, destPath string) {
 	_, err = io.Copy(destFile, response.Body)
 	if err != nil {
 		die("Unable to write to %s.", err, retCodeRuntimeError, destPath)
+	}
+}
+
+func downloadFileWithChecksum(url string, destPath string) {
+	fileName := filepath.Base(destPath)
+	tmpPath := filepath.Join(dvmDir, ".tmp", fileName)
+	downloadFile(url, tmpPath)
+
+	checksumURL := url + ".sha256"
+	checksumPath := filepath.Join(dvmDir, ".tmp", (fileName + ".sh256"))
+	downloadFile(checksumURL, checksumPath)
+
+	checksum.CompareChecksum(tmpPath, checksumPath)
+	isValid, err := checksum.CompareChecksum(tmpPath, checksumPath)
+	if err != nil {
+		die("Unable to calculate checksum of %s.", err, retCodeRuntimeError, tmpPath)
+	}
+	if !isValid {
+		die("The checksum of %s failed to match %s.", nil, retCodeRuntimeError, tmpPath, checksumPath)
+	}
+
+	// Copy to final location, if different
+	if destPath != tmpPath {
+		ensureParentDirectoryExists(destPath)
+		err = os.Rename(tmpPath, destPath)
+		if err != nil {
+			die("Unable to copy %s to %s.", err, retCodeRuntimeError, tmpPath, destPath)
+		}
+	}
+
+	// Cleanup temp files
+	if err = os.Remove(checksumPath); err != nil {
+		writeWarning("Unable to remove temporary file: %s.", checksumPath)
 	}
 }
 

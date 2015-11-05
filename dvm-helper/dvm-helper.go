@@ -9,8 +9,9 @@ import "path/filepath"
 import "regexp"
 import "sort"
 import "strings"
+import "github.com/blang/semver"
 import "github.com/fatih/color"
-import "github.com/getcarina/dvm/dvm-helper/checksum"
+import "github.com/getcarina/dvm/dvm-helper/url"
 import "github.com/google/go-github/github"
 import "github.com/codegangsta/cli"
 import "github.com/kardianos/osext"
@@ -136,6 +137,18 @@ func main() {
 				listAlias()
 			},
 		},
+		{
+			Name:  "upgrade",
+			Usage: "dvm upgrade\n\tUpgrade dvm to the latest release.",
+			Flags: []cli.Flag{
+				cli.BoolFlag{Name: "check", Usage: "Checks if an newer version of dvm is available, but does not perform the upgrade."},
+				cli.StringFlag{Name: "version", Usage: "Upgrade to the specified version."},
+			},
+			Action: func(c *cli.Context) {
+				setGlobalVars(c)
+				upgrade(c.Bool("check"), c.String("version"))
+			},
+		},
 	}
 
 	app.Run(os.Args)
@@ -155,6 +168,37 @@ func setGlobalVars(c *cli.Context) {
 			die("Unable to determine DVM home directory", nil, 1)
 		}
 	}
+}
+
+func upgrade(checkOnly bool, version string) {
+	if version != "" && dvmVersion == version {
+		writeWarning("dvm %s is already installed.", version)
+		return
+	}
+
+	if version == "" {
+		shouldUpgrade, latestVersion := isUpgradeAvailable()
+		if !shouldUpgrade {
+			writeInfo("The latest version of dvm is already installed.")
+			return
+		}
+
+		version = latestVersion
+	}
+
+	if checkOnly {
+		writeInfo("dvm %s is available. Run `dvm upgrade` to install the latest version.", version)
+		return
+	}
+
+	writeInfo("Upgrading to dvm %s...", version)
+	upgradeSelf(version)
+}
+
+func buildDvmReleaseURL(version string, elem ...string) string {
+	prefix := url.Join("https://download.getcarina.com/dvm", version)
+	suffix := url.Join(elem...)
+	return url.Join(prefix, suffix)
 }
 
 func current() {
@@ -210,39 +254,9 @@ func install(version string) {
 
 	writeInfo("Installing %s...", version)
 
-	// Download to a temporary location
 	url := buildDownloadURL(version)
-	tmpPath := filepath.Join(getDvmDir(), ".tmp/docker", version, getBinaryName())
-	downloadFile(url, tmpPath)
-
-	// Download Checksum to verify the binary
-	checksumURL := url + ".sha256"
-	checksumPath := tmpPath + ".sha256"
-	downloadFile(checksumURL, checksumPath)
-
-	// Verify checksum
-	isValid, err := checksum.CompareChecksum(tmpPath, checksumPath)
-	if err != nil {
-		die("Unable to calculate checksum of %s.", err, retCodeRuntimeError, tmpPath)
-	}
-	if !isValid {
-		die("The checksum of %s failed to match %s.", nil, retCodeRuntimeError, tmpPath, checksumPath)
-	}
-
-	// Copy to final location
 	binaryPath := filepath.Join(getDvmDir(), "bin/docker", version, getBinaryName())
-	ensureParentDirectoryExists(binaryPath)
-	err = os.Rename(tmpPath, binaryPath)
-	if err != nil {
-		die("Unable to copy %s to %s.", err, retCodeRuntimeError, tmpPath, binaryPath)
-	}
-
-	// Cleanup temp files
-	tmpDir := filepath.Dir(tmpPath)
-	writeDebug("Cleaning up temporary installation files in %s.", tmpDir)
-	if err = os.RemoveAll(tmpDir); err != nil {
-		writeWarning("Unable to remove temporary files in %s.", tmpDir)
-	}
+	downloadFileWithChecksum(url, binaryPath)
 
 	writeDebug("Installed Docker %s to %s.", version, binaryPath)
 	use(version)
@@ -256,7 +270,7 @@ func buildDownloadURL(version string) string {
 		version = "latest"
 	}
 
-	return fmt.Sprintf("%s/%s/%s/docker-%s%s", mirrorURL, dockerOS, dockerArch, version, binaryFileExt)
+	return url.Join(mirrorURL, dockerOS, dockerArch, version, getBinaryName())
 }
 
 func uninstall(version string) {
@@ -301,7 +315,7 @@ func use(version string) {
 
 		removePreviousDvmVersionFromPath()
 		writeInfo("Now using system version of Docker: %s", systemDockerVersion)
-		writeShellScript()
+		writePathScript()
 		return
 	}
 
@@ -315,7 +329,7 @@ func use(version string) {
 	ensureVersionIsInstalled(version)
 	removePreviousDvmVersionFromPath()
 	prependDvmVersionToPath(version)
-	writeShellScript()
+	writePathScript()
 
 	writeInfo("Now using Docker %s", version)
 }
@@ -415,38 +429,36 @@ func getDockerBinaryName(version string) string {
 }
 
 func getBinaryName() string {
-	return fmt.Sprintf("docker%s", binaryFileExt)
+	return "docker" + binaryFileExt
 }
 
 func deactivate() {
 	removePreviousDvmVersionFromPath()
-	writeShellScript()
+	writePathScript()
 }
 
 func prependDvmVersionToPath(version string) {
 	prependPath(getVersionDir(version))
 }
 
-func writeShellScript() {
-	path := os.Getenv("PATH")
-
-	var contents string
-	var fileExtension string
-	if shell == "powershell" {
-		contents = fmt.Sprintf(`$env:PATH="%s"`, path)
-		fileExtension = "ps1"
-	} else if shell == "cmd" {
-		contents = fmt.Sprintf("PATH=%s", path)
-		fileExtension = "cmd"
-	} else { // default to bash
-		contents = fmt.Sprintf(`export PATH="%s"`, path)
-		fileExtension = "sh"
-	}
-
+func writePathScript() {
 	// Write to a shell script for the calling wrapper to execute
-	scriptPath := filepath.Join(dvmDir, ".tmp", ("dvm-output." + fileExtension))
+	scriptPath := buildDvmOutputScriptPath()
+	contents := buildPathScript()
 
 	writeFile(scriptPath, contents)
+}
+
+func buildDvmOutputScriptPath() string {
+	var fileExtension string
+	if shell == "powershell" {
+		fileExtension = "ps1"
+	} else if shell == "cmd" {
+		fileExtension = "cmd"
+	} else { // default to bash
+		fileExtension = "sh"
+	}
+	return filepath.Join(dvmDir, ".tmp", ("dvm-output." + fileExtension))
 }
 
 func removePreviousDvmVersionFromPath() {
@@ -509,10 +521,10 @@ func getCurrentDockerVersion() (string, error) {
 }
 
 func getSystemDockerPath() (string, error) {
-	originalPath := os.Getenv("PATH")
+	originalPath := getPath()
 	removePreviousDvmVersionFromPath()
 	systemDockerPath, err := exec.LookPath("docker")
-	os.Setenv("PATH", originalPath)
+	setPath(originalPath)
 	return systemDockerPath, err
 }
 
@@ -616,6 +628,35 @@ func getAvailableVersions(pattern string) []string {
 
 	sort.Strings(results)
 	return results
+}
+
+func isUpgradeAvailable() (bool, string) {
+	gh := github.NewClient(nil)
+	release, response, err := gh.Repositories.GetLatestRelease("getcarina", "dvm")
+	if err != nil {
+		writeWarning("Unable to query the latest dvm release from GitHub:")
+		writeWarning("%s", err)
+		return false, ""
+	}
+	if response.StatusCode != 200 {
+		writeWarning("Unable to query the latest dvm release from GitHub (Status %s):", response.StatusCode)
+		return false, ""
+	}
+
+	currentVersion, err := semver.Make(dvmVersion)
+	if err != nil {
+		writeWarning("Unable to parse the current dvm version as a semantic version!")
+		writeWarning("%s", err)
+		return false, ""
+	}
+	latestVersion, err := semver.Make(*release.TagName)
+	if err != nil {
+		writeWarning("Unable to parse the latest dvm version as a semantic version!")
+		writeWarning("%s", err)
+		return false, ""
+	}
+
+	return latestVersion.Compare(currentVersion) > 0, *release.TagName
 }
 
 func getVersionDir(version string) string {

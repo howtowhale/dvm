@@ -23,7 +23,7 @@ Mac OS X and Linux require curl or wget.
 **Mac OS X and Linux**
 
 ```bash
-$ curl -s -L https://download.getcarina.com/dvm/latest/install.sh | sh
+$ curl -sL https://download.getcarina.com/dvm/latest/install.sh | sh
 ```
 
 **Windows**
@@ -36,8 +36,10 @@ installation but you can use `dvm` with PowerShell or CMD once it's installed.
 ```
 
 ## Upgrading from previous dvm
+If you have dvm 0.2 or later, run `dvm upgrade` to install the latest version of dvm.
 
-`dvm` used to *only* be only one shell script, relying on a git backed `~/.dvm`. This worked well for \*nix users and was not workable for Windows users. We've since switched over to small wrapper scripts and a go binary called `dvm-helper` to make cross platform simple and easy. To upgrade, you can either pull and rebuild yourself (with a working go setup), or use the install script. You'll need to open up a new terminal to ensure that all the `dvm` functions are set properly.
+If you have dvm 0.0.0, then you will need to reinstall. `dvm` used to *only* be only one shell script, relying on a git backed `~/.dvm`. This worked well for \*nix users and was not workable for Windows users. We've since switched over to small wrapper scripts and a go binary called `dvm-helper` to make cross platform simple and easy. To upgrade, you can either pull and rebuild yourself (with a working go setup), or use the install script. You'll need to open up a new terminal to ensure that all the `dvm` functions are set properly.
+
 
 ## Usage
 

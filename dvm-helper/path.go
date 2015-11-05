@@ -32,3 +32,19 @@ func removePath(regexValue string) {
 	newPath := regex.ReplaceAllString(getPath(), "")
 	setPath(newPath)
 }
+
+// Build a script which sets the PATH environment variable
+func buildPathScript() string {
+	path := getPath()
+
+	if shell == "powershell" {
+		return fmt.Sprintf(`$env:PATH="%s"`, path)
+	}
+
+	if shell == "cmd" {
+		return fmt.Sprintf("PATH=%s", path)
+	}
+
+	// default to bash
+	return fmt.Sprintf(`export PATH="%s"`, path)
+}
