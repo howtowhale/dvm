@@ -2,17 +2,15 @@ package main
 
 import "errors"
 import "fmt"
-import "io"
 import "io/ioutil"
-import "net/http"
 import "os"
 import "os/exec"
 import "path/filepath"
 import "regexp"
 import "sort"
 import "strings"
-import "github.com/getcarina/dvm/dvm-helper/checksum"
 import "github.com/fatih/color"
+import "github.com/getcarina/dvm/dvm-helper/checksum"
 import "github.com/google/go-github/github"
 import "github.com/codegangsta/cli"
 import "github.com/kardianos/osext"
@@ -141,68 +139,6 @@ func main() {
 	}
 
 	app.Run(os.Args)
-}
-
-func pathExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
-}
-
-func writeFile(path string, contents string) {
-	writeDebug("Writing to %s...", path)
-	writeDebug(contents)
-
-	ensureParentDirectoryExists(path)
-
-	file, err := os.Create(path)
-	if err != nil {
-		die("Unable to create %s", err, retCodeRuntimeError, path)
-	}
-
-	_, err = io.WriteString(file, contents)
-	if err != nil {
-		die("Unable to write to %s", err, retCodeRuntimeError, path)
-	}
-
-	file.Close()
-}
-
-func writeDebug(format string, a ...interface{}) {
-	if !debug {
-		return
-	}
-
-	color.Cyan(format, a...)
-}
-
-func writeInfo(format string, a ...interface{}) {
-	if silent {
-		return
-	}
-
-	color.White(format, a...)
-}
-
-func writeWarning(format string, a ...interface{}) {
-	if silent {
-		return
-	}
-
-	color.Yellow(format, a...)
-}
-
-func writeError(format string, err error, a ...interface{}) {
-	color.Set(color.FgRed)
-	fmt.Fprintf(os.Stderr, format+"\n", a...)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	}
-	color.Unset()
-}
-
-func die(format string, err error, exitCode int, a ...interface{}) {
-	writeError(format, err, a...)
-	os.Exit(exitCode)
 }
 
 func setGlobalVars(c *cli.Context) {
@@ -526,34 +462,6 @@ func ensureVersionIsInstalled(version string) {
 	install(version)
 }
 
-func downloadFile(url string, destPath string) {
-	ensureParentDirectoryExists(destPath)
-
-	destFile, err := os.Create(destPath)
-	if err != nil {
-		die("Unable to create to %s.", err, retCodeRuntimeError, destPath)
-	}
-	defer destFile.Close()
-	os.Chmod(destPath, 0755)
-
-	writeDebug("Downloading %s", url)
-
-	response, err := http.Get(url)
-	if err != nil {
-		die("Unable to download %s.", err, retCodeRuntimeError, url)
-	}
-
-	if response.StatusCode != 200 {
-		die("Unable to download %s. (Status %d)", nil, retCodeRuntimeError, url, response.StatusCode)
-	}
-	defer response.Body.Close()
-
-	_, err = io.Copy(destFile, response.Body)
-	if err != nil {
-		die("Unable to write to %s.", err, retCodeRuntimeError, destPath)
-	}
-}
-
 func isVersionInstalled(version string) bool {
 	installedVersions := getInstalledVersions(version)
 
@@ -573,15 +481,6 @@ func versionExists(version string) bool {
 		}
 	}
 	return false
-}
-
-func ensureParentDirectoryExists(filePath string) {
-	dir := filepath.Dir(filePath)
-
-	err := os.MkdirAll(dir, 0777)
-	if err != nil {
-		die("Unable to create directory %s.", err, retCodeRuntimeError, dir)
-	}
 }
 
 func getCurrentDockerPath() (string, error) {
