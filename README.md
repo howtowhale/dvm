@@ -23,7 +23,7 @@ Mac OS X and Linux require curl or wget.
 **Mac OS X and Linux**
 
 ```bash
-$ curl -s https://download.getcarina.com/dvm/latest/install.sh | sh
+$ curl -s -L https://download.getcarina.com/dvm/latest/install.sh | sh
 ```
 
 **Windows**
