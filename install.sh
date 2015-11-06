@@ -50,13 +50,13 @@ install_dvm_helper() {
   local bin
 
   # Detect mac vs. linux and x86 vs. x64
-  DVM_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-  [ $(getconf LONG_BIT) == 64 ] && DVM_ARCH="amd64" || DVM_ARCH="386"
+  DVM_OS=$(uname -s)
+  DVM_ARCH=$(uname -m)
 
   # Download latest release
   mkdir -p "$DVM_DIR/dvm-helper"
   bin="$DVM_DIR/dvm-helper/dvm-helper"
-  url=https://download.getcarina.com/dvm/latest/$(uname -s)/$(uname -m)/dvm-helper
+  url=https://download.getcarina.com/dvm/latest/$DVM_OS/$DVM_ARCH/dvm-helper
   dvm_download -L -C - --progress-bar $url -o "$bin"
   chmod u+x $bin
 }
