@@ -26,8 +26,8 @@ function downloadDvm([string] $dvmDir) {
   if( [System.Environment]::Is64BitOperatingSystem ) { $arch = "x86_64" } else { $arch = "i386"}
 
   # Download latest release
-  $webClient.DownloadFile("https://download.getcarina.com/dvm/latest/windows/$arch/dvm-helper.exe", "$tmpDir\dvm-helper.exe")
-  $webClient.DownloadFile("https://download.getcarina.com/dvm/latest/windows/$arch/dvm-helper.exe.sha256", "$tmpDir\dvm-helper.exe.256")
+  $webClient.DownloadFile("https://download.getcarina.com/dvm/latest/Windows/$arch/dvm-helper.exe", "$tmpDir\dvm-helper.exe")
+  $webClient.DownloadFile("https://download.getcarina.com/dvm/latest/Windows/$arch/dvm-helper.exe.sha256", "$tmpDir\dvm-helper.exe.256")
 
   # Verify the binary was downloaded successfully
   $checksum = (cat $tmpDir\dvm-helper.exe.256).Split(' ')[0]
