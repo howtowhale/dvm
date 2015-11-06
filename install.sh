@@ -56,7 +56,7 @@ install_dvm_helper() {
   # Download latest release
   mkdir -p "$DVM_DIR/dvm-helper"
   bin="$DVM_DIR/dvm-helper/dvm-helper"
-  url=https://download.getcarina.com/dvm/latest/$DVM_OS/$DVM_ARCH/dvm-helper
+  url=https://download.getcarina.com/dvm/latest/$(uname -s)/$(uname -m)/dvm-helper
   dvm_download -L -C - --progress-bar $url -o "$bin"
   chmod u+x $bin
 }
