@@ -23,7 +23,7 @@ Mac OS X and Linux require curl or wget.
 **Mac OS X and Linux**
 
 ```bash
-$ curl -s https://download.getcarina.com/getcarina/dvm/latest/install.sh | sh
+$ curl -s https://download.getcarina.com/dvm/latest/install.sh | sh
 ```
 
 **Windows**
@@ -32,7 +32,7 @@ Open a PowerShell command prompt and execute the following command. We use Power
 installation but you can use `dvm` with PowerShell or CMD once it's installed.
 
 ```powershell
-> iex (wget https://download.getcarina.com/getcarina/dvm/latest/install.ps1)
+> iex (wget https://download.getcarina.com/dvm/latest/install.ps1)
 ```
 
 ## Usage

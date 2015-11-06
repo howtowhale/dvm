@@ -27,16 +27,16 @@ dvm-helper: get-deps $(GOFILES)
 	CGO_ENABLED=0 $(GOBUILD) -o dvm-helper/dvm-helper $(PACKAGE)
 
 linux: $(GOFILES)
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o bin/dvm-helper-linux-amd64 $(PACKAGE)
-	cd bin && shasum -a 256 dvm-helper-linux-amd64 > dvm-helper-linux-amd64.sha256
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o bin/linux/x86_64/dvm-helper $(PACKAGE)
+	cd bin/linux/x86_64 && shasum -a 256 dvm-helper > dvm-helper.sha256
 
 darwin: $(GOFILES)
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GOBUILD) -o bin/dvm-helper-darwin-amd64 $(PACKAGE)
-	cd bin && shasum -a 256 dvm-helper-darwin-amd64 > dvm-helper-darwin-amd64.sha256
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GOBUILD) -o bin/darwin/x86_64/dvm-helper $(PACKAGE)
+	cd bin/darwin/x86_64 && shasum -a 256 dvm-helper > dvm-helper.sha256
 
 windows: $(GOFILES)
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GOBUILD) -o bin/dvm-helper-windows-amd64.exe $(PACKAGE)
-	cd bin && shasum -a 256 dvm-helper-windows-amd64.exe > dvm-helper-windows-amd64.exe.sha256
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GOBUILD) -o bin/windows/x86_64/dvm-helper.exe $(PACKAGE)
+	cd bin/windows/x86_64 && shasum -a 256 dvm-helper.exe > dvm-helper.exe.sha256
 
 ############################ RELEASE TARGETS ############################
 
