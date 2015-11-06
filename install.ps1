@@ -39,7 +39,7 @@ function downloadDvm([string] $dvmDir) {
     return 1
   }
 
-  mv "$tmpDir\dvm-helper.exe" "$dvmDir\dvm-helper\dvm-helper.exe"
+  mv -force "$tmpDir\dvm-helper.exe" "$dvmDir\dvm-helper\dvm-helper.exe"
 }
 
 function installDvm()
