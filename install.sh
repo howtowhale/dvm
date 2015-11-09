@@ -39,8 +39,7 @@ dvm_download() {
                            -e 's/-L //' \
                            -e 's/-I /--server-response /' \
                            -e 's/-s /-q /' \
-                           -e 's/-o /-O /' \
-                           -e 's/-C - /-c /')
+                           -e 's/-o /-O /')
     eval wget $ARGS
   fi
 }
@@ -50,15 +49,14 @@ install_dvm_helper() {
   local bin
 
   # Detect mac vs. linux and x86 vs. x64
-  DVM_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-  [ $(getconf LONG_BIT) == 64 ] && DVM_ARCH="amd64" || DVM_ARCH="386"
+  DVM_OS=$(uname -s)
+  DVM_ARCH=$(uname -m)
 
   # Download latest release
-  LATEST_TAG=$(curl -s https://api.github.com/repos/getcarina/dvm/tags | grep name -m 1 | awk '{print $2}' | cut -d '"' -f2)
   mkdir -p "$DVM_DIR/dvm-helper"
   bin="$DVM_DIR/dvm-helper/dvm-helper"
-  url=https://github.com/getcarina/dvm/releases/download/$LATEST_TAG/dvm-helper-$DVM_OS-$DVM_ARCH
-  dvm_download -L -C - --progress-bar $url -o "$bin"
+  url=https://download.getcarina.com/dvm/latest/$DVM_OS/$DVM_ARCH/dvm-helper
+  dvm_download -L --progress-bar $url -o "$bin"
   chmod u+x $bin
 }
 
@@ -72,7 +70,7 @@ if [ ! -d "$DVM_DIR" ]; then
 fi
 
 echo "Downloading dvm.sh..."
-dvm_download -L -C - --progress-bar https://raw.githubusercontent.com/getcarina/dvm/master/dvm.sh -o $DVM_DIR/dvm.sh
+dvm_download -L --progress-bar https://download.getcarina.com/dvm/latest/dvm.sh -o $DVM_DIR/dvm.sh
 
 echo "Downloading dvm-helper..."
 install_dvm_helper
