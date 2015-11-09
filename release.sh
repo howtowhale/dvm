@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-declare -xr ORG="carolynvs" # TODO: getcarina
+declare -xr ORG="getcarina"
 declare -xr REPO="dvm"
 declare -xr BINARY="dvm-helper"
 declare -xr DESCRIPTION="The Docker Version Manager (dvm)"
