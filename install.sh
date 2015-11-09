@@ -39,8 +39,7 @@ dvm_download() {
                            -e 's/-L //' \
                            -e 's/-I /--server-response /' \
                            -e 's/-s /-q /' \
-                           -e 's/-o /-O /' \
-                           -e 's/-C - /-c /')
+                           -e 's/-o /-O /')
     eval wget $ARGS
   fi
 }
@@ -57,7 +56,7 @@ install_dvm_helper() {
   mkdir -p "$DVM_DIR/dvm-helper"
   bin="$DVM_DIR/dvm-helper/dvm-helper"
   url=https://download.getcarina.com/dvm/latest/$DVM_OS/$DVM_ARCH/dvm-helper
-  dvm_download -L -C - --progress-bar $url -o "$bin"
+  dvm_download -L --progress-bar $url -o "$bin"
   chmod u+x $bin
 }
 
@@ -71,7 +70,7 @@ if [ ! -d "$DVM_DIR" ]; then
 fi
 
 echo "Downloading dvm.sh..."
-dvm_download -L -C - --progress-bar https://download.getcarina.com/dvm/latest/dvm.sh -o $DVM_DIR/dvm.sh
+dvm_download -L --progress-bar https://download.getcarina.com/dvm/latest/dvm.sh -o $DVM_DIR/dvm.sh
 
 echo "Downloading dvm-helper..."
 install_dvm_helper
