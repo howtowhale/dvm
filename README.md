@@ -35,6 +35,10 @@ installation but you can use `dvm` with PowerShell or CMD once it's installed.
 > iex (wget https://download.getcarina.com/dvm/latest/install.ps1)
 ```
 
+## Upgrading from previous dvm
+
+`dvm` used to *only* be only one shell script, relying on a git backed `~/.dvm`. This worked well for \*nix users and was not workable for Windows users. We've since switched over to small wrapper scripts and a go binary called `dvm-helper` to make cross platform simple and easy. To upgrade, you can either pull and rebuild yourself (with a working go setup), or use the install script. You'll need to open up a new terminal to ensure that all the `dvm` functions are set properly.
+
 ## Usage
 
 To install the 1.8.2 release of docker, do this:
