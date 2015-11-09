@@ -9,6 +9,7 @@ LDFLAGS = -w -X main.dvmCommit=${COMMIT} -X main.dvmVersion=${VERSION}
 GOCMD = go
 GOBUILD = $(GOCMD) build -a -tags netgo -ldflags '$(LDFLAGS)'
 
+BINDIR = bin/dvm/$(VERSION)
 GOFILES = dvm-helper/*.go
 
 default: dvm-helper
@@ -21,44 +22,29 @@ get-deps:
 #	eval "$( ./dvm-helper --bash-completion )"
 #	./dvm-helper --version
 
-cross-build: get-deps dvm-helper linux darwin windows
+cross-build: clean get-deps dvm-helper linux darwin windows
+	cp -R $(BINDIR) bin/dvm/latest
 
 dvm-helper: get-deps $(GOFILES)
 	CGO_ENABLED=0 $(GOBUILD) -o dvm-helper/dvm-helper $(PACKAGE)
 
 linux: $(GOFILES)
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o bin/Linux/x86_64/dvm-helper $(PACKAGE)
-	cd bin/Linux/x86_64 && shasum -a 256 dvm-helper > dvm-helper.sha256
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINDIR)/Linux/x86_64/dvm-helper $(PACKAGE)
+	cd $(BINDIR)/Linux/x86_64 && shasum -a 256 dvm-helper > dvm-helper.sha256
 
 darwin: $(GOFILES)
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GOBUILD) -o bin/Darwin/x86_64/dvm-helper $(PACKAGE)
-	cd bin/Darwin/x86_64 && shasum -a 256 dvm-helper > dvm-helper.sha256
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GOBUILD) -o $(BINDIR)/Darwin/x86_64/dvm-helper $(PACKAGE)
+	cd $(BINDIR)/Darwin/x86_64 && shasum -a 256 dvm-helper > dvm-helper.sha256
 
 windows: $(GOFILES)
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GOBUILD) -o bin/Windows/x86_64/dvm-helper.exe $(PACKAGE)
-	cd bin/Windows/x86_64 && shasum -a 256 dvm-helper.exe > dvm-helper.exe.sha256
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GOBUILD) -o $(BINDIR)/Windows/x86_64/dvm-helper.exe $(PACKAGE)
+	cd $(BINDIR)/Windows/x86_64 && shasum -a 256 dvm-helper.exe > dvm-helper.exe.sha256
 
-############################ RELEASE TARGETS ############################
+# To make a release, push a tag to master, e.g. git tag 0.2.0 -a -m ""
 
-build-tagged-for-release: clean
-	-docker rm -fv dvm-helper-build
-	docker build -f Dockerfile.build -t dvm-helper-cli-build --no-cache=true .
-	docker run --name dvm-helper-build dvm-helper-cli-build make tagged-build TAG=$(TAG)
-	mkdir -p bin/
-	docker cp dvm-helper-build:/built/bin .
-
-checkout-tag:
-	git checkout $(TAG)
-
-# This one is intended to be run inside the accompanying Docker container
-tagged-build: checkout-tag cross-build
-	dvm-helper/dvm-helper --version
-	mkdir -p /built/
-	cp -r bin /built/bin
-
-.PHONY: clean build-tagged-for-release checkout tagged-build
+.PHONY: clean
 
 clean:
-	 -rm -f bin/*
+	 -rm -fr bin/*
 	 -rm dvm-helper/dvm-helper
 	 -rm dvm-helper/dvm-helper.exe
