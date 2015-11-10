@@ -1,3 +1,16 @@
-language: c # defaults to ruby
-script:
-- bash -n dvm.sh
+language: go
+go:
+  - 1.5
+install: make get-deps
+script: make cross-build
+deploy:
+  - provider: cloudfiles
+    username: getcarina-drgsites
+    api_key:
+      secure: KlfkWfMNHyJZvHv0/Ufgz75hacv5hvMY0W+nqtU9mkaEDIqY/uxjHjD3onrxitUqV6w/Q+hg/RGoqmmnIBfE/2BP9vL5kvvOcQzo3fUKpu1Sb18J6WIKr2ew/2/uyrEOIC7xZbhlgtMikJtDEwemdNIhwZE6PO2PsKfTyFczvUb1HDcftl7OOzxarzfIFyLdUt3PmChuhCaZvcRJ90F77lRGheZS/h9OM9UEQBJ/7i7nl24OQeWnuxgikrDtzutPym6/1GWwJhUqg7VPfPPwuPEDDzsyB9svtA1gmV2lWq7Uzc5MKYR7VsUKj5kIsASdqhfSvsIMLfXh2R0vTfNnlI1Hqz9Mgjpcwz3rlvefj4Txb+Xtf1qNzmeKXV+MY4Xs1JnaC2y500ztzJX9HdlUODmKNszQz09eGV3aC+MSfYo2qXC+rZAU5YRRbsCAK0rGBxG1ZYsXCTgnuQWHHoJesNbT14eyJqpKk12GZ+j7TL3r/puUNmZl5YNEt705Z6vZO8IhdXcdd0g3N2NaepM8EShATUbJdNGSM3wzbDeUZEDVm3fAPvG+AaO1pLe2JSP918C/8hKoQWRFqheWknsdKxG2dYp0qdPHqXtLLJSWvGqpgLQ2jEUIlVrHtiEQuBWGXCsCZNnlYckjv0GMnZ4ZoN2169yN8B8VpKe7ausout0=
+    region: IAD
+    container: carina-downloads
+    skip_cleanup: true
+    on:
+      repo: getcarina/dvm
+      tags: true
