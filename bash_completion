@@ -19,7 +19,7 @@ __dvm_commands ()
 
   COMMANDS='\
     help install uninstall use \
-    alias unalias \
+    alias unalias upgrade \
     current list ls list-remote ls-remote \
     list-alias ls-alias deactivate unload \
     version which'
