@@ -270,7 +270,7 @@ func buildDownloadURL(version string) string {
 		version = "latest"
 	}
 
-	return url.Join(mirrorURL, dockerOS, dockerArch, version, getBinaryName())
+	return fmt.Sprintf("%s/%s/%s/docker-%s%s", mirrorURL, dockerOS, dockerArch, version, binaryFileExt)
 }
 
 func uninstall(version string) {
