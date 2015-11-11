@@ -3,6 +3,7 @@ go:
   - 1.5
 install: make get-deps
 script: make cross-build
+before_deploy: cd bin
 deploy:
   - provider: cloudfiles
     username: getcarina-drgsites
