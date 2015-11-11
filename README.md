@@ -62,3 +62,29 @@ If you want to see what versions are available to install:
 To restore your PATH, you can deactivate it:
 
     dvm deactivate
+
+## Bash and zsh completion
+
+There is bash and zsh completion available in `$DVM_DIR/bash_completion`. To invoke it into your shell, run
+
+```bash
+[[ -r $DVM_DIR/bash_completion ]] && . $DVM_DIR/bash_completion
+```
+
+For zsh, there's a bit of special sauce using `bashcompinit` from the more recent versions of zsh.
+
+### Usage
+
+```
+$ dvm [TAB]
+alias        install      ls           uninstall    which
+current      list         ls-alias     unload
+deactivate   list-alias   ls-remote    use
+help         list-remote  unalias      version
+$ dvm u[TAB]
+unalias    uninstall  unload     use
+$ dvm us[TAB]
+$ dvm use [TAB]
+1.8.2         1.9.0         carina        default       experimental
+```
+

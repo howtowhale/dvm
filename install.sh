@@ -72,6 +72,9 @@ fi
 echo "Downloading dvm.sh..."
 dvm_download -L --progress-bar https://download.getcarina.com/dvm/latest/dvm.sh -o $DVM_DIR/dvm.sh
 
+echo "Downloading bash_completion"
+dvm_download -L --progress-bar https://download.getcarina.com/dvm/latest/bash_completion -o $DVM_DIR/bash_completion
+
 echo "Downloading dvm-helper..."
 install_dvm_helper
 
