@@ -21,7 +21,7 @@ __dvm_commands ()
     help install uninstall use \
     alias unalias \
     current list ls list-remote ls-remote \
-    deactivate unload \
+    list-alias ls-alias deactivate unload \
     version which'
 
     if [ ${#COMP_WORDS[@]} == 4 ]; then
@@ -49,7 +49,17 @@ __dvm_options ()
 
 __dvm_installed_dockers ()
 {
-  __dvm_generate_completion "$(dvm_ls) $(__dvm_aliases)"
+  __dvm_generate_completion "$(__dvm_ls) $(__dvm_aliases)"
+}
+
+__dvm_ls ()
+{
+  declare installed
+  installed=""
+  if [ -d $DVM_DIR/bin/docker ]; then
+    installed="`cd $DVM_DIR/bin/docker && command ls`"
+  fi
+  echo "${installed}"
 }
 
 __dvm_aliases ()
