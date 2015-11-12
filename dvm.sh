@@ -7,6 +7,17 @@
 
 DVM_SCRIPT_SOURCE="$_"
 
+__dvm_has() {
+  type "$1" > /dev/null 2>&1
+}
+
+# Make zsh glob matching behave same as bash
+# This fixes the "zsh: no matches found" errors
+if __dvm_has "unsetopt"; then
+  unsetopt nomatch 2>/dev/null
+  DVM_CD_FLAGS="-q"
+fi
+
 # Auto detect the DVM_DIR when not set
 if [ -z "$DVM_DIR" ]; then
   if [ -n "$BASH_SOURCE" ]; then
