@@ -34,6 +34,10 @@ linux: $(GOFILES)
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINDIR)/Linux/x86_64/dvm-helper $(PACKAGE)
 	cd $(BINDIR)/Linux/x86_64 && shasum -a 256 dvm-helper > dvm-helper.sha256
 
+linux32: $(GOFILES)
+	CGO_ENABLED=0 GOOS=linux GOARCH=386 $(GOBUILD) -o $(BINDIR)/Linux/i686/dvm-helper $(PACKAGE)
+	cd $(BINDIR)/Linux/i686 && shasum -a 256 dvm-helper > dvm-helper.sha256
+
 darwin: $(GOFILES)
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GOBUILD) -o $(BINDIR)/Darwin/x86_64/dvm-helper $(PACKAGE)
 	cd $(BINDIR)/Darwin/x86_64 && shasum -a 256 dvm-helper > dvm-helper.sha256
