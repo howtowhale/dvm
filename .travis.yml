@@ -5,7 +5,6 @@ install: make get-deps
 script: make cross-build
 before_deploy:
   - cd bin
-  - gem install mime-types
 deploy:
   - provider: cloudfiles
     username: getcarina-drgsites
