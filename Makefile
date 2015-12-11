@@ -23,7 +23,7 @@ get-deps:
 #	./dvm-helper --version
 
 cross-build: clean get-deps dvm-helper linux linux32 darwin windows
-	cp dvm.sh dvm.ps1 dvm.cmd install.sh install.ps1 README.md LICENSE  $(BINDIR)/
+	cp dvm.sh dvm.ps1 dvm.cmd install.sh install.ps1 README.md LICENSE bash_completion $(BINDIR)/
 	find $(BINDIR) -maxdepth 1 -name "install.*" -exec sed -i -e 's/latest/$(VERSION)/g' {} \;
 	cp -R $(BINDIR) bin/dvm/latest
 
