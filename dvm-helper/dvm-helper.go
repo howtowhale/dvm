@@ -211,6 +211,7 @@ func current() {
 }
 
 func list(pattern string) {
+	pattern += "*"
 	versions := getInstalledVersions(pattern)
 	current, _ := getCurrentDockerVersion()
 
@@ -572,7 +573,7 @@ func listRemote(pattern string) {
 }
 
 func getInstalledVersions(pattern string) []string {
-	versions, _ := filepath.Glob(getVersionDir(pattern + "*"))
+	versions, _ := filepath.Glob(getVersionDir(pattern))
 
 	var results []string
 	for _, versionDir := range versions {
