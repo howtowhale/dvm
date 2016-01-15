@@ -610,6 +610,7 @@ func getAvailableVersions(pattern string) []string {
 	gh := buildGithubClient()
 	tags, response, err := gh.Repositories.ListTags("docker", "docker", nil)
 	if err != nil {
+		warnWhenRateLimitExceeded(err, response)
 		die("Unable to retrieve list of Docker tags from GitHub", err, retCodeRuntimeError)
 	}
 	if response.StatusCode != 200 {
@@ -639,6 +640,7 @@ func isUpgradeAvailable() (bool, string) {
 	gh := buildGithubClient()
 	release, response, err := gh.Repositories.GetLatestRelease("getcarina", "dvm")
 	if err != nil {
+		warnWhenRateLimitExceeded(err, response)
 		writeWarning("Unable to query the latest dvm release from GitHub:")
 		writeWarning("%s", err)
 		return false, ""
@@ -680,4 +682,14 @@ func buildGithubClient() *github.Client {
 	}
 
 	return github.NewClient(nil)
+}
+
+func warnWhenRateLimitExceeded(err error, response *github.Response) {
+	if err == nil {
+		return
+	}
+
+	if response.StatusCode == 403 {
+		writeWarning("Your GitHub API rate limit has been exceeded. Set the GITHUB_TOKEN environment variable or use the --github-token parameter with your GitHub personal access token to authenticate and increase the rate limit.")
+	}
 }
