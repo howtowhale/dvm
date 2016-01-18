@@ -15,12 +15,14 @@ import "github.com/getcarina/dvm/dvm-helper/url"
 import "github.com/google/go-github/github"
 import "github.com/codegangsta/cli"
 import "github.com/kardianos/osext"
+import "golang.org/x/oauth2"
 
 // These are global command line variables
 var shell string
 var dvmDir string
 var debug bool
 var silent bool
+var token string
 
 // These are set during the build
 var dvmVersion string
@@ -39,6 +41,7 @@ func main() {
 	app.Version = fmt.Sprintf("%s (%s)", dvmVersion, dvmCommit)
 	app.EnableBashCompletion = true
 	app.Flags = []cli.Flag{
+		cli.StringFlag{Name: "github-token", EnvVar: "GITHUB_TOKEN", Usage: "Increase the github api rate limit by specifying your github personal access token."},
 		cli.StringFlag{Name: "dvm-dir", EnvVar: "DVM_DIR", Usage: "Specify an alternate DVM home directory, defaults to the current directory."},
 		cli.StringFlag{Name: "shell", EnvVar: "SHELL", Usage: "Specify the shell format in which environment variables should be output, e.g. powershell, cmd or sh/bash. Defaults to sh/bash."},
 		cli.BoolFlag{Name: "debug", Usage: "Print additional debug information."},
@@ -156,6 +159,7 @@ func main() {
 
 func setGlobalVars(c *cli.Context) {
 	debug = c.GlobalBool("debug")
+	token = c.GlobalString("github-token")
 	shell = c.GlobalString("shell")
 	validateShellFlag()
 
@@ -603,9 +607,10 @@ func getInstalledVersions(pattern string) []string {
 }
 
 func getAvailableVersions(pattern string) []string {
-	gh := github.NewClient(nil)
+	gh := buildGithubClient()
 	tags, response, err := gh.Repositories.ListTags("docker", "docker", nil)
 	if err != nil {
+		warnWhenRateLimitExceeded(err, response)
 		die("Unable to retrieve list of Docker tags from GitHub", err, retCodeRuntimeError)
 	}
 	if response.StatusCode != 200 {
@@ -632,9 +637,10 @@ func getAvailableVersions(pattern string) []string {
 }
 
 func isUpgradeAvailable() (bool, string) {
-	gh := github.NewClient(nil)
+	gh := buildGithubClient()
 	release, response, err := gh.Repositories.GetLatestRelease("getcarina", "dvm")
 	if err != nil {
+		warnWhenRateLimitExceeded(err, response)
 		writeWarning("Unable to query the latest dvm release from GitHub:")
 		writeWarning("%s", err)
 		return false, ""
@@ -666,4 +672,24 @@ func getVersionDir(version string) string {
 
 func getDockerVersionVar() string {
 	return strings.TrimSpace(os.Getenv("DOCKER_VERSION"))
+}
+
+func buildGithubClient() *github.Client {
+	if token != "" {
+		tokenSource := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+		httpClient := oauth2.NewClient(oauth2.NoContext, tokenSource)
+		return github.NewClient(httpClient)
+	}
+
+	return github.NewClient(nil)
+}
+
+func warnWhenRateLimitExceeded(err error, response *github.Response) {
+	if err == nil {
+		return
+	}
+
+	if response.StatusCode == 403 {
+		writeWarning("Your GitHub API rate limit has been exceeded. Set the GITHUB_TOKEN environment variable or use the --github-token parameter with your GitHub personal access token to authenticate and increase the rate limit.")
+	}
 }
