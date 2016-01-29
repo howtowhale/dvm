@@ -15,6 +15,7 @@ import "github.com/getcarina/dvm/dvm-helper/url"
 import "github.com/google/go-github/github"
 import "github.com/codegangsta/cli"
 import "github.com/kardianos/osext"
+import "github.com/ryanuber/go-glob"
 import "golang.org/x/oauth2"
 
 // These are global command line variables
@@ -595,7 +596,7 @@ func getInstalledVersions(pattern string) []string {
 		results = append(results, version)
 	}
 
-	if pattern == "" || pattern == "system" {
+	if glob.Glob(pattern, "system") {
 		systemVersion, err := getSystemDockerVersion()
 		if err == nil {
 			results = append(results, fmt.Sprintf("system (%s)", systemVersion))
