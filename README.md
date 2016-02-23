@@ -28,11 +28,11 @@ $ curl -sL https://download.getcarina.com/dvm/latest/install.sh | sh
 
 **Windows**
 
-Open a PowerShell command prompt and execute the following command. We use PowerShell to do the initial
+Open a PowerShell command prompt and execute the following command. We use PowerShell 4 to do the initial
 installation but you can use `dvm` with PowerShell or CMD once it's installed.
 
 ```powershell
-> iex (wget https://download.getcarina.com/dvm/latest/install.ps1)
+> iex (invoke-webrequest https://download.getcarina.com/dvm/latest/install.ps1)
 ```
 
 ## Upgrading from previous dvm
