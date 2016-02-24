@@ -33,10 +33,7 @@ dvm() {
     return 1
   fi
 
-  DVM_OUTPUT="$DVM_DIR/.tmp/dvm-output.sh"
-  if [ -e $DVM_OUTPUT ]; then
-    rm $DVM_OUTPUT
-  fi
+  rm -f "$DVM_DIR/.tmp/dvm-output.sh"
 
   DVM_DIR=$DVM_DIR $DVM_DIR/dvm-helper/dvm-helper --shell sh $@
 
