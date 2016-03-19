@@ -43,4 +43,5 @@ dvm() {
   fi
 }
 
+export -f dvm
 }
