@@ -334,12 +334,19 @@ func use(version dockerversion.Version) {
 	}
 
 	ensureVersionIsInstalled(version)
+
+	if version.IsSystem() {
+		version, _ = getSystemDockerVersion()
+	} else if version.IsExperimental() {
+		version, _ = getExperimentalDockerVersion()
+	}
+
 	removePreviousDockerVersionFromPath()
 	if !version.IsSystem() {
 		prependDockerVersionToPath(version)
 	}
-	writePathScript()
 
+	writePathScript()
 	writeInfo("Now using Docker %s", version)
 }
 
@@ -419,10 +426,6 @@ func getAliases() map[string]string {
 	}
 
 	return results
-}
-
-func getDvmDir() string {
-	return dvmDir
 }
 
 func getAliasPath(alias string) string {
@@ -560,6 +563,16 @@ func getExperimentalDockerPath() (string, error) {
 	experimentalVersionPath := filepath.Join(getVersionsDir(), dockerversion.ExperimentalAlias, getBinaryName())
 	_, err := os.Stat(experimentalVersionPath)
 	return experimentalVersionPath, err
+}
+
+func getExperimentalDockerVersion() (dockerversion.Version, error) {
+	experimentalDockerpath, err := getExperimentalDockerPath()
+	if err != nil {
+		return dockerversion.Version{}, err
+	}
+	version, err := getDockerVersion(experimentalDockerpath, true)
+	version.SetAsExperimental()
+	return version, err
 }
 
 func getDockerVersion(dockerPath string, includeBuild bool) (dockerversion.Version, error) {
