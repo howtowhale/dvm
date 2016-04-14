@@ -50,6 +50,11 @@ func (version *Version) SetAsExperimental() {
 	version.Alias = ExperimentalAlias
 }
 
+func (version Version) ShouldUseArchivedRelease() bool {
+	cutoff := semver.MustParse("1.11.0")
+	return !version.IsExperimental() && version.SemVer.GTE(cutoff)
+}
+
 func (version Version) String() string {
 	if version.HasAlias() {
 		if version.HasSemVer() {

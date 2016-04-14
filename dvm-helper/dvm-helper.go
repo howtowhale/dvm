@@ -5,6 +5,7 @@ import "fmt"
 import "io/ioutil"
 import "os"
 import "os/exec"
+import "path"
 import "path/filepath"
 import "regexp"
 import "strings"
@@ -276,11 +277,7 @@ func install(version dockerversion.Version) {
 
 	writeInfo("Installing %s...", version)
 
-	url := buildDownloadURL(version)
-	binaryPath := filepath.Join(getVersionDir(version), getBinaryName())
-	downloadFileWithChecksum(url, binaryPath)
-
-	writeDebug("Installed Docker %s to %s.", version, binaryPath)
+	downloadRelease(version)
 	use(version)
 }
 
@@ -293,7 +290,25 @@ func buildDownloadURL(version dockerversion.Version) string {
 		dockerVersion = "latest"
 	}
 
+	// New Docker versions are released in a zip file, vs. the old way of releasing the client binary only
+	if version.ShouldUseArchivedRelease() {
+		return fmt.Sprintf("%s/%s/%s/docker-%s%s", mirrorURL, dockerOS, dockerArch, dockerVersion, archiveFileExt)
+	}
+
 	return fmt.Sprintf("%s/%s/%s/docker-%s%s", mirrorURL, dockerOS, dockerArch, dockerVersion, binaryFileExt)
+}
+
+func downloadRelease(version dockerversion.Version) {
+	url := buildDownloadURL(version)
+	binaryName := getBinaryName()
+	binaryPath := filepath.Join(getVersionDir(version), binaryName)
+	if version.ShouldUseArchivedRelease() {
+		archivedFile := path.Join("docker", binaryName)
+		downloadArchivedFileWithChecksum(url, archivedFile, binaryPath)
+	} else {
+		downloadFileWithChecksum(url, binaryPath)
+	}
+	writeDebug("Downloaded Docker %s to %s.", version, binaryPath)
 }
 
 func uninstall(version dockerversion.Version) {
