@@ -41,8 +41,8 @@ func writeUpgradeScript() {
 	writeFile(scriptPath, contents)
 }
 
-func getCleanDvmPathRegex() string {
-	versionDir := getVersionDir("")
+func getCleanPathRegex() string {
+	versionDir := getVersionsDir()
 	escapedVersionDir := strings.Replace(versionDir, `\`, `\\`, -1)
 	return escapedVersionDir + `\\(\d+\.\d+\.\d+|experimental);`
 }
