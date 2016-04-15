@@ -4,8 +4,11 @@ import "fmt"
 import "io"
 import "net/http"
 import "os"
+import "path"
 import "path/filepath"
+import "strings"
 import "github.com/fatih/color"
+import "github.com/pivotal-golang/archiver/extractor"
 import "github.com/getcarina/dvm/dvm-helper/checksum"
 
 func pathExists(path string) bool {
@@ -80,6 +83,33 @@ func downloadFileWithChecksum(url string, destPath string) {
 	// Cleanup temp files
 	if err = os.Remove(checksumPath); err != nil {
 		writeWarning("Unable to remove temporary file: %s.", checksumPath)
+	}
+}
+
+func downloadArchivedFileWithChecksum(url string, archivedFile string, destPath string) {
+	archiveName := path.Base(url)
+	tmpPath := filepath.Join(dvmDir, ".tmp", archiveName)
+	downloadFileWithChecksum(url, tmpPath)
+
+	// Extract the archive
+	archivePath := filepath.Join(dvmDir, ".tmp", strings.TrimSuffix(archiveName, filepath.Ext(archiveName)))
+	extractor := extractor.NewDetectable()
+	extractor.Extract(tmpPath, archivePath)
+
+	// Copy the archived file to the final destination
+	archivedFilePath := filepath.Join(archivePath, archivedFile)
+	ensureParentDirectoryExists(destPath)
+	err := os.Rename(archivedFilePath, destPath)
+	if err != nil {
+		die("Unable to copy %s to %s.", err, retCodeRuntimeError, archivedFilePath, destPath)
+	}
+
+	// Cleanup temp files
+	if err = os.Remove(tmpPath); err != nil {
+		writeWarning("Unable to remove temporary file: %s\n%s", tmpPath, err)
+	}
+	if err = os.RemoveAll(archivePath); err != nil {
+		writeWarning("Unable to remove temporary directory: %s\n%s", archivePath, err)
 	}
 }
 
