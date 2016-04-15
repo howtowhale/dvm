@@ -16,8 +16,8 @@ func upgradeSelf(version string) {
 	downloadFile(scriptURL, scriptPath)
 }
 
-func getCleanDvmPathRegex() string {
-	versionDir := getVersionDir("")
+func getCleanPathRegex() string {
+	versionDir := getVersionsDir()
 	return versionDir + `/(\d+\.\d+\.\d+|experimental):`
 }
 
