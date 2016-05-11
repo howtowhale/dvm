@@ -43,5 +43,9 @@ dvm() {
   fi
 }
 
-export -f dvm
+if [ -n "$ZSH_NAME" ]; then
+  autoload dvm
+else
+  export -f dvm
+fi
 }
