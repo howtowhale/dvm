@@ -23,7 +23,7 @@ if [ -z "$DVM_DIR" ]; then
   if [ -n "$BASH_SOURCE" ]; then
     DVM_SCRIPT_SOURCE="${BASH_SOURCE[0]}"
   fi
-  export DVM_DIR=$(cd $DVM_CD_FLAGS $(dirname "${DVM_SCRIPT_SOURCE:-$0}") > /dev/null && \pwd)
+  export DVM_DIR="$(cd $DVM_CD_FLAGS "$(dirname "${DVM_SCRIPT_SOURCE:-$0}")" > /dev/null && command pwd)"
 fi
 unset DVM_SCRIPT_SOURCE 2> /dev/null
 
