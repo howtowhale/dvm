@@ -54,7 +54,7 @@ func main() {
 			Name:    "install",
 			Aliases: []string{"i"},
 			Usage:   "dvm install [<version>], dvm install experimental\n\tInstall a Docker version, using $DOCKER_VERSION if the version is not specified.",
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 
 				versionName := c.Args().First()
@@ -64,21 +64,23 @@ func main() {
 				version := dockerversion.Parse(versionName)
 
 				install(version)
+				return nil
 			},
 		},
 		{
 			Name:  "uninstall",
 			Usage: "dvm uninstall <version>\n\tUninstall a Docker version.",
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 				version := dockerversion.Parse(c.Args().First())
 				uninstall(version)
+				return nil
 			},
 		},
 		{
 			Name:  "use",
 			Usage: "dvm use [<version>], dvm use system, dvm use experimental\n\tUse a Docker version, using $DOCKER_VERSION if the version is not specified.",
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 
 				versionName := c.Args().First()
@@ -88,76 +90,85 @@ func main() {
 				version := dockerversion.Parse(versionName)
 
 				use(version)
+				return nil
 			},
 		},
 		{
 			Name:  "deactivate",
 			Usage: "dvm deactivate\n\tUndo the effects of `dvm` on current shell.",
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 				deactivate()
+				return nil
 			},
 		},
 		{
 			Name:  "current",
 			Usage: "dvm current\n\tPrint the current Docker version.",
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 				current()
+				return nil
 			},
 		},
 		{
 			Name:  "which",
 			Usage: "dvm which\n\tPrint the path to the current Docker version.",
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 				which()
+				return nil
 			},
 		},
 		{
 			Name:  "alias",
 			Usage: "dvm alias <alias> <version>\n\tCreate an alias to a Docker version.",
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 				name := c.Args().Get(0)
 				version := dockerversion.Parse(c.Args().Get(1))
 				alias(name, version)
+				return nil
 			},
 		},
 		{
 			Name:  "unalias",
 			Usage: "dvm unalias <alias>\n\tRemove a Docker version alias.",
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 				name := c.Args().First()
 				unalias(name)
+				return nil
 			},
 		},
 		{
 			Name:    "list",
 			Aliases: []string{"ls"},
 			Usage:   "dvm list [<pattern>]\n\tList installed Docker versions.",
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 				list(c.Args().First())
+				return nil
 			},
 		},
 		{
 			Name:    "list-remote",
 			Aliases: []string{"ls-remote"},
 			Usage:   "dvm list-remote [<pattern>]\n\tList available Docker versions.",
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 				listRemote(c.Args().First())
+				return nil
 			},
 		},
 		{
 			Name:    "list-alias",
 			Aliases: []string{"ls-alias"},
 			Usage:   "dvm list-alias\n\tList Docker version aliases.",
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 				listAlias()
+				return nil
 			},
 		},
 		{
@@ -167,9 +178,10 @@ func main() {
 				cli.BoolFlag{Name: "check", Usage: "Checks if an newer version of dvm is available, but does not perform the upgrade."},
 				cli.StringFlag{Name: "version", Usage: "Upgrade to the specified version."},
 			},
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 				upgrade(c.Bool("check"), c.String("version"))
+				return nil
 			},
 		},
 	}
