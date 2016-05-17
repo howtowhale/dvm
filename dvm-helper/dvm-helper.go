@@ -294,7 +294,10 @@ func install(version dockerversion.Version) {
 }
 
 func buildDownloadURL(version dockerversion.Version) string {
-	mirrorURL := "https://get.docker.com/builds"
+  mirrorURL := os.Getenv("MIRROR_URL")
+  if mirrorURL == "" {}
+	  mirrorURL := "https://get.docker.com/builds"
+  }
 	dockerVersion := version.SemVer.String()
 	if version.IsExperimental() {
 		writeDebug("Downloading from experimental builds mirror")
