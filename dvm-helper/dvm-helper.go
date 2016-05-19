@@ -662,14 +662,25 @@ func getInstalledVersions(pattern string) []dockerversion.Version {
 
 func getAvailableVersions(pattern string) []dockerversion.Version {
 	gh := buildGithubClient()
-	releases, response, err := gh.Repositories.ListReleases("docker", "docker", nil)
-	if err != nil {
-		warnWhenRateLimitExceeded(err, response)
-		die("Unable to retrieve list of Docker tags from GitHub", err, retCodeRuntimeError)
+	options := &github.ListOptions{PerPage: 10}
+
+	var allReleases []github.RepositoryRelease
+	for {
+		releases, response, err := gh.Repositories.ListReleases("docker", "docker", options)
+		if err != nil {
+			warnWhenRateLimitExceeded(err, response)
+			die("Unable to retrieve list of Docker releases from GitHub", err, retCodeRuntimeError)
+		}
+		allReleases = append(allReleases, releases...)
+		if response.StatusCode != 200 {
+			die("Unable to retrieve list of Docker releases from GitHub (Status %s).", nil, retCodeRuntimeError, response.StatusCode)
+		}
+		if response.NextPage == 0 {
+			break
+		}
+		options.Page = response.NextPage
 	}
-	if response.StatusCode != 200 {
-		die("Unable to retrieve list of Docker tags from GitHub (Status %s).", nil, retCodeRuntimeError, response.StatusCode)
-	}
+
 
 	versionRegex := regexp.MustCompile(`^v([1-9]+\.\d+\.\d+)$`)
 	patternRegex, err := regexp.Compile(pattern)
@@ -678,7 +689,7 @@ func getAvailableVersions(pattern string) []dockerversion.Version {
 	}
 
 	var results []dockerversion.Version
-	for _, release := range releases {
+	for _, release := range allReleases {
 		version := *release.Name
 		match := versionRegex.FindStringSubmatch(version)
 		if len(match) > 1 && patternRegex.MatchString(version) {
