@@ -662,7 +662,7 @@ func getInstalledVersions(pattern string) []dockerversion.Version {
 
 func getAvailableVersions(pattern string) []dockerversion.Version {
 	gh := buildGithubClient()
-	options := &github.ListOptions{PerPage: 10}
+	options := &github.ListOptions{PerPage: 100}
 
 	var allReleases []github.RepositoryRelease
 	for {
