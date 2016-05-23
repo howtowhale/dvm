@@ -305,6 +305,7 @@ func buildDownloadURL(version dockerversion.Version) string {
 		dockerVersion = "latest"
 	}
 
+	mirrorURL := os.Getenv("DVM_MIRROR_URL")
 	// New Docker versions are released in a zip file, vs. the old way of releasing the client binary only
 	if version.ShouldUseArchivedRelease() {
 		return fmt.Sprintf("%s/%s/%s/docker-%s%s", mirrorURL, dockerOS, dockerArch, dockerVersion, archiveFileExt)
