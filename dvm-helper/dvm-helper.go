@@ -22,6 +22,7 @@ import "golang.org/x/oauth2"
 // These are global command line variables
 var shell string
 var dvmDir string
+var mirrorURL string
 var debug bool
 var silent bool
 var token string
@@ -54,6 +55,9 @@ func main() {
 			Name:    "install",
 			Aliases: []string{"i"},
 			Usage:   "dvm install [<version>], dvm install experimental\n\tInstall a Docker version, using $DOCKER_VERSION if the version is not specified.",
+			Flags: []cli.Flag{
+				cli.StringFlag{Name: "mirror-url", EnvVar: "DVM_MIRROR_URL", Usage: "Specify an alternate URL from which to download the Docker client. Defaults to https://get.docker.com/builds"},
+			},
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 
@@ -80,6 +84,9 @@ func main() {
 		{
 			Name:  "use",
 			Usage: "dvm use [<version>], dvm use system, dvm use experimental\n\tUse a Docker version, using $DOCKER_VERSION if the version is not specified.",
+			Flags: []cli.Flag{
+				cli.StringFlag{Name: "mirror-url", EnvVar: "DVM_MIRROR_URL", Usage: "Specify an alternate URL from which to download the Docker client. Defaults to https://get.docker.com/builds"},
+			},
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 
@@ -196,6 +203,8 @@ func setGlobalVars(c *cli.Context) {
 	validateShellFlag()
 
 	silent = c.GlobalBool("silent")
+	mirrorURL = c.String("mirror-url")
+
 	dvmDir = c.GlobalString("dvm-dir")
 	if dvmDir == "" {
 		var err error
