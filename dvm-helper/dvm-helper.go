@@ -303,18 +303,19 @@ func install(version dockerversion.Version) {
 }
 
 func buildDownloadURL(version dockerversion.Version) string {
-	mirrorURL := os.Getenv("MIRROR_URL")
-	if mirrorURL == "" {
-		mirrorURL = "https://get.docker.com/builds"
-	}
 	dockerVersion := version.SemVer.String()
 	if version.IsExperimental() {
-		writeDebug("Downloading from experimental builds mirror")
-		mirrorURL = "https://experimental.docker.com/builds"
 		dockerVersion = "latest"
 	}
 
-	mirrorURL := os.Getenv("DVM_MIRROR_URL")
+	if mirrorURL == "" {
+		mirrorURL = "https://get.docker.com/builds"
+		if version.IsExperimental() {
+			writeDebug("Downloading from experimental builds mirror")
+			mirrorURL = "https://experimental.docker.com/builds"
+		}
+	}
+
 	// New Docker versions are released in a zip file, vs. the old way of releasing the client binary only
 	if version.ShouldUseArchivedRelease() {
 		return fmt.Sprintf("%s/%s/%s/docker-%s%s", mirrorURL, dockerOS, dockerArch, dockerVersion, archiveFileExt)
