@@ -95,6 +95,7 @@ The environment variable DVM_MIRROR_URL can be set to a local mirror inside your
 
 ```
 export DVM_MIRROR_URL="http://localserver/docker/builds"
+dvm install 1.10.3
 ```
 
 
