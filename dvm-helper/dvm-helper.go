@@ -25,6 +25,7 @@ var dvmDir string
 var mirrorURL string
 var debug bool
 var silent bool
+var nocheck bool
 var token string
 
 // These are set during the build
@@ -57,6 +58,7 @@ func main() {
 			Usage:   "dvm install [<version>], dvm install experimental\n\tInstall a Docker version, using $DOCKER_VERSION if the version is not specified.",
 			Flags: []cli.Flag{
 				cli.StringFlag{Name: "mirror-url", EnvVar: "DVM_MIRROR_URL", Usage: "Specify an alternate URL from which to download the Docker client. Defaults to https://get.docker.com/builds"},
+				cli.BoolFlag{Name: "nocheck", EnvVar: "DVM_NOCHECK", Usage: "Do not check if version exists (use with caution)."},
 			},
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
@@ -86,6 +88,7 @@ func main() {
 			Usage: "dvm use [<version>], dvm use system, dvm use experimental\n\tUse a Docker version, using $DOCKER_VERSION if the version is not specified.",
 			Flags: []cli.Flag{
 				cli.StringFlag{Name: "mirror-url", EnvVar: "DVM_MIRROR_URL", Usage: "Specify an alternate URL from which to download the Docker client. Defaults to https://get.docker.com/builds"},
+				cli.BoolFlag{Name: "nocheck", EnvVar: "DVM_NOCHECK", Usage: "Do not check if version exists (use with caution)."},
 			},
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
@@ -198,6 +201,7 @@ func main() {
 
 func setGlobalVars(c *cli.Context) {
 	debug = c.GlobalBool("debug")
+	nocheck = c.GlobalBool("nocheck")
 	token = c.GlobalString("github-token")
 	shell = c.GlobalString("shell")
 	validateShellFlag()
@@ -276,7 +280,7 @@ func install(version dockerversion.Version) {
 		die("The install command requires that a version is specified or the DOCKER_VERSION environment variable is set.", nil, retCodeInvalidArgument)
 	}
 
-	if !versionExists(version) {
+	if !nocheck && !versionExists(version) {
 		die("Version %s not found - try `dvm ls-remote` to browse available versions.", nil, retCodeInvalidOperation, version)
 	}
 
