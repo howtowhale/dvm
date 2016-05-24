@@ -87,3 +87,14 @@ $ dvm us[TAB]
 $ dvm use [TAB]
 1.8.2         1.9.0         carina        default       experimental
 ```
+## Mirroring docker builds
+
+You may want to use a local mirror for Docker binaries instead of downloading them from the default site (`https://get.docker.com/builds`). There are a few possible reasons for this, most commonly the need to avoid dealing with corporate proxies every time.
+
+The environment variable DVM_MIRROR_URL can be set to a local mirror inside your LAN:
+
+```
+export DVM_MIRROR_URL="http://localserver/docker/builds"
+```
+
+
