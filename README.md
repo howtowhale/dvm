@@ -32,7 +32,7 @@ Open a PowerShell command prompt and execute the following command. We use Power
 installation but you can use `dvm` with PowerShell or CMD once it's installed.
 
 ```powershell
-> iex (invoke-webrequest https://download.getcarina.com/dvm/latest/install.ps1)
+> Invoke-WebRequest https://download.getcarina.com/dvm/latest/install.ps1 -UseBasicParsing | Invoke-Expression
 ```
 
 ## Upgrading from previous dvm
@@ -87,4 +87,3 @@ $ dvm us[TAB]
 $ dvm use [TAB]
 1.8.2         1.9.0         carina        default       experimental
 ```
-
