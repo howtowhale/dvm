@@ -201,7 +201,7 @@ func main() {
 
 func setGlobalVars(c *cli.Context) {
 	debug = c.GlobalBool("debug")
-	nocheck = c.GlobalBool("nocheck")
+	nocheck = c.Bool("nocheck")
 	token = c.GlobalString("github-token")
 	shell = c.GlobalString("shell")
 	validateShellFlag()
@@ -278,6 +278,10 @@ func install(version dockerversion.Version) {
 
 	if version.IsEmpty() {
 		die("The install command requires that a version is specified or the DOCKER_VERSION environment variable is set.", nil, retCodeInvalidArgument)
+	}
+
+	if nocheck {
+		writeDebug("Skipping version validation!")
 	}
 
 	if !nocheck && !versionExists(version) {
