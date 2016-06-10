@@ -18,14 +18,10 @@ if __dvm_has "unsetopt"; then
   DVM_CD_FLAGS="-q"
 fi
 
-# Auto detect the DVM_DIR when not set
+# Default DVM_DIR to $HOME/.dvm when not set
 if [ -z "$DVM_DIR" ]; then
-  if [ -n "$BASH_SOURCE" ]; then
-    DVM_SCRIPT_SOURCE="${BASH_SOURCE[0]}"
-  fi
-  export DVM_DIR="$(cd $DVM_CD_FLAGS "$(dirname "${DVM_SCRIPT_SOURCE:-$0}")" > /dev/null && command pwd)"
+  DVM_DIR="$HOME/.dvm"
 fi
-unset DVM_SCRIPT_SOURCE 2> /dev/null
 
 dvm() {
   if [ ! -f "$DVM_DIR/dvm-helper/dvm-helper" ]; then

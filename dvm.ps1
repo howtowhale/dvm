@@ -3,7 +3,10 @@
 # To use, source this script, `. dvm.ps1`, then type dvm help
 
 function dvm() {
-  $dvmDir = $PSScriptRoot
+  $dvmDir = $env:DVM_DIR
+  if( $dvmDir -eq $null ) {
+    $dvmDir = "$env:USERPROFILE\.dvm"
+  }
 
   if( !(Test-Path (Join-Path $dvmDir dvm-helper\dvm-helper.exe)) ) {
     $host.ui.WriteErrorLine("Installation corrupt: dvm-helper.exe is missing. Please reinstall dvm.")
