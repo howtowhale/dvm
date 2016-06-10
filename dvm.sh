@@ -23,22 +23,32 @@ if [ -z "$DVM_DIR" ]; then
   DVM_DIR="$HOME/.dvm"
 fi
 
+# Expect that dvm-helper is next to this script
+if [ -n "$BASH_SOURCE" ]; then
+  DVM_SCRIPT_SOURCE="${BASH_SOURCE[0]}"
+fi
+export DVM_HELPER="$(cd $DVM_CD_FLAGS "$(dirname "${DVM_SCRIPT_SOURCE:-$0}")" > /dev/null && command pwd)/dvm-helper/dvm-helper"
+unset DVM_SCRIPT_SOURCE 2> /dev/null
+
 dvm() {
-  if [ ! -f "$DVM_DIR/dvm-helper/dvm-helper" ]; then
+  if [ ! -f "$DVM_HELPER" ]; then
     echo "Installation corrupt: dvm-helper is missing. Please reinstall dvm."
     return 1
   fi
 
+  # Pass dvm-helper output back to script via ~/.dvm/.tmp/dvm-output.sh
   DVM_OUTPUT="$DVM_DIR/.tmp/dvm-output.sh"
   rm -f "$DVM_OUTPUT"
 
-  DVM_DIR=$DVM_DIR $DVM_DIR/dvm-helper/dvm-helper --shell sh $@
+  $DVM_HELPER --shell sh $@
 
+  # Execute any dvm-helper output
   if [ -e $DVM_OUTPUT ]; then
     source $DVM_OUTPUT
   fi
 }
 
+# Make the dvm function available to other scripts
 if [ -n "$ZSH_NAME" ]; then
   autoload dvm
 else
