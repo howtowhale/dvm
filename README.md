@@ -14,7 +14,8 @@ Error response from daemon: client and server don't have same version (client : 
 ```
 
 ## Prerequisites
-Mac OS X and Linux require curl or wget.
+* Mac OS X and Linux: curl or wget.
+* Windows: PowerShell v4+
 
 ## Installation
 1. Run the one of the installation scripts below.
@@ -97,5 +98,3 @@ The environment variable DVM_MIRROR_URL can be set to a local mirror inside your
 export DVM_MIRROR_URL="http://localserver/docker/builds"
 dvm install 1.10.3
 ```
-
-
