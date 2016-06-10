@@ -48,7 +48,7 @@ func main() {
 	app.EnableBashCompletion = true
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: "github-token", EnvVar: "GITHUB_TOKEN", Usage: "Increase the github api rate limit by specifying your github personal access token."},
-		cli.StringFlag{Name: "dvm-dir", EnvVar: "DVM_DIR", Usage: "Specify an alternate DVM home directory, defaults to $HOME/.dvm."},
+		cli.StringFlag{Name: "dvm-dir", EnvVar: "DVM_DIR", Usage: "Specify an alternate DVM home directory, defaults to ~/.dvm."},
 		cli.StringFlag{Name: "shell", EnvVar: "SHELL", Usage: "Specify the shell format in which environment variables should be output, e.g. powershell, cmd or sh/bash. Defaults to sh/bash."},
 		cli.BoolFlag{Name: "debug", Usage: "Print additional debug information."},
 		cli.BoolFlag{Name: "silent", EnvVar: "DVM_SILENT", Usage: "Suppress output. Errors will still be displayed."},
