@@ -33,6 +33,7 @@ var token string
 // These are set during the build
 var dvmVersion string
 var dvmCommit string
+var upgradeDisabled string // Allow package managers like homebrew to disable in-place upgrades
 
 const (
 	retCodeInvalidArgument  = 127
@@ -183,7 +184,10 @@ func main() {
 				return nil
 			},
 		},
-		{
+	}
+
+	if upgradeDisabled != "true" {
+		app.Commands = append(app.Commands, cli.Command{
 			Name:  "upgrade",
 			Usage: "dvm upgrade\n\tUpgrade dvm to the latest release.",
 			Flags: []cli.Flag{
@@ -195,7 +199,7 @@ func main() {
 				upgrade(c.Bool("check"), c.String("version"))
 				return nil
 			},
-		},
+		})
 	}
 
 	app.Run(os.Args)
