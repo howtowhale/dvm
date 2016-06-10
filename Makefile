@@ -3,8 +3,9 @@ VERSION = $(shell git describe --tags --dirty='-dev' 2> /dev/null)
 GITHUB_ORG = getcarina
 GITHUB_REPO = dvm
 PACKAGE = github.com/${GITHUB_ORG}/${GITHUB_REPO}/dvm-helper
+UPGRADE_DISABLED = false
 
-LDFLAGS = -w -X main.dvmCommit=${COMMIT} -X main.dvmVersion=${VERSION}
+LDFLAGS = -w -X main.dvmCommit=${COMMIT} -X main.dvmVersion=${VERSION} -X main.upgradeDisabled=${UPGRADE_DISABLED}
 
 GOCMD = go
 GOBUILD = $(GOCMD) build -a -tags netgo -ldflags '$(LDFLAGS)'
