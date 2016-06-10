@@ -66,4 +66,9 @@ function installDvm()
   echo "`t2. setx PATH `"%PATH%;$dvmDir`""
 }
 
+if($PSVersionTable -eq $null -or $PSVersionTable.PSVersion.Major -lt 4){
+  Write-Output "dvm requires PowerShell version 4 or higher."
+  Exit 1
+}
+
 installDvm
