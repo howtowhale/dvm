@@ -1,23 +1,25 @@
 package main
 
-import "errors"
-import "fmt"
-import "io/ioutil"
-import "os"
-import "os/exec"
-import "path"
-import "path/filepath"
-import "regexp"
-import "strings"
-import "github.com/blang/semver"
-import "github.com/fatih/color"
-import "github.com/getcarina/dvm/dvm-helper/url"
-import "github.com/getcarina/dvm/dvm-helper/dockerversion"
-import "github.com/google/go-github/github"
-import "github.com/codegangsta/cli"
-import "github.com/kardianos/osext"
-import "github.com/ryanuber/go-glob"
-import "golang.org/x/oauth2"
+import (
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path"
+	"path/filepath"
+	"regexp"
+	"strings"
+
+	"github.com/blang/semver"
+	"github.com/codegangsta/cli"
+	"github.com/fatih/color"
+	"github.com/getcarina/dvm/dvm-helper/dockerversion"
+	"github.com/getcarina/dvm/dvm-helper/url"
+	"github.com/google/go-github/github"
+	"github.com/ryanuber/go-glob"
+	"golang.org/x/oauth2"
+)
 
 // These are global command line variables
 var shell string
@@ -46,7 +48,7 @@ func main() {
 	app.EnableBashCompletion = true
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: "github-token", EnvVar: "GITHUB_TOKEN", Usage: "Increase the github api rate limit by specifying your github personal access token."},
-		cli.StringFlag{Name: "dvm-dir", EnvVar: "DVM_DIR", Usage: "Specify an alternate DVM home directory, defaults to the current directory."},
+		cli.StringFlag{Name: "dvm-dir", EnvVar: "DVM_DIR", Usage: "Specify an alternate DVM home directory, defaults to $HOME/.dvm."},
 		cli.StringFlag{Name: "shell", EnvVar: "SHELL", Usage: "Specify the shell format in which environment variables should be output, e.g. powershell, cmd or sh/bash. Defaults to sh/bash."},
 		cli.BoolFlag{Name: "debug", Usage: "Print additional debug information."},
 		cli.BoolFlag{Name: "silent", EnvVar: "DVM_SILENT", Usage: "Suppress output. Errors will still be displayed."},
@@ -211,12 +213,9 @@ func setGlobalVars(c *cli.Context) {
 
 	dvmDir = c.GlobalString("dvm-dir")
 	if dvmDir == "" {
-		var err error
-		dvmDir, err = osext.ExecutableFolder()
-		if err != nil {
-			die("Unable to determine DVM home directory", nil, 1)
-		}
+		dvmDir = filepath.Join(getUserHomeDir(), ".dvm")
 	}
+	writeDebug("The dvm home directory is: %s", dvmDir)
 }
 
 func upgrade(checkOnly bool, version string) {
@@ -702,7 +701,6 @@ func getAvailableVersions(pattern string) []dockerversion.Version {
 		}
 		options.Page = response.NextPage
 	}
-
 
 	versionRegex := regexp.MustCompile(`^v([1-9]+\.\d+\.\d+)$`)
 	patternRegex, err := regexp.Compile(pattern)

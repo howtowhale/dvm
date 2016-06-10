@@ -2,8 +2,11 @@
 
 package main
 
-import "fmt"
-import "path/filepath"
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+)
 import "strings"
 
 const dockerOS string = "Windows"
@@ -52,4 +55,8 @@ func validateShellFlag() {
 	if shell != "powershell" && shell != "cmd" {
 		die("The --shell flag or SHELL environment variable must be set when running on Windows. Available values are powershell and cmd.", nil, retCodeInvalidArgument)
 	}
+}
+
+func getUserHomeDir() string {
+	return os.Getenv("USERPROFILE")
 }

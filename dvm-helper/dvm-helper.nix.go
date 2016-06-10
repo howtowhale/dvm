@@ -2,7 +2,10 @@
 
 package main
 
-import "path/filepath"
+import (
+	"os"
+	"path/filepath"
+)
 
 const binaryFileExt string = ""
 const archiveFileExt string = ".tgz"
@@ -24,4 +27,8 @@ func getCleanPathRegex() string {
 
 func validateShellFlag() {
 	// we don't care about the shell flag on non-Windows platforms
+}
+
+func getUserHomeDir() string {
+	return os.Getenv("HOME")
 }
