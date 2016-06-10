@@ -37,9 +37,9 @@ func writeUpgradeScript() {
 
 	var contents string
 	if shell == "powershell" {
-		contents = fmt.Sprintf("cp -force %s %s", tmpBinaryPath, binaryPath)
+		contents = fmt.Sprintf("cp -force '%s' '%s'", tmpBinaryPath, binaryPath)
 	} else { // cmd
-		contents = fmt.Sprintf("cp /Y %s %s", tmpBinaryPath, binaryPath)
+		contents = fmt.Sprintf("cp /Y '%s' '%s'", tmpBinaryPath, binaryPath)
 	}
 
 	writeFile(scriptPath, contents)

@@ -23,7 +23,7 @@ function dvm() {
   }
 
   $rawArgs = $MyInvocation.Line.Substring(3).Trim()
-  $dvmCall = "$dvmHelper --shell powershell $rawArgs"
+  $dvmCall = "& '$dvmHelper' --shell powershell $rawArgs"
   iex $dvmCall
 
   if( Test-Path $dvmOutput ) {
