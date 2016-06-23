@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="TryPublish" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Target Name="TryPublish" DependsOnTargets="RetrieveLatestVersion">
+    <Message Text="Skipping publish to Chocolatey because version $(Version) has already been published." Condition=" '$(ShouldPublish)' == 'False' " />
+    <CallTarget Targets="Publish" Condition=" '$(ShouldPublish)' == 'True' " />
+  </Target>
+
+  <Target Name="Publish" DependsOnTargets="Package">
+    <!-- The environment variable BAMBOO_CHOCOLATEY_PASSWORD comes from the chocolatey.password variable defined on the dvm plan in Bamboo -->
+    <Exec Command="choco push dvm.$(NuGetVersion).nupkg --api-key %25BAMBOO_CHOCOLATEY_PASSWORD%25" />
+  </Target>
+
+  <Target Name="Package" DependsOnTargets="RetrieveLatestVersion">
+    <PropertyGroup>
+      <Url>https://download.getcarina.com/dvm/$(Version)/Windows/x86_64/carina.exe</Url>
+    </PropertyGroup>
+    <Exec Command="@powershell -NoProfile -ExecutionPolicy unrestricted -Command &quot;$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest 'https://download.getcarina.com/dvm/latest/Windows/$arch/dvm-helper.exe' -OutFile carina.exe&quot;" />
+    <Exec Command="choco pack dvm.nuspec --Version $(NuGetVersion)"/>
+  </Target>
+
+  <Target Name="RetrieveLatestVersion">
+    <Exec Command="git describe --tags --abbrev=0" ConsoleToMSBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="Version" />
+    </Exec>
+
+    <PropertyGroup>
+      <!-- NuGet/Chocolatey doesn't support beta.1, so change to beta1. Remove 'v' prefix -->
+      <NuGetVersion>$(Version.Replace('beta.', 'beta').Substring(1))</NuGetVersion>
+    </PropertyGroup>
+
+    <Exec Command="@powershell -NoProfile -ExecutionPolicy unrestricted -File check-chocolatey-version-exists.ps1 $(NuGetVersion)" ConsoleToMSBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="ShouldPublish" />
+    </Exec>
+  </Target>
+
+</Project>
