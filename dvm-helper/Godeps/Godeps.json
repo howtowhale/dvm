@@ -1,0 +1,64 @@
+{
+	"ImportPath": "github.com/getcarina/dvm/dvm-helper",
+	"GoVersion": "go1.6",
+	"GodepVersion": "v74",
+	"Deps": [
+		{
+			"ImportPath": "github.com/blang/semver",
+			"Comment": "v3.2.0",
+			"Rev": "e64c75d1c910cd81c8caa1f2cc2c6409dd65af81"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/cli",
+			"Comment": "v1.17.0-85-g4205e9c",
+			"Rev": "4205e9c4ee9672a8df5bb4fe486a8aa07e1e4037"
+		},
+		{
+			"ImportPath": "github.com/fatih/color",
+			"Comment": "v0.1-19-g87d4004",
+			"Rev": "87d4004f2ab62d0d255e0a38f1680aa534549fe3"
+		},
+		{
+			"ImportPath": "github.com/google/go-github/github",
+			"Rev": "1c08387e4c91df86627d0853f155a4efc8cb8a2d"
+		},
+		{
+			"ImportPath": "github.com/google/go-querystring/query",
+			"Rev": "9235644dd9e52eeae6fa48efd539fdc351a0af53"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-colorable",
+			"Comment": "v0.0.5",
+			"Rev": "9056b7a9f2d1f2d96498d6d146acd1f9d5ed3d59"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-isatty",
+			"Rev": "56b76bdf51f7708750eac80fa38b952bb9f32639"
+		},
+		{
+			"ImportPath": "github.com/pivotal-golang/archiver/extractor",
+			"Rev": "f598990ddfeda2767a09346acf844a7d216c1256"
+		},
+		{
+			"ImportPath": "github.com/ryanuber/go-glob",
+			"Comment": "v0.1",
+			"Rev": "572520ed46dbddaed19ea3d9541bdd0494163693"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "a8e212f3d10e1cd58f7669dd2c9d757bf7b98f93"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "2baa8a1b9338cf13d9eeb27696d761155fa480be"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/internal",
+			"Rev": "2baa8a1b9338cf13d9eeb27696d761155fa480be"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "62bee037599929a6e9146f29d10dd5208c43507d"
+		}
+	]
+}
