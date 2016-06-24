@@ -1,7 +1,7 @@
 language: go
 go:
   - 1.6
-install: make get-deps
+install: echo 'skipping default travis install step'
 script: make cross-build
 before_deploy:
   - cd bin
