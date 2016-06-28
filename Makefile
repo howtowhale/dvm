@@ -16,7 +16,7 @@ GOFILES = dvm-helper/*.go
 default: dvm-helper
 
 get-deps:
-	go get ./...
+	glide install
 
 #test: dvm-helper
 #	go test -v

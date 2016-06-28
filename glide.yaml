@@ -1,0 +1,12 @@
+package: github.com/getcarina/dvm
+import:
+- package: github.com/blang/semver
+- package: github.com/codegangsta/cli
+- package: github.com/fatih/color
+- package: github.com/pivotal-golang/archiver
+  subpackages:
+  - extractor
+- package: github.com/ryanuber/go-glob
+- package: golang.org/x/oauth2
+- package: github.com/google/go-github
+  version: 1c08387e4c91df86627d0853f155a4efc8cb8a2d
