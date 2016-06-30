@@ -2,27 +2,12 @@
 <!-- Do not remove this test for UTF-8: if “Ω” doesn’t appear as greek uppercase omega letter enclosed in quotation marks, you should use an editor that supports UTF-8, not this one. -->
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
-    <id>dvm</id>
-    <title>Docker Version Mananager (dvm)</title>
+    <id>foobar</id>
     <version>$version$</version>
-    <authors>Carolyn Van Slyck, Kyle Kelly</authors>
-    <owners>carolynvs</owners>
-    <summary>The Docker Version Manager (dvm) is a cross-platform command-line tool that helps you install and switch between Docker clients.</summary>
-    <description>The Docker Version Manager (dvm) is a cross-platform command-line tool that helps you install and switch between Docker clients.</description>
-    <projectUrl>https://github.com/getcarina/dvm</projectUrl>
-    <packageSourceUrl>https://github.com/getcarina/dvm/script/chocolatey</packageSourceUrl>
-    <projectSourceUrl>https://github.com/getcarina/dvm</projectSourceUrl>
-    <docsUrl>https://github.com/getcarina/dvm/</docsUrl>
-    <bugTrackerUrl>https://github.com/getcarina/dvm/issues</bugTrackerUrl>
-    <tags>docker version manager dvm cli</tags>
-    <licenseUrl>https://github.com/getcarina/dvm/blob/master/LICENSE</licenseUrl>
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <iconUrl>http://cdn.rawgit.com/getcarina/dvm/$version$/logo.png</iconUrl>
-    <releaseNotes>https://github.com/getcarina/dvm/releases</releaseNotes>
+    <authors>Carolyn Van Slyck</authors>
+    <description>It does both stuff _and_ things!</description>
   </metadata>
   <files>
-    <file src="dvm-helper.exe" />
-    <file src="dvm-helper.exe.ignore" />
-    <file src="dvm.ps1" />
+    <file src="foobar.exe" />
   </files>
 </package>
