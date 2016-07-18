@@ -23,7 +23,7 @@ function downloadDvm([string] $dvmDir) {
 
 
   # Detect x86 vs. x64
-  if( [System.Environment]::Is64BitOperatingSystem ) { $arch = "x86_64" } else { $arch = "i386"}
+  if( [System.Environment]::Is64BitOperatingSystem ) { $arch = "x86_64" } else { $arch = "i686"}
 
   # Download latest release
   $webClient.DownloadFile("https://download.getcarina.com/dvm/latest/Windows/$arch/dvm-helper.exe", "$tmpDir\dvm-helper.exe")
