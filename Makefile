@@ -48,6 +48,10 @@ windows: $(GOFILES)
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GOBUILD) -o $(BINDIR)/Windows/x86_64/dvm-helper.exe $(PACKAGE)
 	cd $(BINDIR)/Windows/x86_64 && shasum -a 256 dvm-helper.exe > dvm-helper.exe.sha256
 
+windows32: $(GOFILES)
+	CGO_ENABLED=0 GOOS=windows GOARCH=386 $(GOBUILD) -o $(BINDIR)/Windows/i686/dvm-helper.exe $(PACKAGE)
+	cd $(BINDIR)/Windows/i686 && shasum -a 256 dvm-helper.exe > dvm-helper.exe.sha256
+
 # To make a release, push a tag to master, e.g. git tag 0.2.0 -a -m ""
 
 .PHONY: clean
