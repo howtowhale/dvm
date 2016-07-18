@@ -2,7 +2,6 @@ language: go
 go:
   - 1.6
 install:
-  - go get github.com/Masterminds/glide
   - make get-deps
 script: make cross-build
 before_deploy:

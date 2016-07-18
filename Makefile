@@ -16,6 +16,7 @@ GOFILES = dvm-helper/*.go
 default: dvm-helper
 
 get-deps:
+	go get github.com/Masterminds/glide
 	glide install
 
 #test: dvm-helper
