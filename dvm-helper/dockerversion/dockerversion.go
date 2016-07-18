@@ -52,7 +52,7 @@ func (version *Version) SetAsExperimental() {
 
 func (version Version) ShouldUseArchivedRelease() bool {
 	cutoff := semver.MustParse("1.11.0")
-	return !version.IsExperimental() && version.SemVer.GTE(cutoff)
+	return version.IsExperimental() || version.SemVer.GTE(cutoff)
 }
 
 func (version Version) String() string {
