@@ -786,7 +786,9 @@ func warnWhenRateLimitExceeded(err error, response *github.Response) {
 		return
 	}
 
-	if response.StatusCode == 403 {
-		writeWarning("Your GitHub API rate limit has been exceeded. Set the GITHUB_TOKEN environment variable or use the --github-token parameter with your GitHub personal access token to authenticate and increase the rate limit.")
+	if response != nil {
+		if response.StatusCode == 403 {
+			writeWarning("Your GitHub API rate limit has been exceeded. Set the GITHUB_TOKEN environment variable or use the --github-token parameter with your GitHub personal access token to authenticate and increase the rate limit.")
+		}
 	}
 }
