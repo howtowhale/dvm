@@ -21,26 +21,28 @@ Error response from daemon: client and server don't have same version (client : 
 1. Run the one of the installation scripts below.
 2. Copy, paste and run the commands from the installation output to finalize the installation.
 
-**Mac OS X with Homebrew**
+    **Mac OS X with Homebrew**
 
-```bash
-$ brew update && brew install dvm
-```
+    ```bash
+    $ brew update && brew install dvm
+    ```
 
-**Mac OS X without Homebrew, and Linux**
+    **Mac OS X without Homebrew, and Linux**
 
-```bash
-$ curl -sL https://download.getcarina.com/dvm/latest/install.sh | sh
-```
+    ```bash
+    $ curl -sL https://download.getcarina.com/dvm/latest/install.sh | sh
+    ```
 
-**Windows**
+    **Windows**
 
-Open a PowerShell command prompt and execute the following command. We use PowerShell 4 to do the initial
-installation but you can use `dvm` with PowerShell or CMD once it's installed.
+    Open a PowerShell command prompt and execute the following command. We use PowerShell 4 to do the initial
+    installation but you can use `dvm` with PowerShell or CMD once it's installed.
 
-```powershell
-> Invoke-WebRequest https://download.getcarina.com/dvm/latest/install.ps1 -UseBasicParsing | Invoke-Expression
-```
+    ```powershell
+    > Invoke-WebRequest https://download.getcarina.com/dvm/latest/install.ps1 -UseBasicParsing | Invoke-Expression
+    ```
+
+    **Note**: If you use zsh instead of bash, add `source $HOME/.dvm/dvm.sh` to your `~/.zshrc` to finalize the installation.
 
 ## Upgrading from previous dvm
 **Mac OS X with Homebrew**
