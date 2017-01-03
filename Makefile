@@ -13,23 +13,23 @@ GOBUILD = $(GOCMD) build -a -tags netgo -ldflags '$(LDFLAGS)'
 BINDIR = bin/dvm/$(VERSION)
 GOFILES = dvm-helper/*.go
 
-default: dvm-helper
+default: get-deps local
 
 get-deps:
 	go get github.com/Masterminds/glide
 	glide install
 
-#test: dvm-helper
+#test: local
 #	go test -v
 #	eval "$( ./dvm-helper --bash-completion )"
 #	./dvm-helper --version
 
-cross-build: clean get-deps dvm-helper linux linux32 darwin windows windows32
+cross-build: local linux linux32 darwin windows windows32
 	cp dvm.sh dvm.ps1 dvm.cmd install.sh install.ps1 README.md LICENSE bash_completion $(BINDIR)/
 	find $(BINDIR) -maxdepth 1 -name "install.*" -exec sed -i -e 's/latest/$(VERSION)/g' {} \;
 	cp -R $(BINDIR) bin/dvm/latest
 
-dvm-helper: get-deps $(GOFILES)
+local: $(GOFILES)
 	CGO_ENABLED=0 $(GOBUILD) -o dvm-helper/dvm-helper $(PACKAGE)
 
 linux: $(GOFILES)
