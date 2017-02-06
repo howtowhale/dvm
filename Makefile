@@ -1,5 +1,7 @@
 COMMIT = $(shell git rev-parse --verify --short HEAD)
 VERSION = $(shell git describe --tags --dirty='-dev' 2> /dev/null)
+PERMALINK = $(shell if [[ $(VERSION) =~ [^-]*-([^.]+).* ]]; then echo $${BASH_REMATCH[1]}; else echo "latest"; fi)
+
 GITHUB_ORG = getcarina
 GITHUB_REPO = dvm
 PACKAGE = github.com/${GITHUB_ORG}/${GITHUB_REPO}/dvm-helper
@@ -26,8 +28,8 @@ get-deps:
 
 cross-build: local linux linux32 darwin windows windows32
 	cp dvm.sh dvm.ps1 dvm.cmd install.sh install.ps1 README.md LICENSE bash_completion $(BINDIR)/
-	find $(BINDIR) -maxdepth 1 -name "install.*" -exec sed -i -e 's/latest/$(VERSION)/g' {} \;
-	cp -R $(BINDIR) bin/dvm/latest
+	find $(BINDIR) -maxdepth 1 -name "install.*" -exec sed -i -e 's/$(PERMALINK)/$(VERSION)/g' {} \;
+	cp -R $(BINDIR) bin/dvm/$(PERMALINK)
 
 local: $(GOFILES)
 	CGO_ENABLED=0 $(GOBUILD) -o dvm-helper/dvm-helper $(PACKAGE)
@@ -54,9 +56,14 @@ windows32: $(GOFILES)
 
 # To make a release, push a tag to master, e.g. git tag 0.2.0 -a -m ""
 
-.PHONY: clean
+.PHONY: clean deploy
 
 clean:
 	 -rm -fr bin/*
 	 -rm dvm-helper/dvm-helper
 	 -rm dvm-helper/dvm-helper.exe
+
+deploy:
+	curl -O https://ec4a542dbf90c03b9f75-b342aba65414ad802720b41e8159cf45.ssl.cf5.rackcdn.com/1.2/Linux/amd64/rack
+	chmod +x rack
+	./rack files object upload-dir --recurse --container carina-downloads --dir bin
