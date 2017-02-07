@@ -1,0 +1,117 @@
+{
+    "memo": "d02b0f325412b5e12575d98073dbf964eba05e4c5f27e89723d4c23fbee0a5ff",
+    "projects": [
+        {
+            "name": "github.com/blang/semver",
+            "branch": "master",
+            "revision": "aea32c919a18e5ef4537bbd283ff29594b1b0165",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/codegangsta/cli",
+            "branch": "master",
+            "revision": "0eb4e0be6c214f8904ef6989b11072c7b897c657",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/fatih/color",
+            "branch": "master",
+            "revision": "9aae6aaa22315390f03959adca2c4d395b02fcef",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/golang/protobuf",
+            "branch": "master",
+            "revision": "8ee79997227bf9b34611aee7946ae64735e6fd93",
+            "packages": [
+                "proto"
+            ]
+        },
+        {
+            "name": "github.com/google/go-github",
+            "branch": "master",
+            "revision": "0457a4f009ea4fd392f2c0a210ce4ef0cb5da8a9",
+            "packages": [
+                "github"
+            ]
+        },
+        {
+            "name": "github.com/google/go-querystring",
+            "branch": "master",
+            "revision": "2a60fc2ba6c19de80291203597d752e9ba58e4c0",
+            "packages": [
+                "query"
+            ]
+        },
+        {
+            "name": "github.com/mattn/go-colorable",
+            "branch": "master",
+            "revision": "3dac7b4f76f6e17fb39b768b89e3783d16e237fe",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/mattn/go-isatty",
+            "branch": "master",
+            "revision": "56b76bdf51f7708750eac80fa38b952bb9f32639",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/pivotal-golang/archiver",
+            "branch": "master",
+            "revision": "f598990ddfeda2767a09346acf844a7d216c1256",
+            "packages": [
+                "extractor"
+            ]
+        },
+        {
+            "name": "github.com/ryanuber/go-glob",
+            "branch": "master",
+            "revision": "572520ed46dbddaed19ea3d9541bdd0494163693",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "golang.org/x/net",
+            "branch": "master",
+            "revision": "5916dcb167ed985a5b9e6871fbfd74848a4c170b",
+            "packages": [
+                "context"
+            ]
+        },
+        {
+            "name": "golang.org/x/oauth2",
+            "branch": "master",
+            "revision": "e86e2718db89775a4604abc10a5d3a5672e7336e",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "golang.org/x/sys",
+            "branch": "master",
+            "revision": "d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03",
+            "packages": [
+                "unix"
+            ]
+        },
+        {
+            "name": "google.golang.org/appengine",
+            "version": "v1.0.0",
+            "revision": "150dc57a1b433e64154302bdc40b6bb8aefa313a",
+            "packages": [
+                "urlfetch"
+            ]
+        }
+    ]
+}

@@ -20,8 +20,8 @@ GOFILES = dvm-helper/*.go
 default: get-deps local
 
 get-deps:
-	go get github.com/Masterminds/glide
-	glide install
+	go get -u github.com/golang/dep/...
+	dep ensure
 
 #test: local
 #	go test -v

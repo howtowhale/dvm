@@ -1,0 +1,25 @@
+{
+    "dependencies": {
+        "github.com/blang/semver": {
+            "branch": "master"
+        },
+        "github.com/codegangsta/cli": {
+            "branch": "master"
+        },
+        "github.com/fatih/color": {
+            "branch": "master"
+        },
+        "github.com/google/go-github": {
+            "branch": "master"
+        },
+        "github.com/pivotal-golang/archiver": {
+            "branch": "master"
+        },
+        "github.com/ryanuber/go-glob": {
+            "branch": "master"
+        },
+        "golang.org/x/oauth2": {
+            "branch": "master"
+        }
+    }
+}
