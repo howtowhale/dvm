@@ -17,4 +17,4 @@ deploy:
   skip_cleanup: true
   on:
     repo: getcarina/dvm
-    tags: true
+    branch: rack-deploy
