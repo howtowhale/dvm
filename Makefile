@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 COMMIT = $(shell git rev-parse --verify --short HEAD)
 VERSION = $(shell git describe --tags --dirty='-dev' 2> /dev/null)
 PERMALINK = $(shell if [[ $(VERSION) =~ [^-]*-([^.]+).* ]]; then echo $${BASH_REMATCH[1]}; else echo "latest"; fi)
