@@ -16,12 +16,18 @@ GOBUILD = $(GOCMD) build -a -tags netgo -ldflags '$(LDFLAGS)'
 
 BINDIR = bin/dvm/$(VERSION)
 GOFILES = dvm-helper/*.go
+GOFILES_NOVENDOR = $(shell go list ./... | grep -v /vendor/)
 
 default: get-deps local
 
 get-deps:
 	go get github.com/Masterminds/glide
 	glide install
+
+validate:
+	go fmt $(GOFILES_NOVENDOR)
+	go vet $(GOFILES_NOVENDOR)
+	-go list ./... | grep -v /vendor/ | xargs -L1 golint --set_exit_status
 
 #test: local
 #	go test -v
