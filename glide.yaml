@@ -10,3 +10,11 @@ import:
 - package: golang.org/x/oauth2
 - package: github.com/google/go-github
   version: 1c08387e4c91df86627d0853f155a4efc8cb8a2d
+- package: github.com/docker/docker
+  version: ^1.13.1
+  subpackages:
+  - client
+- package: github.com/stretchr/testify
+  version: ^1.1.4
+  subpackages:
+  - assert

@@ -11,6 +11,21 @@ import "github.com/fatih/color"
 import "github.com/pivotal-golang/archiver/extractor"
 import "github.com/getcarina/dvm/dvm-helper/checksum"
 
+func exportEnvironmentVariable(name string) string {
+	value := os.Getenv(name)
+
+	if shell == "powershell" {
+		return fmt.Sprintf("$env:%s=\"%s\"\r\n", name, value)
+	}
+
+	if shell == "cmd" {
+		return fmt.Sprintf("%s=%s\r\n", name, value)
+	}
+
+	// default to bash
+	return fmt.Sprintf("export %s=\"%s\"\n", name, value)
+}
+
 func pathExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
@@ -119,7 +134,7 @@ func writeFile(path string, contents string) {
 
 	ensureParentDirectoryExists(path)
 
-	file, err := os.Create(path)
+	file, err := os.OpenFile(path, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
 	if err != nil {
 		die("Unable to create %s", err, retCodeRuntimeError, path)
 	}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	neturl "net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -11,8 +12,10 @@ import (
 	"regexp"
 	"strings"
 
+	"context"
 	"github.com/blang/semver"
 	"github.com/codegangsta/cli"
+	dockerclient "github.com/docker/docker/client"
 	"github.com/fatih/color"
 	"github.com/getcarina/dvm/dvm-helper/dockerversion"
 	"github.com/getcarina/dvm/dvm-helper/url"
@@ -25,6 +28,7 @@ import (
 var shell string
 var dvmDir string
 var mirrorURL string
+var githubUrlOverride string
 var debug bool
 var silent bool
 var nocheck bool
@@ -39,6 +43,7 @@ const (
 	retCodeInvalidArgument  = 127
 	retCodeInvalidOperation = 3
 	retCodeRuntimeError     = 1
+	versionEnvVar           = "DOCKER_VERSION"
 )
 
 func main() {
@@ -55,6 +60,15 @@ func main() {
 		cli.BoolFlag{Name: "silent", EnvVar: "DVM_SILENT", Usage: "Suppress output. Errors will still be displayed."},
 	}
 	app.Commands = []cli.Command{
+		{
+			Name:  "detect",
+			Usage: "Detect the appropriate Docker client version",
+			Action: func(c *cli.Context) error {
+				setGlobalVars(c)
+				detect()
+				return nil
+			},
+		},
 		{
 			Name:    "install",
 			Aliases: []string{"i"},
@@ -220,6 +234,60 @@ func setGlobalVars(c *cli.Context) {
 		dvmDir = filepath.Join(getUserHomeDir(), ".dvm")
 	}
 	writeDebug("The dvm home directory is: %s", dvmDir)
+}
+
+func detect() {
+	docker, err := dockerclient.NewEnvClient()
+	if err != nil {
+		die("Cannot build a docker client from environment variables", err, retCodeRuntimeError)
+	}
+
+	versionResult, err := docker.ServerVersion(context.Background())
+	if err != nil {
+		die("Unable to query docker version", err, retCodeRuntimeError)
+	}
+
+	writeDebug("Queried /version and got Version: %s", versionResult.Version)
+	version, err := semver.Parse(versionResult.Version)
+
+	// Docker versions prior to 1.12 don't return a usable client version
+	// Lookup the client version from the API version
+	if err != nil {
+		writeDebug("Attempting to lookup a client version for API version: %s", versionResult.APIVersion)
+
+		// api version -> client version range
+		oldVersionMap := map[string]string{
+			"1.23": "1.11.x",
+			"1.22": "1.10.x",
+			"1.21": "1.9.x",
+			"1.20": "1.8.x",
+			"1.19": "1.7.x",
+			"1.18": "1.6.x",
+		}
+		clientVersion, found := oldVersionMap[versionResult.APIVersion]
+		if !found {
+			die("Unable to detect the proper client version for Docker API version %s", nil, retCodeRuntimeError, versionResult.APIVersion)
+		}
+
+		// Find the highest version that statisfies the client version range
+		clientRange := semver.MustParseRange(clientVersion)
+		availableVersions := getAvailableVersions("")
+		for i := len(availableVersions) - 1; i >= 0; i-- {
+			v := availableVersions[i]
+			if clientRange(v.SemVer) {
+				version = v.SemVer
+				break
+			}
+		}
+		if version.Equals(semver.Version{}) {
+			die("Unable to detect the proper client version for Docker client version %s", nil, retCodeRuntimeError, clientVersion)
+		}
+	}
+	writeDebug("Detected client version: %s", version)
+
+	os.Setenv(versionEnvVar, version.String())
+	writeEnvironmentVariableScript(versionEnvVar)
+	use(dockerversion.New(version))
 }
 
 func upgrade(checkOnly bool, version string) {
@@ -398,7 +466,7 @@ func use(version dockerversion.Version) {
 		prependDockerVersionToPath(version)
 	}
 
-	writePathScript()
+	writeEnvironmentVariableScript(pathEnvVar)
 	writeInfo("Now using Docker %s", version)
 }
 
@@ -490,17 +558,17 @@ func getBinaryName() string {
 
 func deactivate() {
 	removePreviousDockerVersionFromPath()
-	writePathScript()
+	writeEnvironmentVariableScript(pathEnvVar)
 }
 
 func prependDockerVersionToPath(version dockerversion.Version) {
 	prependPath(getVersionDir(version))
 }
 
-func writePathScript() {
-	// Write to a shell script for the calling wrapper to execute
+func writeEnvironmentVariableScript(name string) {
+	// Write to a shell script for the calling wrapper to execute which exports the environment variable
 	scriptPath := buildDvmOutputScriptPath()
-	contents := buildPathScript()
+	contents := exportEnvironmentVariable(name)
 
 	writeFile(scriptPath, contents)
 }
@@ -686,6 +754,7 @@ func getInstalledVersions(pattern string) []dockerversion.Version {
 }
 
 func getAvailableVersions(pattern string) []dockerversion.Version {
+	writeDebug("Retrieving Docker releases")
 	gh := buildGithubClient()
 	options := &github.ListOptions{PerPage: 100}
 
@@ -778,7 +847,15 @@ func buildGithubClient() *github.Client {
 		return github.NewClient(httpClient)
 	}
 
-	return github.NewClient(nil)
+	client := github.NewClient(nil)
+	if githubUrlOverride != "" {
+		var err error
+		client.BaseURL, err = neturl.Parse(githubUrlOverride)
+		if err != nil {
+			die("Invalid github url override: %s", err, retCodeInvalidArgument, githubUrlOverride)
+		}
+	}
+	return client
 }
 
 func warnWhenRateLimitExceeded(err error, response *github.Response) {
