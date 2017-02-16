@@ -11,7 +11,9 @@ env:
   - secure: JRAezKJaRS3xK936tty0A5xEFvhKLKxSBHsb5JhP7WOCZ4sVQ7fegRSgJv9QyR96rza3fRvjAI7X77lIRzvEmpmi6UnCGrAEsCSG0I791RQv40Nkpgmlmu1lXzS8JvpsiXVHCa/CuewYT2ucLeBBb8TOj4BCP5fA8SaTvWrOc+yacQ2MoqDpF/RAqjxclzDWoSBtqKPfkYQY1Uu9G2WN2HSngRB6lq6JqRG0jgbVZhbxfYnhOqLCX+J61mNSjUCg9ukwrP01/1WY29VrtGM9QE5HWf/xgAChQt/Upas6/5dQ8PCsbaOAR1c+EUg5JDHXHXqqGwwoocmNaasKv6dL5YScETqst1O8gIsKd2MFzaV0g1m50a3NIk09eXJh0EZW/vEfJqqTI8QRTUWLCiV+5QooX76mUx0VUSM0VKdWL13IFCFOzjw+vSve65FFpZZ+LBBeEheXYRL8dik2Np7k/wd2GTatArrTynNfhmtxfoWpvTW3qZt5bTxj2v6F0AqbVq8m95ho+Bx6t4FviIZxq0eCM7e2oxsBepsdrZ/3/mOwFI3t6fNo/Q42QY4yN72Z9pzdpYmFkM8wuUXq5Lv8eV3umql5qA1U9gK4gszyYUP7ZMROKc9nRGZ1SSSDFerj+WP586NG6DzxflqKAXpVzLdQ1wqwejIMqeligB1IEJQ=
 install:
 - make get-deps
-script: make cross-build
+script:
+- make test
+- make cross-build
 deploy:
 - provider: script
   script: make deploy

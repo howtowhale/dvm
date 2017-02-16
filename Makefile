@@ -29,10 +29,10 @@ validate:
 	go vet $(GOFILES_NOVENDOR)
 	-go list ./... | grep -v /vendor/ | xargs -L1 golint --set_exit_status
 
-#test: local
-#	go test -v
-#	eval "$( ./dvm-helper --bash-completion )"
-#	./dvm-helper --version
+test: local
+	go test $(GOFILES_NOVENDOR)
+	eval "$( ./dvm-helper --bash-completion )"
+	./dvm-helper/dvm-helper --version
 
 cross-build: local linux linux32 darwin windows windows32
 	cp dvm.sh dvm.ps1 dvm.cmd install.sh install.ps1 README.md LICENSE bash_completion $(BINDIR)/
