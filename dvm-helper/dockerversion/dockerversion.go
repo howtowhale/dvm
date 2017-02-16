@@ -13,13 +13,17 @@ type Version struct {
 	Alias  string
 }
 
+func New(semver semver.Version) Version {
+	return Version{SemVer: semver}
+}
+
 func Parse(value string) Version {
 	semver, err := semver.Parse(value)
 	if err != nil {
 		return Version{Alias: value}
 	}
 
-	return Version{SemVer: semver}
+	return New(semver)
 }
 
 func (version Version) HasAlias() bool {

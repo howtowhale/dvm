@@ -1,14 +1,46 @@
-hash: e3539f5d2fb6f53cc816cd79bc4a2c8f76e595f4f25b182ae8a5eb863753ad17
-updated: 2016-06-27T11:02:45.626128223-05:00
+hash: 1f785d0ac14223e0366995b6a5e0716677e141bb81a9c888c7f2e650c49debea
+updated: 2017-02-16T15:37:42.300441023-06:00
 imports:
 - name: github.com/blang/semver
-  version: e64c75d1c910cd81c8caa1f2cc2c6409dd65af81
+  version: 4a1e882c79dcf4ec00d2e29fac74b9c8938d5052
 - name: github.com/codegangsta/cli
-  version: 4205e9c4ee9672a8df5bb4fe486a8aa07e1e4037
+  version: 2526b57c56f30b50466c96c4133b1a4ad0f0191f
+- name: github.com/docker/distribution
+  version: 4f87c800734ffe0d8931e45679112aea36f8b5ec
+  subpackages:
+  - reference
+  - digestset
+- name: github.com/docker/docker
+  version: 092cba3727bb9b4a2f0e922cd6c0f93ea270e363
+  subpackages:
+  - client
+  - api/types
+  - api/types/container
+  - api/types/events
+  - api/types/filters
+  - api/types/network
+  - api/types/reference
+  - api/types/registry
+  - api/types/swarm
+  - api/types/time
+  - api/types/versions
+  - api/types/volume
+  - pkg/tlsconfig
+  - api/types/mount
+  - api/types/blkiodev
+  - api/types/strslice
+- name: github.com/docker/go-connections
+  version: 7da10c8c50cad14494ec818dcdfb6506265c0086
+  subpackages:
+  - sockets
+  - tlsconfig
+  - nat
+- name: github.com/docker/go-units
+  version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - name: github.com/fatih/color
-  version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
+  version: 5ec5d9d3c2cf82e9688b34e9bc27a94d616a7193
 - name: github.com/golang/protobuf
-  version: 0c1f6d65b5a189c2250d10e71a5506f06f9fa0a0
+  version: 8ee79997227bf9b34611aee7946ae64735e6fd93
   subpackages:
   - proto
 - name: github.com/google/go-github
@@ -16,33 +48,48 @@ imports:
   subpackages:
   - github
 - name: github.com/google/go-querystring
-  version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
+  version: 53e6ce116135b80d037921a7fdd5138cf32d7a8a
   subpackages:
   - query
 - name: github.com/mattn/go-colorable
-  version: 9056b7a9f2d1f2d96498d6d146acd1f9d5ed3d59
+  version: 5411d3eea5978e6cdc258b30de592b60df6aba96
 - name: github.com/mattn/go-isatty
-  version: 56b76bdf51f7708750eac80fa38b952bb9f32639
+  version: 281032e84ae07510239465db46bf442aa44b953a
+- name: github.com/Microsoft/go-winio
+  version: fff283ad5116362ca252298cfc9b95828956d85d
+- name: github.com/opencontainers/go-digest
+  version: aa2ec055abd10d26d539eb630a92241b781ce4bc
 - name: github.com/pivotal-golang/archiver
-  version: f598990ddfeda2767a09346acf844a7d216c1256
+  version: 59f15fd17404dceccb25d8b62df1271035b707a5
   subpackages:
   - extractor
+- name: github.com/pkg/errors
+  version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/ryanuber/go-glob
-  version: 572520ed46dbddaed19ea3d9541bdd0494163693
+  version: 256dc444b735e061061cf46c809487313d5b0065
+- name: github.com/Sirupsen/logrus
+  version: 7f4b1adc791766938c29457bed0703fb9134421a
+- name: github.com/stretchr/testify
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+  subpackages:
+  - assert
 - name: golang.org/x/net
-  version: e445b19913b9d40fdbdfe19ac5e3d314aafd6f63
+  version: b4690f45fa1cafc47b1c280c2e75116efe40cc13
   subpackages:
   - context
+  - context/ctxhttp
+  - proxy
 - name: golang.org/x/oauth2
-  version: 65a8d08c6292395d47053be10b3c5e91960def76
+  version: b9780ec78894ab900c062d58ee3076cd9b2a4501
   subpackages:
   - internal
 - name: golang.org/x/sys
-  version: 62bee037599929a6e9146f29d10dd5208c43507d
+  version: e24f485414aeafb646f6fca458b0bf869c0880a1
   subpackages:
   - unix
+  - windows
 - name: google.golang.org/appengine
-  version: 267c27e7492265b84fc6719503b14a1e17975d79
+  version: 2e4a801b39fc199db615bfca7d0b9f8cd9580599
   subpackages:
   - urlfetch
   - internal
@@ -51,4 +98,12 @@ imports:
   - internal/datastore
   - internal/log
   - internal/remote_api
-devImports: []
+testImports:
+- name: github.com/davecgh/go-spew
+  version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib

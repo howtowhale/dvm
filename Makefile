@@ -16,6 +16,7 @@ GOBUILD = $(GOCMD) build -a -tags netgo -ldflags '$(LDFLAGS)'
 
 BINDIR = bin/dvm/$(VERSION)
 GOFILES = dvm-helper/*.go
+GOFILES_NOVENDOR = $(shell go list ./... | grep -v /vendor/)
 
 default: get-deps local
 
@@ -23,10 +24,15 @@ get-deps:
 	go get github.com/Masterminds/glide
 	glide install
 
-#test: local
-#	go test -v
-#	eval "$( ./dvm-helper --bash-completion )"
-#	./dvm-helper --version
+validate:
+	go fmt $(GOFILES_NOVENDOR)
+	go vet $(GOFILES_NOVENDOR)
+	-go list ./... | grep -v /vendor/ | xargs -L1 golint --set_exit_status
+
+test: local
+	go test $(GOFILES_NOVENDOR)
+	eval "$( ./dvm-helper --bash-completion )"
+	./dvm-helper/dvm-helper --version
 
 cross-build: local linux linux32 darwin windows windows32
 	cp dvm.sh dvm.ps1 dvm.cmd install.sh install.ps1 README.md LICENSE bash_completion $(BINDIR)/
