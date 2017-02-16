@@ -1,6 +1,7 @@
 language: go
 go:
 - 1.7
+go_import_path: github.com/getcarina/dvm
 git:
   depth: 9999999
 env:
