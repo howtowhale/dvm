@@ -38,17 +38,10 @@ layout: default
     {% include toc.html %}
     {% endunless %}
 
-
-    {% if site.github_editme_path %}
-
-    <a target="_blank" href="https://github.com/{{site.github_editme_path}}{% unless page.url contains "index.html" %}pages/{% endunless %}{{page.folder}}{{page.url | remove: ".html" | append: ".md"}}" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit me</a>
-
-    {% endif %}
-
   {{content}}
 
     <div class="tags">
-        {% if page.tags != null %}
+        {% if page.tags != null and page.tags.length > 0 %}
         <b>Tags: </b>
         {% assign projectTags = site.data.tags.allowed-tags %}
         {% for tag in page.tags %}
@@ -66,5 +59,11 @@ layout: default
 </div>
 
 {{site.data.alerts.hr_shaded}}
+
+{% if site.github_editme_path %}
+
+<a target="_blank" href="https://github.com/{{site.github_editme_path}}{% unless page.url contains "index.html" %}pages/{% endunless %}{{page.folder}}{{page.url | remove: ".html" | append: ".md"}}" class="btn btn-default githubEditButton" role="button"><i class="fa fa-github fa-lg"></i> Edit on GitHub</a>
+
+{% endif %}
 
 {% include footer.html %}

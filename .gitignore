@@ -1,4 +1,6 @@
 _site/
+dvm-helper/
+vendor/
 .sass-cache/
 .jekyll-metadata
 _pdf

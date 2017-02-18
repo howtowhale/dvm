@@ -5,6 +5,19 @@ search: exclude
 ---
 
 [
+{% for page in site.commands %}
+{% unless page.search == "exclude" %}
+{
+"title": "{{ page.title | escape }}",
+"tags": "{{ page.tags }}",
+"keywords": "{{page.keywords}}",
+"url": "{{ page.url | remove: "/"}}",
+"summary": "{{page.summary | strip }}"
+}
+{% unless forloop.last and site.posts.size < 1 %},{% endunless %}
+{% endunless %}
+{% endfor %}
+
 {% for page in site.pages %}
 {% unless page.search == "exclude" %}
 {
@@ -19,7 +32,6 @@ search: exclude
 {% endfor %}
 
 {% for post in site.posts %}
-
 {
 "title": "{{ post.title | escape }}",
 "tags": "{{ post.tags }}",

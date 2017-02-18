@@ -1,21 +1,21 @@
-repository: tomjohnson1492/documentation-theme-jekyll
+repository: carolynvs/dvm
 
 output: web
 # this property is useful for conditional filtering of content that is separate from the PDF.
 
-topnav_title: Jekyll Documentation Theme
+topnav_title: Docker Version Manager
 # this appears on the top navigation bar next to the home button
 
-site_title: Jekyll theme for documentation
+site_title: Docker Version Manager (dvm)
 # this appears in the html browser tab for the site title (seen mostly by search engines, not users)
 
-company_name: Your company
+company_name: Carolyn Van Slyck
 # this appears in the footer
 
-github_editme_path: tomjohnson1492/documentation-theme-jekyll/blob/gh-pages/
+github_editme_path: carolynvs/dvm/blob/gh-pages/
 # if you're using Github, provide the basepath to the branch you've created for reviews, following the sample here. if not, leave this value blank.
 
-disqus_shortname: idrbwjekyll
+disqus_shortname:
 # if you're using disqus for comments, add the shortname here. if not, leave this value blank.
 
 host: 127.0.0.1
@@ -24,23 +24,28 @@ host: 127.0.0.1
 port: 4000
 # the port where the preview is rendered. You can leave this as is unless you have other Jekyll builds using this same port that might cause conflicts. in that case, use another port such as 4006.
 
+baseurl: /dvm
+# the prefix where the site is hosted
+
 exclude:
   - .idea/
+  - .iml
   - .gitignore
+  - vendor/
+  - dvm-helper/
 # these are the files and directories that jekyll will exclude from the build
 
-feedback_subject_line: Jekyll documentation theme
-
-feedback_email: tomjohnson1492@gmail.com
+# feedback_subject_line:
+# feedback_email:
 # used as a contact email for the Feedback link in the top navigation bar
 
 # feedback_disable: true
 # if you uncomment the previous line, the Feedback link gets removed
 
-# feedback_text: "Need help?"
+feedback_text: "Support"
 # if you uncomment the previous line, it changes the Feedback text
 
-# feedback_link: "http://helpy.io/"
+feedback_link: "http://github.com/carolynvs/dvm/issues"
 # if you uncomment the previous line, it changes where the feedback link points to
 
 highlighter: rouge
@@ -56,11 +61,25 @@ kramdown:
 # filter used to process markdown. note that kramdown differs from github-flavored markdown in some subtle ways
 
 collections:
-  tooltips:
-    output: false
+  commands:
+    output: true
+    toc: false
+    permalink: command-:title.html
+
 # collections are declared here. this renders the content in _tooltips and processes it, but doesn't output it as actual files in the output unless you change output to true
 
 defaults:
+  -
+    scope:
+      path: ""
+      type: commands
+    values:
+      layout: "page"
+      comments: true
+      search: true
+      sidebar: home_sidebar
+      folder: commands
+      output: web
   -
     scope:
       path: ""
@@ -70,16 +89,6 @@ defaults:
       comments: true
       search: true
       sidebar: home_sidebar
-  -
-    scope:
-      path: ""
-      type: "tooltips"
-    values:
-      layout: "page"
-      comments: true
-      search: true
-      tooltip: true
-
   -
     scope:
       path: ""
@@ -94,13 +103,9 @@ defaults:
 
 sidebars:
 - home_sidebar
-- mydoc_sidebar
-- product1_sidebar
-- product2_sidebar
-- other
 
-description: "Intended as a documentation theme based on Jekyll for technical writers documenting software and other technical products, this theme has all the elements you would need to handle multiple products with both multi-level sidebar navigation, tags, and other documentation features."
+description: "The Docker Version Manager (dvm) is a cross-platform command-line tool that helps you install and switch between Docker clients"
 # the description is used in the feed.xml file
 
 # needed for sitemap.xml file only
-url: http://idratherbewriting.com
+url: http://carolynvanslyck.com/dvm

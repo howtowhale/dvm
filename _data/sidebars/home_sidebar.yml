@@ -5,18 +5,54 @@ entries:
   levels: one
   folders:
 
-  - title: Products
+  - title: Setup
     output: web
     folderitems:
-    - title: News
-      url: /news.html
+    - title: Install
+      url: /install.html
       output: web
-    - title: Theme instructions
-      url: /mydoc_introduction.html
+    - title: Upgrade
+      url: /upgrade.html
       output: web
-    - title: Product 1
-      url: /p1_landing_page.html
+  - title: Commands
+    output: web
+    folderitems:
+    - title: alias
+      url: /command-alias.html
       output: web
-    - title: Product 2
-      url: /p2_landing_page.html
+    - title: current
+      url: /command-current.html
+      output: web
+    - title: deactivate
+      url: /command-deactivate.html
+      output: web
+    - title: detect
+      url: /command-detect.html
+      output: web
+    - title: install
+      url: /command-install.html
+      output: web
+    - title: list
+      url: /command-list.html
+      output: web
+    - title: list-alias
+      url: /command-list-alias.html
+      output: web
+    - title: list-remote
+      url: /command-list-remote.html
+      output: web
+    - title: unalias
+      url: /command-unalias.html
+      output: web
+    - title: uninstall
+      url: /command-uninstall.html
+      output: web
+    - title: use
+      url: /command-use.html
+      output: web
+    - title: version
+      url: /command-version.html
+      output: web
+    - title: which
+      url: /command-which.html
       output: web
