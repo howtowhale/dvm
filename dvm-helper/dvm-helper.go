@@ -244,6 +244,8 @@ func setGlobalVars(c *cli.Context) {
 }
 
 func detect() {
+	writeDebug("dvm detect")
+
 	docker, err := dockerclient.NewEnvClient()
 	if err != nil {
 		die("Cannot build a docker client from environment variables", err, retCodeRuntimeError)
@@ -619,7 +621,6 @@ func isVersionInstalled(version dockerversion.Version) bool {
 	installedVersions := getInstalledVersions("*")
 
 	for _, availableVersion := range installedVersions {
-		writeDebug("Checking version: %s", availableVersion)
 		if version.Equals(availableVersion) {
 			writeDebug("Version %s is installed", version)
 			return true
