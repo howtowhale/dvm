@@ -32,6 +32,7 @@ var githubUrlOverride string
 var debug bool
 var silent bool
 var nocheck bool
+var useAfterInstall bool = true
 var token string
 var includePrereleases bool
 
@@ -294,6 +295,8 @@ func detect() {
 
 	os.Setenv(versionEnvVar, version.String())
 	writeEnvironmentVariableScript(versionEnvVar)
+
+	nocheck = true
 	use(dockerversion.New(version))
 }
 
@@ -378,6 +381,7 @@ func install(version dockerversion.Version) {
 
 	if _, err := os.Stat(versionDir); err == nil {
 		writeWarning("%s is already installed", version)
+		nocheck = true
 		use(version)
 		return
 	}
@@ -385,7 +389,11 @@ func install(version dockerversion.Version) {
 	writeInfo("Installing %s...", version)
 
 	downloadRelease(version)
-	use(version)
+
+	if useAfterInstall {
+		nocheck = true
+		use(version)
+	}
 }
 
 func buildDownloadURL(version dockerversion.Version) string {
@@ -460,6 +468,7 @@ func use(version dockerversion.Version) {
 		writeDebug("Using alias: %s -> %s", version.Alias, version.SemVer)
 	}
 
+	useAfterInstall = false
 	ensureVersionIsInstalled(version)
 
 	if version.IsSystem() {
