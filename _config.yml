@@ -1,4 +1,4 @@
-repository: carolynvs/dvm
+repository: howtowhale/dvm
 
 output: web
 # this property is useful for conditional filtering of content that is separate from the PDF.
@@ -9,10 +9,10 @@ topnav_title: Docker Version Manager
 site_title: Docker Version Manager (dvm)
 # this appears in the html browser tab for the site title (seen mostly by search engines, not users)
 
-company_name: Carolyn Van Slyck
+company_name:
 # this appears in the footer
 
-github_editme_path: carolynvs/dvm/blob/gh-pages/
+github_editme_path: howtowhale/dvm/blob/gh-pages/
 # if you're using Github, provide the basepath to the branch you've created for reviews, following the sample here. if not, leave this value blank.
 
 disqus_shortname:
@@ -45,7 +45,7 @@ exclude:
 feedback_text: "Support"
 # if you uncomment the previous line, it changes the Feedback text
 
-feedback_link: "http://github.com/carolynvs/dvm/issues"
+feedback_link: "http://github.com/howtowhale/dvm/issues"
 # if you uncomment the previous line, it changes where the feedback link points to
 
 highlighter: rouge
