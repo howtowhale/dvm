@@ -14,10 +14,12 @@ install:
 script:
 - make test
 - make cross-build
+before_deploy:
+  - openssl aes-256-cbc -K $encrypted_dbb0a0025066_key -iv $encrypted_dbb0a0025066_iv -in script/travis.deploy.pem.enc -out script/travis.deploy.pem -d
 deploy:
 - provider: script
   script: make deploy
   skip_cleanup: true
   on:
-    repo: getcarina/dvm
+    repo: howtowhale/dvm
     tags: true
