@@ -23,7 +23,7 @@ Mac OS X and Linux require curl or wget.
 **Mac OS X and Linux**
 
 ```bash
-$ curl -sL https://download.getcarina.com/dvm/latest/install.sh | sh
+$ curl -sL https://howtowhale.github.io/dvm/downloads/latest/install.sh | sh
 ```
 
 **Windows**
@@ -32,7 +32,7 @@ Open a PowerShell command prompt and execute the following command. We use Power
 installation but you can use `dvm` with PowerShell or CMD once it's installed.
 
 ```powershell
-> iex (invoke-webrequest https://download.getcarina.com/dvm/latest/install.ps1)
+> iex (invoke-webrequest https://howtowhale.github.io/dvm/downloads/latest/install.ps1)
 ```
 
 ## Upgrading from previous dvm

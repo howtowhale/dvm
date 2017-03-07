@@ -30,7 +30,7 @@ Error response from daemon: client and server don't have same version (client : 
     **Mac OS X without Homebrew, and Linux**
 
     ```bash
-    $ curl -sL https://download.getcarina.com/dvm/latest/install.sh | sh
+    $ curl -sL https://howtowhale.github.io/dvm/downloads/latest/install.sh | sh
     ```
 
     **Windows**
@@ -39,7 +39,7 @@ Error response from daemon: client and server don't have same version (client : 
     installation but you can use `dvm` with PowerShell or CMD once it's installed.
 
     ```powershell
-    > Invoke-WebRequest https://download.getcarina.com/dvm/latest/install.ps1 -UseBasicParsing | Invoke-Expression
+    > Invoke-WebRequest https://howtowhale.github.io/dvm/downloads/latest/install.ps1 -UseBasicParsing | Invoke-Expression
     ```
 
     **Note**: If you use zsh instead of bash, add `source $HOME/.dvm/dvm.sh` to your `~/.zshrc` to finalize the installation.

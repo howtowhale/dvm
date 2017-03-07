@@ -55,7 +55,7 @@ install_dvm_helper() {
   # Download 0.3.1 release
   mkdir -p "$DVM_DIR/dvm-helper"
   bin="$DVM_DIR/dvm-helper/dvm-helper"
-  url=https://download.getcarina.com/dvm/0.3.1/$DVM_OS/$DVM_ARCH/dvm-helper
+  url=https://howtowhale.github.io/dvm/downloads/0.3.1/$DVM_OS/$DVM_ARCH/dvm-helper
   dvm_download -L --progress-bar $url -o "$bin"
   chmod u+x $bin
 }
@@ -70,10 +70,10 @@ if [ ! -d "$DVM_DIR" ]; then
 fi
 
 echo "Downloading dvm.sh..."
-dvm_download -L --progress-bar https://download.getcarina.com/dvm/0.3.1/dvm.sh -o $DVM_DIR/dvm.sh
+dvm_download -L --progress-bar https://howtowhale.github.io/dvm/downloads/0.3.1/dvm.sh -o $DVM_DIR/dvm.sh
 
 echo "Downloading bash_completion"
-dvm_download -L --progress-bar https://download.getcarina.com/dvm/0.3.1/bash_completion -o $DVM_DIR/bash_completion
+dvm_download -L --progress-bar https://howtowhale.github.io/dvm/downloads/0.3.1/bash_completion -o $DVM_DIR/bash_completion
 
 echo "Downloading dvm-helper..."
 install_dvm_helper

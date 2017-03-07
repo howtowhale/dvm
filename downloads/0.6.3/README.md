@@ -30,7 +30,7 @@ $ brew update && brew install dvm
 **Mac OS X and Linux**
 
 ```bash
-$ curl -sL https://download.getcarina.com/dvm/latest/install.sh | sh
+$ curl -sL https://howtowhale.github.io/dvm/downloads/latest/install.sh | sh
 ```
 
 **Windows**
@@ -39,7 +39,7 @@ Open a PowerShell command prompt and execute the following command. We use Power
 installation but you can use `dvm` with PowerShell or CMD once it's installed.
 
 ```powershell
-> Invoke-WebRequest https://download.getcarina.com/dvm/latest/install.ps1 -UseBasicParsing | Invoke-Expression
+> Invoke-WebRequest https://howtowhale.github.io/dvm/downloads/latest/install.ps1 -UseBasicParsing | Invoke-Expression
 ```
 
 ## Upgrading from previous dvm

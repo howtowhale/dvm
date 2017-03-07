@@ -4,10 +4,10 @@ function downloadDvm([string] $dvmDir) {
   $webClient = New-Object net.webclient
 
   echo "Downloading dvm.ps1..."
-  $webClient.DownloadFile("https://download.getcarina.com/dvm/0.6.5/dvm.ps1", "$dvmDir\dvm.ps1")
+  $webClient.DownloadFile("https://howtowhale.github.io/dvm/downloads/0.6.5/dvm.ps1", "$dvmDir\dvm.ps1")
 
   echo "Downloading dvm.cmd..."
-  $webClient.DownloadFile("https://download.getcarina.com/dvm/0.6.5/dvm.cmd", "$dvmDir\dvm.cmd")
+  $webClient.DownloadFile("https://howtowhale.github.io/dvm/downloads/0.6.5/dvm.cmd", "$dvmDir\dvm.cmd")
 
   echo "Downloading dvm-helper.exe..."
   $tmpDir = Join-Path $dvmDir .tmp
@@ -26,8 +26,8 @@ function downloadDvm([string] $dvmDir) {
   if( [System.Environment]::Is64BitOperatingSystem ) { $arch = "x86_64" } else { $arch = "i686"}
 
   # Download 0.6.5 release
-  $webClient.DownloadFile("https://download.getcarina.com/dvm/0.6.5/Windows/$arch/dvm-helper.exe", "$tmpDir\dvm-helper.exe")
-  $webClient.DownloadFile("https://download.getcarina.com/dvm/0.6.5/Windows/$arch/dvm-helper.exe.sha256", "$tmpDir\dvm-helper.exe.256")
+  $webClient.DownloadFile("https://howtowhale.github.io/dvm/downloads/0.6.5/Windows/$arch/dvm-helper.exe", "$tmpDir\dvm-helper.exe")
+  $webClient.DownloadFile("https://howtowhale.github.io/dvm/downloads/0.6.5/Windows/$arch/dvm-helper.exe.sha256", "$tmpDir\dvm-helper.exe.256")
 
   # Verify the binary was downloaded successfully
   $checksum = (cat $tmpDir\dvm-helper.exe.256).Split(' ')[0]
