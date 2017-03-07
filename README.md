@@ -1,6 +1,6 @@
 # Docker Version Manager
 
-[![Build Status](https://travis-ci.org/getcarina/dvm.svg?branch=master)](https://travis-ci.org/getcarina/dvm)
+[![Build Status](https://travis-ci.org/howtowhale/dvm.svg?branch=master)](https://travis-ci.org/howtowhale/dvm)
 
 <p style="text-align: center"><a href="https://howtowhale.github.io/dvm/">howtowhale.github.io/dvm/</a></p>
 

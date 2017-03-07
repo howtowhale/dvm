@@ -4,7 +4,7 @@ COMMIT = $(shell git rev-parse --verify --short HEAD)
 VERSION = $(shell git describe --tags --dirty='-dev' 2> /dev/null)
 PERMALINK = $(shell if [[ $(VERSION) =~ [^-]*-([^.]+).* ]]; then echo $${BASH_REMATCH[1]}; else echo "latest"; fi)
 
-GITHUB_ORG = getcarina
+GITHUB_ORG = howtowhale
 GITHUB_REPO = dvm
 PACKAGE = github.com/${GITHUB_ORG}/${GITHUB_REPO}/dvm-helper
 UPGRADE_DISABLED = false
