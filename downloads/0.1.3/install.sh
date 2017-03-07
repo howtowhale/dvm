@@ -54,10 +54,10 @@ install_dvm_helper() {
   [ $(getconf LONG_BIT) == 64 ] && DVM_ARCH="amd64" || DVM_ARCH="386"
 
   # Download latest release
-  LATEST_TAG=$(curl -s https://api.github.com/repos/getcarina/dvm/tags | grep name -m 1 | awk '{print $2}' | cut -d '"' -f2)
+  LATEST_TAG=$(curl -s https://api.github.com/repos/howtowhale/dvm/tags | grep name -m 1 | awk '{print $2}' | cut -d '"' -f2)
   mkdir -p "$DVM_DIR/dvm-helper"
   bin="$DVM_DIR/dvm-helper/dvm-helper"
-  url=https://github.com/getcarina/dvm/releases/download/$LATEST_TAG/dvm-helper-$DVM_OS-$DVM_ARCH
+  url=https://github.com/howtowhale/dvm/releases/download/$LATEST_TAG/dvm-helper-$DVM_OS-$DVM_ARCH
   dvm_download -L -C - --progress-bar $url -o "$bin"
   chmod u+x $bin
 }
@@ -72,7 +72,7 @@ if [ ! -d "$DVM_DIR" ]; then
 fi
 
 echo "Downloading dvm.sh..."
-dvm_download -L -C - --progress-bar https://raw.githubusercontent.com/getcarina/dvm/master/dvm.sh -o $DVM_DIR/dvm.sh
+dvm_download -L -C - --progress-bar https://raw.githubusercontent.com/howtowhale/dvm/master/dvm.sh -o $DVM_DIR/dvm.sh
 
 echo "Downloading dvm-helper..."
 install_dvm_helper

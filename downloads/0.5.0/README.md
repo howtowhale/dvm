@@ -1,6 +1,6 @@
 # Docker Version Manager
 
-[![Build Status](https://travis-ci.org/getcarina/dvm.svg?branch=master)](https://travis-ci.org/getcarina/dvm)
+[![Build Status](https://travis-ci.org/howtowhale/dvm.svg?branch=master)](https://travis-ci.org/howtowhale/dvm)
 
 Version management for your Docker clients. Heavily influenced by [nvm](https://github.com/creationix/nvm) (ok, "borrowed" from).
 This tool modifies your current PATH to switch between different Docker clients.
