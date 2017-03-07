@@ -1,6 +1,5 @@
 package: github.com/howtowhale/dvm
 import:
-- package: github.com/blang/semver
 - package: github.com/codegangsta/cli
 - package: github.com/fatih/color
 - package: github.com/pivotal-golang/archiver
@@ -18,3 +17,5 @@ import:
   version: ^1.1.4
   subpackages:
   - assert
+- package: github.com/Masterminds/semver
+  version: ^1.2.2
