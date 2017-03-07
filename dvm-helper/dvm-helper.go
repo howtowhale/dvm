@@ -13,13 +13,14 @@ import (
 	"strings"
 
 	"context"
+
 	"github.com/blang/semver"
 	"github.com/codegangsta/cli"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/fatih/color"
-	"github.com/getcarina/dvm/dvm-helper/dockerversion"
-	"github.com/getcarina/dvm/dvm-helper/url"
 	"github.com/google/go-github/github"
+	"github.com/howtowhale/dvm/dvm-helper/dockerversion"
+	"github.com/howtowhale/dvm/dvm-helper/url"
 	"github.com/ryanuber/go-glob"
 	"golang.org/x/oauth2"
 )
