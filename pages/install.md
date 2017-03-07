@@ -27,7 +27,7 @@ brew install dvm
 Open a terminal, and then run the following command:
 
 ```bash
-curl -sL https://howtowhale.github.io/dvm/download/latest/install.sh | sh
+curl -sL https://howtowhale.github.io/dvm/downloads/latest/install.sh | sh
 ```
 
 ## Windows
@@ -38,5 +38,5 @@ CMD after it is installed.
 Open PowerShell, and then run the following command:
 
 ```powershell
-iwr 'https://howtowhale.github.io/dvm/download/latest/install.ps1' -UseBasicParsing | iex
+iwr 'https://howtowhale.github.io/dvm/downloads/latest/install.ps1' -UseBasicParsing | iex
 ```
