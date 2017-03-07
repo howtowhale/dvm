@@ -20,10 +20,10 @@ session, and so the changes that dvm makes are temporary.
 
 
 ### Quick Start
-After you [install]({{site.baseurl}}{% link pages/install.md %}) dvm, run 
-the [detect]({{site.baseurl}}{% link _commands/detect.md %}) command and you 
+After you [install]({{site.baseurl}}{% link pages/install.md %}) dvm, run
+the [detect]({{site.baseurl}}{% link _commands/detect.md %}) command and you
 are all ready to start using Docker.
- 
+
 ```
 $ dvm detect
 1.13.1 is not installed. Installing now...
@@ -45,3 +45,39 @@ for example: `dvm --silent install 1.9.0`.
 * `--debug`
 
   Prints additional debug information.
+
+### Bash and zsh completion
+
+There is bash and zsh completion available in `$DVM_DIR/bash_completion`. To invoke it into your shell, run
+
+```bash
+[[ -r $DVM_DIR/bash_completion ]] && . $DVM_DIR/bash_completion
+```
+
+For zsh, there's a bit of special sauce using `bashcompinit` from the more recent versions of zsh.
+
+### Usage
+
+```
+$ dvm [TAB]
+alias        install      ls           uninstall    which
+current      list         ls-alias     unload
+deactivate   list-alias   ls-remote    use
+help         list-remote  unalias      version
+$ dvm u[TAB]
+unalias    uninstall  unload     use
+$ dvm us[TAB]
+$ dvm use [TAB]
+1.8.2         1.9.0         carina        default       experimental
+```
+
+### Mirroring Docker Builds
+
+You may want to use a local mirror for Docker binaries instead of downloading them from the default site (`https://get.docker.com/builds`). There are a few possible reasons for this, most commonly the need to avoid dealing with corporate proxies every time.
+
+The environment variable DVM_MIRROR_URL can be set to a local mirror inside your LAN:
+
+```
+export DVM_MIRROR_URL="http://localserver/docker/builds"
+dvm install 1.10.3
+```
