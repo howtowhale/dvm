@@ -1,7 +1,7 @@
 language: go
 go:
 - 1.7
-go_import_path: github.com/getcarina/dvm
+go_import_path: github.com/howtowhale/dvm
 git:
   depth: 9999999
 env:
@@ -14,10 +14,12 @@ install:
 script:
 - make test
 - make cross-build
+before_deploy:
+  - openssl aes-256-cbc -K $encrypted_dbb0a0025066_key -iv $encrypted_dbb0a0025066_iv -in script/travis.deploy.pem.enc -out script/travis.deploy.pem -d
 deploy:
 - provider: script
   script: make deploy
   skip_cleanup: true
   on:
-    repo: getcarina/dvm
+    repo: howtowhale/dvm
     tags: true

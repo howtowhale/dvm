@@ -21,7 +21,7 @@ $ dvm --version
 [PASTE YOUR OUTPUT HERE]
 ```
 
-What is your operating System?
+What is your Operating System?
 
 What is your shell (bash/powershell/cmd/fish)?
 

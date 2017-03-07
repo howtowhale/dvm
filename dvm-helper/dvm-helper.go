@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -12,14 +13,13 @@ import (
 	"regexp"
 	"strings"
 
-	"context"
 	"github.com/blang/semver"
 	"github.com/codegangsta/cli"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/fatih/color"
-	"github.com/getcarina/dvm/dvm-helper/dockerversion"
-	"github.com/getcarina/dvm/dvm-helper/url"
 	"github.com/google/go-github/github"
+	"github.com/howtowhale/dvm/dvm-helper/dockerversion"
+	"github.com/howtowhale/dvm/dvm-helper/url"
 	"github.com/ryanuber/go-glob"
 	"golang.org/x/oauth2"
 )
@@ -316,7 +316,7 @@ func upgrade(checkOnly bool, version string) {
 }
 
 func buildDvmReleaseURL(version string, elem ...string) string {
-	prefix := url.Join("https://download.getcarina.com/dvm", version)
+	prefix := url.Join("https://howtowhale.github.io/dvm/downloads", version)
 	suffix := url.Join(elem...)
 	return url.Join(prefix, suffix)
 }
@@ -796,7 +796,7 @@ func getAvailableVersions(pattern string) []dockerversion.Version {
 
 func isUpgradeAvailable() (bool, string) {
 	gh := buildGithubClient()
-	release, response, err := gh.Repositories.GetLatestRelease("getcarina", "dvm")
+	release, response, err := gh.Repositories.GetLatestRelease("howtowhale", "dvm")
 	if err != nil {
 		warnWhenRateLimitExceeded(err, response)
 		writeWarning("Unable to query the latest dvm release from GitHub:")

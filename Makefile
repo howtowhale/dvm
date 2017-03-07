@@ -4,7 +4,7 @@ COMMIT = $(shell git rev-parse --verify --short HEAD)
 VERSION = $(shell git describe --tags --dirty='-dev' 2> /dev/null)
 PERMALINK = $(shell if [[ $(VERSION) =~ [^-]*-([^.]+).* ]]; then echo $${BASH_REMATCH[1]}; else echo "latest"; fi)
 
-GITHUB_ORG = getcarina
+GITHUB_ORG = howtowhale
 GITHUB_REPO = dvm
 PACKAGE = github.com/${GITHUB_ORG}/${GITHUB_REPO}/dvm-helper
 UPGRADE_DISABLED = false
@@ -68,10 +68,9 @@ windows32: $(GOFILES)
 
 clean:
 	 -rm -fr bin/*
+	 -rm -fr _deploy/
 	 -rm dvm-helper/dvm-helper
 	 -rm dvm-helper/dvm-helper.exe
 
 deploy:
-	curl -O https://ec4a542dbf90c03b9f75-b342aba65414ad802720b41e8159cf45.ssl.cf5.rackcdn.com/1.2/Linux/amd64/rack
-	chmod +x rack
-	./rack files object upload-dir --recurse --container carina-downloads --dir bin
+	VERSION=$(VERSION) PERMALINK=$(PERMALINK) ./script/deploy-gh-pages.sh

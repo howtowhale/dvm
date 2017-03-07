@@ -9,7 +9,7 @@ import "path/filepath"
 import "strings"
 import "github.com/fatih/color"
 import "github.com/pivotal-golang/archiver/extractor"
-import "github.com/getcarina/dvm/dvm-helper/checksum"
+import "github.com/howtowhale/dvm/dvm-helper/checksum"
 
 func exportEnvironmentVariable(name string) string {
 	value := os.Getenv(name)

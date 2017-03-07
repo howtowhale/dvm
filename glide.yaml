@@ -1,4 +1,4 @@
-package: github.com/getcarina/dvm
+package: github.com/howtowhale/dvm
 import:
 - package: github.com/blang/semver
 - package: github.com/codegangsta/cli
