@@ -32,7 +32,7 @@ var githubUrlOverride string
 var debug bool
 var silent bool
 var nocheck bool
-var useAfterInstall bool = true
+var useAfterInstall bool
 var token string
 var includePrereleases bool
 
@@ -49,6 +49,11 @@ const (
 )
 
 func main() {
+	app := makeCliApp()
+	app.Run(os.Args)
+}
+
+func makeCliApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "Docker Version Manager"
 	app.Usage = "Manage multiple versions of the Docker client"
@@ -222,10 +227,12 @@ func main() {
 		})
 	}
 
-	app.Run(os.Args)
+	return app
 }
 
 func setGlobalVars(c *cli.Context) {
+	useAfterInstall = true
+
 	debug = c.GlobalBool("debug")
 	nocheck = c.Bool("nocheck")
 	token = c.GlobalString("github-token")
@@ -409,6 +416,10 @@ func buildDownloadURL(version dockerversion.Version) string {
 		if version.IsExperimental() {
 			writeDebug("Downloading from experimental builds mirror")
 			mirrorURL = "https://experimental.docker.com/builds"
+		}
+		if version.IsPrerelease() {
+			writeDebug("Downloading from prerelease builds mirror")
+			mirrorURL = "https://test.docker.com/builds"
 		}
 	}
 
@@ -734,6 +745,9 @@ func getDockerVersion(dockerPath string, includeBuild bool) (dockerversion.Versi
 func listRemote(prefix string) {
 	versions := getAvailableVersions(prefix)
 	for _, version := range versions {
+		if !includePrereleases && version.IsPrerelease() {
+			continue
+		}
 		writeInfo(version.String())
 	}
 }
@@ -798,10 +812,6 @@ func getAvailableVersions(pattern string) []dockerversion.Version {
 		v := dockerversion.Parse(version)
 		if v.SemVer == nil {
 			writeDebug("Ignoring non-semver Docker release: %s", version)
-			continue
-		}
-
-		if !includePrereleases && v.IsPrerelease() {
 			continue
 		}
 
