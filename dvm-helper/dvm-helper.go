@@ -734,6 +734,9 @@ func getDockerVersion(dockerPath string, includeBuild bool) (dockerversion.Versi
 func listRemote(prefix string) {
 	versions := getAvailableVersions(prefix)
 	for _, version := range versions {
+		if !includePrereleases && version.IsPrerelease() {
+			continue
+		}
 		writeInfo(version.String())
 	}
 }
@@ -798,10 +801,6 @@ func getAvailableVersions(pattern string) []dockerversion.Version {
 		v := dockerversion.Parse(version)
 		if v.SemVer == nil {
 			writeDebug("Ignoring non-semver Docker release: %s", version)
-			continue
-		}
-
-		if !includePrereleases && v.IsPrerelease() {
 			continue
 		}
 
