@@ -29,6 +29,23 @@ func Parse(value string) Version {
 	return New(semver)
 }
 
+func (version Version) IsPrerelease() bool {
+	if version.SemVer == nil {
+		return false
+	}
+
+	tag := version.SemVer.Prerelease()
+
+	preTags := []string{"rc", "alpha", "beta"}
+	for i := 0; i < len(preTags); i++ {
+		if strings.Contains(tag, preTags[i]) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (version Version) IsEmpty() bool {
 	return version.Alias == "" && version.SemVer == nil
 }

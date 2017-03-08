@@ -33,6 +33,7 @@ var debug bool
 var silent bool
 var nocheck bool
 var token string
+var includePrereleases bool
 
 // These are set during the build
 var dvmVersion string
@@ -182,8 +183,12 @@ func main() {
 			Name:    "list-remote",
 			Aliases: []string{"ls-remote"},
 			Usage:   "dvm list-remote [<prefix>]\n\tList available Docker versions.",
+			Flags: []cli.Flag{
+				cli.BoolFlag{Name: "pre", Usage: "Include pre-release versions"},
+			},
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
+
 				listRemote(c.Args().First())
 				return nil
 			},
@@ -228,6 +233,7 @@ func setGlobalVars(c *cli.Context) {
 
 	silent = c.GlobalBool("silent")
 	mirrorURL = c.String("mirror-url")
+	includePrereleases = c.Bool("pre")
 
 	dvmDir = c.GlobalString("dvm-dir")
 	if dvmDir == "" {
@@ -785,8 +791,11 @@ func getAvailableVersions(pattern string) []dockerversion.Version {
 			continue
 		}
 
-		if strings.HasPrefix(v.SemVer.String(), pattern) {
+		if !includePrereleases && v.IsPrerelease() {
+			continue
+		}
 
+		if strings.HasPrefix(v.SemVer.String(), pattern) {
 			results = append(results, v)
 		}
 	}
