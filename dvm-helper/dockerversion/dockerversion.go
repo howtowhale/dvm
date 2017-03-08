@@ -67,7 +67,7 @@ func (version *Version) SetAsExperimental() {
 }
 
 func (version Version) ShouldUseArchivedRelease() bool {
-	cutoff, _ := semver.NewConstraint(">= 1.11.0")
+	cutoff, _ := semver.NewConstraint(">= 1.11.0-rc1")
 	return version.IsExperimental() || cutoff.Check(version.SemVer)
 }
 

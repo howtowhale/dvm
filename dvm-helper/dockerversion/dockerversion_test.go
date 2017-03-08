@@ -15,7 +15,6 @@ func TestIsPrerelease(t *testing.T) {
 	var v Version
 
 	v = Parse("17.3.0-ce-rc1")
-	t.Log(v.SemVer.Prerelease())
 	assert.True(t, v.IsPrerelease(), "%s should be a prerelease", v)
 
 	v = Parse("1.12.4-rc1")
@@ -29,4 +28,10 @@ func TestIsPrerelease(t *testing.T) {
 
 	v = Parse("17.3.0-ce")
 	assert.False(t, v.IsPrerelease(), "%s should NOT be a prerelease", v)
+}
+
+func TestPrereleasesUseArchivedReleases(t *testing.T) {
+	v := Parse("v1.12.5-rc1")
+
+	assert.True(t, v.ShouldUseArchivedRelease())
 }
