@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/fatih/color"
+	"github.com/howtowhale/dvm/dvm-helper/dockerversion"
 	"github.com/ryanuber/go-glob"
 	"github.com/stretchr/testify/assert"
 )
@@ -128,6 +129,15 @@ func TestListWithPrereleases(t *testing.T) {
 	assert.NotEmpty(t, output, "Should have captured stdout")
 	assert.Contains(t, output, "1.12.5-rc1", "Should have listed a prerelease version")
 
+}
+
+func TestInstallPrereleases(t *testing.T) {
+	_, github := createMockDVM(nil)
+	defer github.Close()
+
+	debug = true
+
+	install(dockerversion.Parse("v1.12.5-rc1"))
 }
 
 func loadTestData(src string) string {
