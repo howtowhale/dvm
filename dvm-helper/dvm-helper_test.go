@@ -1,15 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
-	"github.com/ryanuber/go-glob"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/fatih/color"
+	"github.com/ryanuber/go-glob"
+	"github.com/stretchr/testify/assert"
 )
 
 type requestHandler func(w http.ResponseWriter, r *http.Request)
@@ -52,11 +55,13 @@ func githubReleasesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func createMockDVM(h requestHandler) (docker *httptest.Server, github *httptest.Server) {
-	docker = httptest.NewServer(http.HandlerFunc(h))
+func createMockDVM(dockerHandler requestHandler) (docker *httptest.Server, github *httptest.Server) {
 	github = httptest.NewServer(http.HandlerFunc(githubReleasesHandler))
 	githubUrlOverride = github.URL + "/"
 
+	if dockerHandler != nil {
+		docker = httptest.NewServer(http.HandlerFunc(dockerHandler))
+	}
 	return
 }
 
@@ -90,6 +95,39 @@ func TestDetectVersion(t *testing.T) {
 	detect()
 	version := os.Getenv("DOCKER_VERSION")
 	assert.Equal(t, version, "1.12.1")
+}
+
+func TestList(t *testing.T) {
+	_, github := createMockDVM(nil)
+	defer github.Close()
+
+	debug = true
+	outputCapture := &bytes.Buffer{}
+	color.Output = outputCapture
+
+	listRemote("1.12")
+
+	output := outputCapture.String()
+	assert.NotEmpty(t, output, "Should have captured stdout")
+	assert.NotContains(t, output, "1.12.5-rc1", "Should not have listed a prerelease version")
+
+}
+
+func TestListWithPrereleases(t *testing.T) {
+	_, github := createMockDVM(nil)
+	defer github.Close()
+
+	debug = true
+	includePrereleases = true
+	outputCapture := &bytes.Buffer{}
+	color.Output = outputCapture
+
+	listRemote("1.12")
+
+	output := outputCapture.String()
+	assert.NotEmpty(t, output, "Should have captured stdout")
+	assert.Contains(t, output, "1.12.5-rc1", "Should have listed a prerelease version")
+
 }
 
 func loadTestData(src string) string {

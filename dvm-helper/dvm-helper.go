@@ -13,7 +13,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/blang/semver"
+	"github.com/Masterminds/semver"
 	"github.com/codegangsta/cli"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/fatih/color"
@@ -33,6 +33,7 @@ var debug bool
 var silent bool
 var nocheck bool
 var token string
+var includePrereleases bool
 
 // These are set during the build
 var dvmVersion string
@@ -181,9 +182,13 @@ func main() {
 		{
 			Name:    "list-remote",
 			Aliases: []string{"ls-remote"},
-			Usage:   "dvm list-remote [<pattern>]\n\tList available Docker versions.",
+			Usage:   "dvm list-remote [<prefix>]\n\tList available Docker versions.",
+			Flags: []cli.Flag{
+				cli.BoolFlag{Name: "pre", Usage: "Include pre-release versions"},
+			},
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
+
 				listRemote(c.Args().First())
 				return nil
 			},
@@ -228,6 +233,7 @@ func setGlobalVars(c *cli.Context) {
 
 	silent = c.GlobalBool("silent")
 	mirrorURL = c.String("mirror-url")
+	includePrereleases = c.Bool("pre")
 
 	dvmDir = c.GlobalString("dvm-dir")
 	if dvmDir == "" {
@@ -248,7 +254,7 @@ func detect() {
 	}
 
 	writeDebug("Queried /version and got Version: %s", versionResult.Version)
-	version, err := semver.Parse(versionResult.Version)
+	version, err := semver.NewVersion(versionResult.Version)
 
 	// Docker versions prior to 1.12 don't return a usable client version
 	// Lookup the client version from the API version
@@ -269,17 +275,18 @@ func detect() {
 			die("Unable to detect the proper client version for Docker API version %s", nil, retCodeRuntimeError, versionResult.APIVersion)
 		}
 
-		// Find the highest version that statisfies the client version range
-		clientRange := semver.MustParseRange(clientVersion)
+		// Find the highest version that satisfies the client version range
+		clientRange, _ := semver.NewConstraint(clientVersion)
 		availableVersions := getAvailableVersions("")
 		for i := len(availableVersions) - 1; i >= 0; i-- {
 			v := availableVersions[i]
-			if clientRange(v.SemVer) {
+
+			if clientRange.Check(v.SemVer) {
 				version = v.SemVer
 				break
 			}
 		}
-		if version.Equals(semver.Version{}) {
+		if version == nil {
 			die("Unable to detect the proper client version for Docker client version %s", nil, retCodeRuntimeError, clientVersion)
 		}
 	}
@@ -447,7 +454,7 @@ func use(version dockerversion.Version) {
 		die("The use command requires that a version is specified or the DOCKER_VERSION environment variable is set.", nil, retCodeInvalidOperation)
 	}
 
-	if version.HasAlias() && aliasExists(version.Alias) {
+	if version.Alias != "" && aliasExists(version.Alias) {
 		aliasedVersion, _ := ioutil.ReadFile(getAliasPath(version.Alias))
 		version.SemVer = semver.MustParse(string(aliasedVersion))
 		writeDebug("Using alias: %s -> %s", version.Alias, version.SemVer)
@@ -714,8 +721,8 @@ func getDockerVersion(dockerPath string, includeBuild bool) (dockerversion.Versi
 	return dockerversion.Parse(version), nil
 }
 
-func listRemote(pattern string) {
-	versions := getAvailableVersions(pattern)
+func listRemote(prefix string) {
+	versions := getAvailableVersions(prefix)
 	for _, version := range versions {
 		writeInfo(version.String())
 	}
@@ -775,18 +782,21 @@ func getAvailableVersions(pattern string) []dockerversion.Version {
 		options.Page = response.NextPage
 	}
 
-	versionRegex := regexp.MustCompile(`^v([1-9]+\.\d+\.\d+)$`)
-	patternRegex, err := regexp.Compile(pattern)
-	if err != nil {
-		die("Invalid pattern.", err, retCodeInvalidOperation)
-	}
-
 	var results []dockerversion.Version
 	for _, release := range allReleases {
 		version := *release.Name
-		match := versionRegex.FindStringSubmatch(version)
-		if len(match) > 1 && patternRegex.MatchString(version) {
-			results = append(results, dockerversion.Parse(match[1]))
+		v := dockerversion.Parse(version)
+		if v.SemVer == nil {
+			writeDebug("Ignoring non-semver Docker release: %s", version)
+			continue
+		}
+
+		if !includePrereleases && v.IsPrerelease() {
+			continue
+		}
+
+		if strings.HasPrefix(v.SemVer.String(), pattern) {
+			results = append(results, v)
 		}
 	}
 
@@ -808,20 +818,20 @@ func isUpgradeAvailable() (bool, string) {
 		return false, ""
 	}
 
-	currentVersion, err := semver.Make(dvmVersion)
+	currentVersion, err := semver.NewVersion(dvmVersion)
 	if err != nil {
 		writeWarning("Unable to parse the current dvm version as a semantic version!")
 		writeWarning("%s", err)
 		return false, ""
 	}
-	latestVersion, err := semver.Make(*release.TagName)
+	latestVersion, err := semver.NewVersion(*release.TagName)
 	if err != nil {
 		writeWarning("Unable to parse the latest dvm version as a semantic version!")
 		writeWarning("%s", err)
 		return false, ""
 	}
 
-	return latestVersion.Compare(currentVersion) > 0, *release.TagName
+	return latestVersion.GreaterThan(currentVersion), *release.TagName
 }
 
 func getVersionsDir() string {
