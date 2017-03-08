@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/fatih/color"
-	"github.com/howtowhale/dvm/dvm-helper/dockerversion"
 	"github.com/ryanuber/go-glob"
 	"github.com/stretchr/testify/assert"
 )
@@ -75,11 +74,18 @@ func TestDetectOldVersion(t *testing.T) {
 	os.Setenv("DOCKER_TLS_VERIFY", "0")
 	os.Unsetenv("DOCKER_CERT_PATH")
 
-	debug = true
+	outputCapture := &bytes.Buffer{}
+	color.Output = outputCapture
 
-	detect()
+	dvm := makeCliApp()
+	dvm.Run([]string{"dvm", "--debug", "detect"})
+
 	version := os.Getenv("DOCKER_VERSION")
-	assert.Equal(t, version, "1.10.3")
+	assert.Equal(t, version, "1.10.3", "Detected the wrong version")
+
+	output := outputCapture.String()
+	assert.NotEmpty(t, output, "Should have captured stdout")
+	assert.Contains(t, output, "Detected client version: 1.10.3", "Should have printed the detected version")
 }
 
 func TestDetectVersion(t *testing.T) {
@@ -87,26 +93,33 @@ func TestDetectVersion(t *testing.T) {
 	defer docker.Close()
 	defer github.Close()
 
+	outputCapture := &bytes.Buffer{}
+	color.Output = outputCapture
+
 	os.Setenv("DOCKER_HOST", docker.URL)
 	os.Setenv("DOCKER_TLS_VERIFY", "0")
 	os.Unsetenv("DOCKER_CERT_PATH")
 
-	debug = true
+	dvm := makeCliApp()
+	dvm.Run([]string{"dvm", "--debug", "detect"})
 
-	detect()
 	version := os.Getenv("DOCKER_VERSION")
-	assert.Equal(t, version, "1.12.1")
+	assert.Equal(t, version, "1.12.1", "Detected the wrong version")
+
+	output := outputCapture.String()
+	assert.NotEmpty(t, output, "Should have captured stdout")
+	assert.Contains(t, output, "Detected client version: 1.12.1", "Should have printed the detected version")
 }
 
-func TestList(t *testing.T) {
+func TestListRemote(t *testing.T) {
 	_, github := createMockDVM(nil)
 	defer github.Close()
 
-	debug = true
 	outputCapture := &bytes.Buffer{}
 	color.Output = outputCapture
 
-	listRemote("1.12")
+	dvm := makeCliApp()
+	dvm.Run([]string{"dvm", "--debug", "list-remote", "1.12"})
 
 	output := outputCapture.String()
 	assert.NotEmpty(t, output, "Should have captured stdout")
@@ -114,16 +127,15 @@ func TestList(t *testing.T) {
 
 }
 
-func TestListWithPrereleases(t *testing.T) {
+func TestListRemoteWithPrereleases(t *testing.T) {
 	_, github := createMockDVM(nil)
 	defer github.Close()
 
-	debug = true
-	includePrereleases = true
 	outputCapture := &bytes.Buffer{}
 	color.Output = outputCapture
 
-	listRemote("1.12")
+	dvm := makeCliApp()
+	dvm.Run([]string{"dvm-helper", "--debug", "list-remote", "--pre", "1.12"})
 
 	output := outputCapture.String()
 	assert.NotEmpty(t, output, "Should have captured stdout")
@@ -135,9 +147,15 @@ func TestInstallPrereleases(t *testing.T) {
 	_, github := createMockDVM(nil)
 	defer github.Close()
 
-	debug = true
+	outputCapture := &bytes.Buffer{}
+	color.Output = outputCapture
 
-	install(dockerversion.Parse("v1.12.5-rc1"))
+	dvm := makeCliApp()
+	dvm.Run([]string{"dvm-helper", "--debug", "install", "1.12.5-rc1"})
+
+	output := outputCapture.String()
+	assert.NotEmpty(t, output, "Should have captured stdout")
+	assert.Contains(t, output, "Now using Docker 1.12.5-rc1", "Should have installed a prerelease version")
 }
 
 func loadTestData(src string) string {
