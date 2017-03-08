@@ -410,6 +410,10 @@ func buildDownloadURL(version dockerversion.Version) string {
 			writeDebug("Downloading from experimental builds mirror")
 			mirrorURL = "https://experimental.docker.com/builds"
 		}
+		if version.IsPrerelease() {
+			writeDebug("Downloading from prerelease builds mirror")
+			mirrorURL = "https://test.docker.com/builds"
+		}
 	}
 
 	// New Docker versions are released in a zip file, vs. the old way of releasing the client binary only
