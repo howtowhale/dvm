@@ -97,6 +97,17 @@ func (version Version) Value() string {
 	return version.formatRaw()
 }
 
+// Slug is the path segment under DVM_DIR where the binary is located
+func (version Version) Slug() string {
+	if version.IsSystem() {
+		return ""
+	}
+	if version.IsExperimental() {
+		return version.alias
+	}
+	return version.formatRaw()
+}
+
 func (version Version) Name() string {
 	if version.alias != "" {
 		return version.alias

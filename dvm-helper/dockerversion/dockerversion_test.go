@@ -47,9 +47,23 @@ func TestLeadingZeroInVersion(t *testing.T) {
 
 func TestSystemAlias(t *testing.T) {
 	v := dockerversion.Parse(dockerversion.SystemAlias)
+	assert.Empty(t, v.Slug(),
+		"The system alias should not have a slug")
 	assert.Equal(t, dockerversion.SystemAlias, v.String(),
 		"An empty alias should only print the alias")
-	assert.Equal(t, dockerversion.SystemAlias, v.String(),
+	assert.Equal(t, dockerversion.SystemAlias, v.Name(),
+		"The name for an aliased version should be its alias")
+	assert.Equal(t, "", v.Value(),
+		"The value for an empty aliased version should be empty")
+}
+
+func TestExperimentalAlias(t *testing.T) {
+	v := dockerversion.Parse(dockerversion.ExperimentalAlias)
+	assert.Equal(t, dockerversion.ExperimentalAlias, v.Slug(),
+		"The slug for the experimental version should be 'experimental'")
+	assert.Equal(t, dockerversion.ExperimentalAlias, v.String(),
+		"An empty alias should only print the alias")
+	assert.Equal(t, dockerversion.ExperimentalAlias, v.Name(),
 		"The name for an aliased version should be its alias")
 	assert.Equal(t, "", v.Value(),
 		"The value for an empty aliased version should be empty")
@@ -57,20 +71,36 @@ func TestSystemAlias(t *testing.T) {
 
 func TestAlias(t *testing.T) {
 	v := dockerversion.NewAlias("prod", "1.2.3")
+	assert.Equal(t, "1.2.3", v.Slug(),
+		"The slug for an aliased version should be its semver value")
 	assert.Equal(t, "prod (1.2.3)", v.String(),
 		"The string representation for an aliased version should include both alias and version")
 	assert.Equal(t, "prod", v.Name(),
 		"The name for an aliased version should be its alias")
 	assert.Equal(t, "1.2.3", v.Value(),
-		"The value for an aliased version should be its version")
+		"The value for an aliased version should be its semver value")
 }
 
 func TestSemanticVersion(t *testing.T) {
 	v := dockerversion.Parse("1.2.3")
+	assert.Equal(t, "1.2.3", v.Slug(),
+		"The slug for a a semantic version should be its semver value")
 	assert.Equal(t, "1.2.3", v.String(),
 		"The string representation for a semantic version should only include the semver value")
 	assert.Equal(t, "1.2.3", v.Name(),
 		"The name for a semantic version should be its semver value")
 	assert.Equal(t, "1.2.3", v.Value(),
 		"The value for a semantic version should be its semver value")
+}
+
+func TestSetAsExperimental(t *testing.T) {
+	v := dockerversion.Parse("1.2.3")
+	v.SetAsExperimental()
+	assert.True(t, v.IsExperimental())
+}
+
+func TestSetAsSystem(t *testing.T) {
+	v := dockerversion.Parse("1.2.3")
+	v.SetAsSystem()
+	assert.True(t, v.IsSystem())
 }

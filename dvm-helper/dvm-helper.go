@@ -878,7 +878,7 @@ func getVersionsDir() string {
 }
 
 func getVersionDir(version dockerversion.Version) string {
-	versionPath := version.Name()
+	versionPath := version.Slug()
 	if version.IsExperimental() {
 		versionPath = dockerversion.ExperimentalAlias
 	}
