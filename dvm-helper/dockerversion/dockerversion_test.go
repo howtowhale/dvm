@@ -35,3 +35,20 @@ func TestPrereleasesUseArchivedReleases(t *testing.T) {
 
 	assert.True(t, v.ShouldUseArchivedRelease())
 }
+
+func TestLeadingZeroInVersion(t *testing.T) {
+	v := Parse("v17.03.0-ce")
+
+	assert.Equal(t, "17.03.0-ce", v.String(), "Leading zeroes in the version should be preserved")
+}
+
+func TestSystemAlias(t *testing.T) {
+	v := Parse(SystemAlias)
+	assert.Equal(t, SystemAlias, v.String())
+}
+
+func TestUserAlias(t *testing.T) {
+	v := Parse("1.2.3")
+	v.Alias = "prod"
+	assert.Equal(t, "prod (1.2.3)", v.String())
+}

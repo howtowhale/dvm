@@ -12,21 +12,22 @@ const SystemAlias = "system"
 const ExperimentalAlias = "experimental"
 
 type Version struct {
+	// Since Docker versions aren't valid versions, (it has leading zeroes)
+	// We must save the original string representation
+	Raw string
 	SemVer *semver.Version
 	Alias  string
 }
 
-func New(semver *semver.Version) Version {
-	return Version{SemVer: semver}
-}
-
 func Parse(value string) Version {
+	v := Version{Raw: value}
 	semver, err := semver.NewVersion(value)
-	if err != nil {
-		return Version{Alias: value}
+	if err == nil {
+		v.SemVer = semver
+	} else {
+		v.Alias = value
 	}
-
-	return New(semver)
+	return v
 }
 
 func (version Version) IsPrerelease() bool {
@@ -72,13 +73,19 @@ func (version Version) ShouldUseArchivedRelease() bool {
 }
 
 func (version Version) String() string {
-	if version.Alias != "" {
-		if version.SemVer != nil {
-			return fmt.Sprintf("%s (%s)", version.Alias, version.SemVer.String())
-		}
-		return version.Alias
+	raw := version.formatRaw()
+	if version.Alias != "" && version.SemVer != nil {
+		return fmt.Sprintf("%s (%s)", version.Alias, raw)
 	}
-	return version.SemVer.String()
+	return raw
+}
+func (version Version) formatRaw() string {
+	value := version.Raw
+	prefix := value[0:1]
+	if strings.ToLower(prefix) == "v" {
+		value = value[1:]
+	}
+	return value
 }
 
 // Compare compares Versions v to o:

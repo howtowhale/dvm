@@ -264,11 +264,11 @@ func detect() {
 	}
 
 	writeDebug("Queried /version and got Version: %s", versionResult.Version)
-	version, err := semver.NewVersion(versionResult.Version)
+	version := dockerversion.Parse(versionResult.Version)
 
 	// Docker versions prior to 1.12 don't return a usable client version
 	// Lookup the client version from the API version
-	if err != nil {
+	if version.SemVer == nil {
 		writeDebug("Attempting to lookup a client version for API version: %s", versionResult.APIVersion)
 
 		// api version -> client version range
@@ -292,11 +292,11 @@ func detect() {
 			v := availableVersions[i]
 
 			if clientRange.Check(v.SemVer) {
-				version = v.SemVer
+				version = v
 				break
 			}
 		}
-		if version == nil {
+		if version.SemVer == nil {
 			die("Unable to detect the proper client version for Docker client version %s", nil, retCodeRuntimeError, clientVersion)
 		}
 	}
@@ -306,7 +306,7 @@ func detect() {
 	writeEnvironmentVariableScript(versionEnvVar)
 
 	nocheck = true
-	use(dockerversion.New(version))
+	use(version)
 }
 
 func upgrade(checkOnly bool, version string) {
@@ -406,7 +406,7 @@ func install(version dockerversion.Version) {
 }
 
 func buildDownloadURL(version dockerversion.Version) string {
-	dockerVersion := version.SemVer.String()
+	dockerVersion := version.Raw
 	if version.IsExperimental() {
 		dockerVersion = "latest"
 	}
@@ -767,7 +767,8 @@ func getInstalledVersions(pattern string) []dockerversion.Version {
 				writeDebug("Unable to get version of installed experimental version at %s.\n%s", versionDir, err)
 				continue
 			}
-			version.SemVer = experimentalVersion.SemVer
+			experimentalVersion.Alias = dockerversion.ExperimentalAlias
+			version = experimentalVersion
 		}
 
 		results = append(results, version)
