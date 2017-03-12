@@ -9,7 +9,9 @@ import (
 
 func TestStripLeadingV(t *testing.T) {
 	v := dockerversion.Parse("v1.0.0")
-	assert.Equal(t, "1.0.0", v.String())
+	assert.Equal(t, "1.0.0", v.String(), "Leading v should be stripped from the string representation")
+	assert.Equal(t, "1.0.0", v.Name(), "Leading v should be stripped from the name")
+	assert.Equal(t, "1.0.0", v.Value(), "Leading v should be stripped from the version value")
 }
 
 func TestIsPrerelease(t *testing.T) {

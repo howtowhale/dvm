@@ -84,25 +84,24 @@ func (version Version) ShouldUseArchivedRelease() bool {
 }
 
 func (version Version) String() string {
-	raw := version.formatRaw()
 	if version.alias != "" && version.semver != nil {
-		return fmt.Sprintf("%s (%s)", version.alias, raw)
+		return fmt.Sprintf("%s (%s)", version.alias, version.formatRaw())
 	}
-	return raw
+	return version.formatRaw()
 }
 
 func (version Version) Value() string {
 	if version.semver == nil {
 		return ""
 	}
-	return version.raw
+	return version.formatRaw()
 }
 
 func (version Version) Name() string {
 	if version.alias != "" {
 		return version.alias
 	}
-	return version.raw
+	return version.formatRaw()
 }
 
 func (version Version) formatRaw() string {
