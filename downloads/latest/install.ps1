@@ -4,10 +4,10 @@ function downloadDvm([string] $dvmDir) {
   $webClient = New-Object net.webclient
 
   echo "Downloading dvm.ps1..."
-  $webClient.DownloadFile("https://howtowhale.github.io/dvm/downloads/0.8.1/dvm.ps1", "$dvmDir\dvm.ps1")
+  $webClient.DownloadFile("https://howtowhale.github.io/dvm/downloads/0.8.2/dvm.ps1", "$dvmDir\dvm.ps1")
 
   echo "Downloading dvm.cmd..."
-  $webClient.DownloadFile("https://howtowhale.github.io/dvm/downloads/0.8.1/dvm.cmd", "$dvmDir\dvm.cmd")
+  $webClient.DownloadFile("https://howtowhale.github.io/dvm/downloads/0.8.2/dvm.cmd", "$dvmDir\dvm.cmd")
 
   echo "Downloading dvm-helper.exe..."
   $tmpDir = Join-Path $dvmDir .tmp
@@ -25,8 +25,8 @@ function downloadDvm([string] $dvmDir) {
   # Detect x86 vs. x64
   if( [System.Environment]::Is64BitOperatingSystem ) { $arch = "x86_64" } else { $arch = "i686"}
 
-  # Download 0.8.1 release
-  $webClient.DownloadFile("https://howtowhale.github.io/dvm/downloads/0.8.1/Windows/$arch/dvm-helper.exe", "$tmpDir\dvm-helper.exe")
+  # Download 0.8.2 release
+  $webClient.DownloadFile("https://howtowhale.github.io/dvm/downloads/0.8.2/Windows/$arch/dvm-helper.exe", "$tmpDir\dvm-helper.exe")
   $webClient.DownloadFile("https://howtowhale.github.io/dvm/downloads/Windows/$arch/dvm-helper.exe.sha256", "$tmpDir\dvm-helper.exe.256")
 
   # Verify the binary was downloaded successfully
