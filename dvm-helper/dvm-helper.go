@@ -72,6 +72,8 @@ func makeCliApp() *cli.App {
 			Usage: "Detect the appropriate Docker client version",
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
+
+				writeDebug("dvm detect")
 				detect()
 				return nil
 			},
@@ -87,13 +89,17 @@ func makeCliApp() *cli.App {
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 
-				versionName := c.Args().First()
-				if versionName == "" {
-					versionName = getDockerVersionVar()
-				}
-				version := dockerversion.Parse(versionName)
+				value := c.Args().First()
+				if value == "" {
+					value = getDockerVersionVar()
 
-				install(version)
+					if value == "" {
+						die("The install command requires that a version is specified or the DOCKER_VERSION environment variable is set.", nil, retCodeInvalidArgument)
+					}
+				}
+
+				writeDebug("dvm install %s", value)
+				install(dockerversion.Parse(value))
 				return nil
 			},
 		},
@@ -102,8 +108,14 @@ func makeCliApp() *cli.App {
 			Usage: "dvm uninstall <version>\n\tUninstall a Docker version.",
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
-				version := dockerversion.Parse(c.Args().First())
-				uninstall(version)
+
+				value := c.Args().First()
+				if value == "" {
+					die("The uninstall command requires that a version is specified.", nil, retCodeInvalidArgument)
+				}
+
+				writeDebug("dvm uninstall %s", value)
+				uninstall(dockerversion.Parse(value))
 				return nil
 			},
 		},
@@ -117,13 +129,17 @@ func makeCliApp() *cli.App {
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 
-				versionName := c.Args().First()
-				if versionName == "" {
-					versionName = getDockerVersionVar()
-				}
-				version := dockerversion.Parse(versionName)
+				value := c.Args().First()
+				if value == "" {
+					value = getDockerVersionVar()
 
-				use(version)
+					if value == "" {
+						die("The use command requires that a version is specified or the DOCKER_VERSION environment variable is set.", nil, retCodeInvalidOperation)
+					}
+				}
+
+				writeDebug("dvm use %s", value)
+				use(dockerversion.Parse(value))
 				return nil
 			},
 		},
@@ -132,6 +148,8 @@ func makeCliApp() *cli.App {
 			Usage: "dvm deactivate\n\tUndo the effects of `dvm` on current shell.",
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
+
+				writeDebug("dvm deactivate")
 				deactivate()
 				return nil
 			},
@@ -141,6 +159,8 @@ func makeCliApp() *cli.App {
 			Usage: "dvm current\n\tPrint the current Docker version.",
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
+
+				writeDebug("dvm current")
 				current()
 				return nil
 			},
@@ -150,6 +170,8 @@ func makeCliApp() *cli.App {
 			Usage: "dvm which\n\tPrint the path to the current Docker version.",
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
+
+				writeDebug("dvm which")
 				which()
 				return nil
 			},
@@ -159,9 +181,15 @@ func makeCliApp() *cli.App {
 			Usage: "dvm alias <alias> <version>\n\tCreate an alias to a Docker version.",
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
+
 				name := c.Args().Get(0)
-				version := dockerversion.Parse(c.Args().Get(1))
-				alias(name, version)
+				value := c.Args().Get(1)
+				if name == "" || value == "" {
+					die("The alias command requires both an alias name and a version.", nil, retCodeInvalidArgument)
+				}
+
+				writeDebug("dvm alias %s %s", name, value)
+				alias(name, value)
 				return nil
 			},
 		},
@@ -170,8 +198,14 @@ func makeCliApp() *cli.App {
 			Usage: "dvm unalias <alias>\n\tRemove a Docker version alias.",
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
-				name := c.Args().First()
-				unalias(name)
+
+				alias := c.Args().First()
+				if alias == "" {
+					die("The unalias command requires an alias alias.", nil, retCodeInvalidArgument)
+				}
+
+				writeDebug("dvm unalias %s", alias)
+				unalias(alias)
 				return nil
 			},
 		},
@@ -181,7 +215,11 @@ func makeCliApp() *cli.App {
 			Usage:   "dvm list [<pattern>]\n\tList installed Docker versions.",
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
-				list(c.Args().First())
+
+				pattern := c.Args().First()
+
+				writeDebug("dvm list %s", pattern)
+				list(pattern)
 				return nil
 			},
 		},
@@ -195,7 +233,10 @@ func makeCliApp() *cli.App {
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
 
-				listRemote(c.Args().First())
+				pattern := c.Args().First()
+
+				writeDebug("dvm list-remote %s", pattern)
+				listRemote(pattern)
 				return nil
 			},
 		},
@@ -205,6 +246,8 @@ func makeCliApp() *cli.App {
 			Usage:   "dvm list-alias\n\tList Docker version aliases.",
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
+
+				writeDebug("dvm list-alias")
 				listAlias()
 				return nil
 			},
@@ -264,11 +307,11 @@ func detect() {
 	}
 
 	writeDebug("Queried /version and got Version: %s", versionResult.Version)
-	version, err := semver.NewVersion(versionResult.Version)
+	version := dockerversion.Parse(versionResult.Version)
 
 	// Docker versions prior to 1.12 don't return a usable client version
 	// Lookup the client version from the API version
-	if err != nil {
+	if version.IsEmpty() {
 		writeDebug("Attempting to lookup a client version for API version: %s", versionResult.APIVersion)
 
 		// api version -> client version range
@@ -280,24 +323,23 @@ func detect() {
 			"1.19": "1.7.x",
 			"1.18": "1.6.x",
 		}
-		clientVersion, found := oldVersionMap[versionResult.APIVersion]
+		clientRange, found := oldVersionMap[versionResult.APIVersion]
 		if !found {
 			die("Unable to detect the proper client version for Docker API version %s", nil, retCodeRuntimeError, versionResult.APIVersion)
 		}
 
 		// Find the highest version that satisfies the client version range
-		clientRange, _ := semver.NewConstraint(clientVersion)
 		availableVersions := getAvailableVersions("")
 		for i := len(availableVersions) - 1; i >= 0; i-- {
 			v := availableVersions[i]
 
-			if clientRange.Check(v.SemVer) {
-				version = v.SemVer
+			if ok, _ := v.InRange(clientRange); ok {
+				version = v
 				break
 			}
 		}
-		if version == nil {
-			die("Unable to detect the proper client version for Docker client version %s", nil, retCodeRuntimeError, clientVersion)
+		if version.IsEmpty() {
+			die("Unable to detect the proper client version for %s", nil, retCodeRuntimeError, clientRange)
 		}
 	}
 	writeDebug("Detected client version: %s", version)
@@ -306,7 +348,7 @@ func detect() {
 	writeEnvironmentVariableScript(versionEnvVar)
 
 	nocheck = true
-	use(dockerversion.New(version))
+	use(version)
 }
 
 func upgrade(checkOnly bool, version string) {
@@ -364,12 +406,6 @@ func list(pattern string) {
 }
 
 func install(version dockerversion.Version) {
-	writeDebug("dvm install %s", version)
-
-	if version.IsEmpty() {
-		die("The install command requires that a version is specified or the DOCKER_VERSION environment variable is set.", nil, retCodeInvalidArgument)
-	}
-
 	if nocheck {
 		writeDebug("Skipping version validation!")
 	}
@@ -406,7 +442,7 @@ func install(version dockerversion.Version) {
 }
 
 func buildDownloadURL(version dockerversion.Version) string {
-	dockerVersion := version.SemVer.String()
+	dockerVersion := version.Value()
 	if version.IsExperimental() {
 		dockerVersion = "latest"
 	}
@@ -445,10 +481,6 @@ func downloadRelease(version dockerversion.Version) {
 }
 
 func uninstall(version dockerversion.Version) {
-	if version.IsEmpty() {
-		die("The uninstall command requires that a version is specified.", nil, retCodeInvalidArgument)
-	}
-
 	current, _ := getCurrentDockerVersion()
 	if current.Equals(version) {
 		die("Cannot uninstall the currently active Docker version.", nil, retCodeInvalidOperation)
@@ -469,16 +501,10 @@ func uninstall(version dockerversion.Version) {
 }
 
 func use(version dockerversion.Version) {
-	writeDebug("dvm use %s", version)
-
-	if version.IsEmpty() {
-		die("The use command requires that a version is specified or the DOCKER_VERSION environment variable is set.", nil, retCodeInvalidOperation)
-	}
-
-	if version.Alias != "" && aliasExists(version.Alias) {
-		aliasedVersion, _ := ioutil.ReadFile(getAliasPath(version.Alias))
-		version.SemVer = semver.MustParse(string(aliasedVersion))
-		writeDebug("Using alias: %s -> %s", version.Alias, version.SemVer)
+	if version.IsAlias() && aliasExists(version.Name()) {
+		aliasedVersion, _ := ioutil.ReadFile(getAliasPath(version.Name()))
+		version = dockerversion.NewAlias(version.Name(), string(aliasedVersion))
+		writeDebug("Using alias: %s", version)
 	}
 
 	useAfterInstall = false
@@ -506,11 +532,8 @@ func which() {
 	}
 }
 
-func alias(alias string, version dockerversion.Version) {
-	if alias == "" || version.IsEmpty() {
-		die("The alias command requires both an alias name and a version.", nil, retCodeInvalidArgument)
-	}
-
+func alias(alias string, value string) {
+	version := dockerversion.NewAlias(alias, value)
 	if !isVersionInstalled(version) {
 		die("The aliased version, %s, is not installed.", nil, retCodeInvalidArgument, version)
 	}
@@ -520,15 +543,11 @@ func alias(alias string, version dockerversion.Version) {
 		writeDebug("Overwriting existing alias.")
 	}
 
-	writeFile(aliasPath, version.SemVer.String())
-	writeInfo("Aliased %s to %s.", alias, version)
+	writeFile(aliasPath, version.Value())
+	writeInfo("Aliased %s to %s.", alias, value)
 }
 
 func unalias(alias string) {
-	if alias == "" {
-		die("The unalias command requires an alias name.", nil, retCodeInvalidArgument)
-	}
-
 	if !aliasExists(alias) {
 		writeWarning("%s is not an alias.", alias)
 		return
@@ -646,7 +665,7 @@ func versionExists(version dockerversion.Version) bool {
 		return true
 	}
 
-	availableVersions := getAvailableVersions(version.SemVer.String())
+	availableVersions := getAvailableVersions(version.Value())
 
 	for _, availableVersion := range availableVersions {
 		if version.Equals(availableVersion) {
@@ -767,7 +786,7 @@ func getInstalledVersions(pattern string) []dockerversion.Version {
 				writeDebug("Unable to get version of installed experimental version at %s.\n%s", versionDir, err)
 				continue
 			}
-			version.SemVer = experimentalVersion.SemVer
+			version = dockerversion.NewAlias(dockerversion.ExperimentalAlias, experimentalVersion.Value())
 		}
 
 		results = append(results, version)
@@ -810,12 +829,12 @@ func getAvailableVersions(pattern string) []dockerversion.Version {
 	for _, release := range allReleases {
 		version := *release.Name
 		v := dockerversion.Parse(version)
-		if v.SemVer == nil {
+		if v.IsEmpty() {
 			writeDebug("Ignoring non-semver Docker release: %s", version)
 			continue
 		}
 
-		if strings.HasPrefix(v.SemVer.String(), pattern) {
+		if strings.HasPrefix(v.Value(), pattern) {
 			results = append(results, v)
 		}
 	}
@@ -859,7 +878,7 @@ func getVersionsDir() string {
 }
 
 func getVersionDir(version dockerversion.Version) string {
-	versionPath := version.SemVer.String()
+	versionPath := version.Name()
 	if version.IsExperimental() {
 		versionPath = dockerversion.ExperimentalAlias
 	}
