@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
+	"github.com/pkg/errors"
 )
 
 const SystemAlias = "system"
@@ -14,28 +15,34 @@ const ExperimentalAlias = "experimental"
 type Version struct {
 	// Since Docker versions aren't valid versions, (it has leading zeroes)
 	// We must save the original string representation
-	Raw string
-	SemVer *semver.Version
-	Alias  string
+	raw    string
+	semver *semver.Version
+	alias  string
+}
+
+func NewAlias(alias string, value string) Version {
+	v := Parse(value)
+	v.alias = alias
+	return v
 }
 
 func Parse(value string) Version {
-	v := Version{Raw: value}
+	v := Version{raw: value}
 	semver, err := semver.NewVersion(value)
 	if err == nil {
-		v.SemVer = semver
+		v.semver = semver
 	} else {
-		v.Alias = value
+		v.alias = value
 	}
 	return v
 }
 
 func (version Version) IsPrerelease() bool {
-	if version.SemVer == nil {
+	if version.semver == nil {
 		return false
 	}
 
-	tag := version.SemVer.Prerelease()
+	tag := version.semver.Prerelease()
 
 	preTags := []string{"rc", "alpha", "beta"}
 	for i := 0; i < len(preTags); i++ {
@@ -48,39 +55,58 @@ func (version Version) IsPrerelease() bool {
 }
 
 func (version Version) IsEmpty() bool {
-	return version.Alias == "" && version.SemVer == nil
+	return version.semver == nil
+}
+
+func (version Version) IsAlias() bool {
+	return version.alias != ""
 }
 
 func (version Version) IsSystem() bool {
-	return version.Alias == SystemAlias
+	return version.alias == SystemAlias
 }
 
 func (version *Version) SetAsSystem() {
-	version.Alias = SystemAlias
+	version.alias = SystemAlias
 }
 
 func (version Version) IsExperimental() bool {
-	return version.Alias == ExperimentalAlias
+	return version.alias == ExperimentalAlias
 }
 
 func (version *Version) SetAsExperimental() {
-	version.Alias = ExperimentalAlias
+	version.alias = ExperimentalAlias
 }
 
 func (version Version) ShouldUseArchivedRelease() bool {
 	cutoff, _ := semver.NewConstraint(">= 1.11.0-rc1")
-	return version.IsExperimental() || cutoff.Check(version.SemVer)
+	return version.IsExperimental() || cutoff.Check(version.semver)
 }
 
 func (version Version) String() string {
 	raw := version.formatRaw()
-	if version.Alias != "" && version.SemVer != nil {
-		return fmt.Sprintf("%s (%s)", version.Alias, raw)
+	if version.alias != "" && version.semver != nil {
+		return fmt.Sprintf("%s (%s)", version.alias, raw)
 	}
 	return raw
 }
+
+func (version Version) Value() string {
+	if version.semver == nil {
+		return ""
+	}
+	return version.raw
+}
+
+func (version Version) Name() string {
+	if version.alias != "" {
+		return version.alias
+	}
+	return version.raw
+}
+
 func (version Version) formatRaw() string {
-	value := version.Raw
+	value := version.raw
 	prefix := value[0:1]
 	if strings.ToLower(prefix) == "v" {
 		value = value[1:]
@@ -88,16 +114,24 @@ func (version Version) formatRaw() string {
 	return value
 }
 
+func (version Version) InRange(r string) (bool, error) {
+	c, err := semver.NewConstraint(r)
+	if err != nil {
+		return false, errors.Wrapf(err, "Unable to parse range constraint: %s", r)
+	}
+	return c.Check(version.semver), nil
+}
+
 // Compare compares Versions v to o:
 // -1 == v is less than o
 // 0 == v is equal to o
 // 1 == v is greater than o
 func (v Version) Compare(o Version) int {
-	if v.SemVer != nil && o.SemVer != nil {
-		return v.SemVer.Compare(o.SemVer)
+	if v.semver != nil && o.semver != nil {
+		return v.semver.Compare(o.semver)
 	}
 
-	return strings.Compare(v.Alias, o.Alias)
+	return strings.Compare(v.alias, o.alias)
 }
 
 // Equals checks if v is equal to o.
@@ -105,7 +139,7 @@ func (v Version) Equals(o Version) bool {
 	semverMatch := v.Compare(o) == 0
 	// Enables distinguishing between X.Y.Z and system (X.Y.Z)
 	systemMatch := v.IsSystem() == o.IsSystem()
-	aliasmatch := v.Alias != "" && v.Alias == o.Alias
+	aliasmatch := v.alias != "" && v.alias == o.alias
 	return (semverMatch && systemMatch) || aliasmatch
 }
 
