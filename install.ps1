@@ -27,7 +27,7 @@ function downloadDvm([string] $dvmDir) {
 
   # Download latest release
   $webClient.DownloadFile("https://howtowhale.github.io/dvm/downloads/latest/Windows/$arch/dvm-helper.exe", "$tmpDir\dvm-helper.exe")
-  $webClient.DownloadFile("https://howtowhale.github.io/dvm/downloads/Windows/$arch/dvm-helper.exe.sha256", "$tmpDir\dvm-helper.exe.256")
+  $webClient.DownloadFile("https://howtowhale.github.io/dvm/downloads/latest/Windows/$arch/dvm-helper.exe.sha256", "$tmpDir\dvm-helper.exe.256")
 
   # Verify the binary was downloaded successfully
   $checksum = (cat $tmpDir\dvm-helper.exe.256).Split(' ')[0]
