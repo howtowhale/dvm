@@ -6,6 +6,7 @@ go:
 go_import_path: github.com/howtowhale/dvm
 git:
   depth: 9999999
+sudo: false # Run in a container
 script:
 - make test
 - make cross-build
