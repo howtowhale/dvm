@@ -18,11 +18,7 @@ BINDIR = bin/dvm/$(VERSION)
 GOFILES = dvm-helper/*.go
 GOFILES_NOVENDOR = $(shell go list ./... | grep -v /vendor/)
 
-default: get-deps local
-
-get-deps:
-	go get github.com/Masterminds/glide
-	glide install
+default: local
 
 validate:
 	go fmt $(GOFILES_NOVENDOR)
