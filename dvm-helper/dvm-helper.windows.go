@@ -9,10 +9,8 @@ import (
 )
 import "strings"
 
-const dockerOS string = "Windows"
 const dvmOS string = "Windows"
 const binaryFileExt string = ".exe"
-const archiveFileExt string = ".zip"
 
 func upgradeSelf(version string) {
 	binaryURL := buildDvmReleaseURL(version, dvmOS, dvmArch, "dvm-helper.exe")
