@@ -730,12 +730,13 @@ func getExperimentalDockerVersion() (dockerversion.Version, error) {
 }
 
 func getDockerVersion(dockerPath string, includeBuild bool) (dockerversion.Version, error) {
-	rawVersion, _ := exec.Command(dockerPath, "-v").Output()
+	stdout, _ := exec.Command(dockerPath, "-v").Output()
+	rawVersion := strings.TrimSpace(string(stdout))
 
 	writeDebug("%s -v output: %s", dockerPath, rawVersion)
 
-	versionRegex := regexp.MustCompile(`^Docker version (.+), build ([^,]+),?`)
-	match := versionRegex.FindSubmatch(rawVersion)
+	versionRegex := regexp.MustCompile(`^Docker version (.+), build (.+)?`)
+	match := versionRegex.FindStringSubmatch(rawVersion)
 	if len(match) < 2 {
 		return dockerversion.Version{}, errors.New("Could not detect docker version.")
 	}
