@@ -30,11 +30,67 @@ func Parse(value string) Version {
 	v := Version{raw: value}
 	semver, err := semver.NewVersion(value)
 	if err == nil {
-		v.semver = semver
+		v.semver = &semver
 	} else {
 		v.alias = value
 	}
 	return v
+}
+
+func (version Version) BuildDownloadURL(mirrorURL string) (url string, archived bool) {
+	var releaseSlug, versionSlug, extSlug string
+
+	archivedReleaseCutoff, _ := semver.NewVersion("1.11.0-rc1")
+	dockerStoreCutoff, _ := semver.NewVersion("17.06.0-ce")
+
+	var edgeVersion Version
+	if version.IsExperimental() {
+		// TODO: Figure out the latest edge version
+		edgeVersion = Parse("17.06.0-ce")
+	}
+
+	// Docker Store Download
+	if version.IsExperimental() || !version.semver.LessThan(dockerStoreCutoff) {
+		archived = true
+		extSlug = archiveFileExt
+		if mirrorURL == "" {
+			mirrorURL = "download.docker.com"
+		}
+		if version.IsExperimental() {
+			releaseSlug = "edge"
+			versionSlug = edgeVersion.String()
+		} else if version.IsPrerelease() {
+			releaseSlug = "test"
+			versionSlug = version.String()
+		} else {
+			releaseSlug = "stable"
+			versionSlug = version.String()
+		}
+
+		url = fmt.Sprintf("https://%s/%s/static/%s/%s/docker-%s%s",
+			mirrorURL, mobyOS, releaseSlug, dockerArch, versionSlug, extSlug)
+		return
+	} else { // Original Download
+		archived = !version.semver.LessThan(archivedReleaseCutoff)
+		versionSlug = version.String()
+		if archived {
+			extSlug = archiveFileExt
+		} else {
+			extSlug = binaryFileExt
+		}
+		if mirrorURL == "" {
+			mirrorURL = "docker.com"
+		}
+		if version.IsPrerelease() {
+			releaseSlug = "test"
+		} else {
+			releaseSlug = "get"
+		}
+
+		url = fmt.Sprintf("https://%s.%s/builds/%s/%s/docker-%s%s",
+			releaseSlug, mirrorURL, dockerOS, dockerArch, versionSlug, extSlug)
+		return
+	}
 }
 
 func (version Version) IsPrerelease() bool {
@@ -76,11 +132,6 @@ func (version Version) IsExperimental() bool {
 
 func (version *Version) SetAsExperimental() {
 	version.alias = ExperimentalAlias
-}
-
-func (version Version) ShouldUseArchivedRelease() bool {
-	cutoff, _ := semver.NewConstraint(">= 1.11.0-rc1")
-	return version.IsExperimental() || cutoff.Check(version.semver)
 }
 
 func (version Version) String() string {
@@ -129,7 +180,10 @@ func (version Version) InRange(r string) (bool, error) {
 	if err != nil {
 		return false, errors.Wrapf(err, "Unable to parse range constraint: %s", r)
 	}
-	return c.Check(version.semver), nil
+	if version.semver == nil {
+		return false, nil
+	}
+	return c.Matches(*version.semver) == nil, nil
 }
 
 // Compare compares Versions v to o:
@@ -138,7 +192,7 @@ func (version Version) InRange(r string) (bool, error) {
 // 1 == v is greater than o
 func (v Version) Compare(o Version) int {
 	if v.semver != nil && o.semver != nil {
-		return v.semver.Compare(o.semver)
+		return v.semver.Compare(*o.semver)
 	}
 
 	return strings.Compare(v.alias, o.alias)

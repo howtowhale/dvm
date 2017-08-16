@@ -441,37 +441,11 @@ func install(version dockerversion.Version) {
 	}
 }
 
-func buildDownloadURL(version dockerversion.Version) string {
-	dockerVersion := version.Value()
-	if version.IsExperimental() {
-		dockerVersion = "latest"
-	}
-
-	if mirrorURL == "" {
-		mirrorURL = "https://get.docker.com/builds"
-		if version.IsExperimental() {
-			writeDebug("Downloading from experimental builds mirror")
-			mirrorURL = "https://experimental.docker.com/builds"
-		}
-		if version.IsPrerelease() {
-			writeDebug("Downloading from prerelease builds mirror")
-			mirrorURL = "https://test.docker.com/builds"
-		}
-	}
-
-	// New Docker versions are released in a zip file, vs. the old way of releasing the client binary only
-	if version.ShouldUseArchivedRelease() {
-		return fmt.Sprintf("%s/%s/%s/docker-%s%s", mirrorURL, dockerOS, dockerArch, dockerVersion, archiveFileExt)
-	}
-
-	return fmt.Sprintf("%s/%s/%s/docker-%s%s", mirrorURL, dockerOS, dockerArch, dockerVersion, binaryFileExt)
-}
-
 func downloadRelease(version dockerversion.Version) {
-	url := buildDownloadURL(version)
+	url, archived := version.BuildDownloadURL(mirrorURL)
 	binaryName := getBinaryName()
 	binaryPath := filepath.Join(getVersionDir(version), binaryName)
-	if version.ShouldUseArchivedRelease() {
+	if archived {
 		archivedFile := path.Join("docker", binaryName)
 		downloadArchivedFileWithChecksum(url, archivedFile, binaryPath)
 	} else {

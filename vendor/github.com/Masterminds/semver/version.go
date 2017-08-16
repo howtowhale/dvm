@@ -7,72 +7,118 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // The compiled version of the regex created at init() is cached here so it
 // only needs to be created once.
 var versionRegex *regexp.Regexp
-var validPrereleaseRegex *regexp.Regexp
 
 var (
 	// ErrInvalidSemVer is returned a version is found to be invalid when
 	// being parsed.
 	ErrInvalidSemVer = errors.New("Invalid Semantic Version")
-
-	// ErrInvalidMetadata is returned when the metadata is an invalid format
-	ErrInvalidMetadata = errors.New("Invalid Metadata string")
-
-	// ErrInvalidPrerelease is returned when the pre-release is an invalid format
-	ErrInvalidPrerelease = errors.New("Invalid Prerelease string")
 )
 
-// SemVerRegex is the regular expression used to parse a semantic version.
+// Error type; lets us defer string interpolation
+type badVersionSegment struct {
+	e error
+}
+
+func (b badVersionSegment) Error() string {
+	return fmt.Sprintf("Error parsing version segment: %s", b.e)
+}
+
+// CacheVersions controls whether or not parsed constraints are cached. Defaults
+// to true.
+var CacheVersions = true
+var versionCache = make(map[string]vcache)
+var versionCacheLock sync.RWMutex
+
+type vcache struct {
+	v   Version
+	err error
+}
+
+// SemVerRegex id the regular expression used to parse a semantic version.
 const SemVerRegex string = `v?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?` +
 	`(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?` +
 	`(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?`
 
-// ValidPrerelease is the regular expression which validates
-// both prerelease and metadata values.
-const ValidPrerelease string = `^([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*)`
+type specialVersion uint8
+
+const (
+	notSpecial specialVersion = iota
+	zeroVersion
+	infiniteVersion
+)
 
 // Version represents a single semantic version.
 type Version struct {
-	major, minor, patch int64
+	major, minor, patch uint64
 	pre                 string
 	metadata            string
 	original            string
+	special             specialVersion
 }
 
 func init() {
 	versionRegex = regexp.MustCompile("^" + SemVerRegex + "$")
-	validPrereleaseRegex = regexp.MustCompile(ValidPrerelease)
 }
 
 // NewVersion parses a given version and returns an instance of Version or
 // an error if unable to parse the version.
-func NewVersion(v string) (*Version, error) {
-	m := versionRegex.FindStringSubmatch(v)
-	if m == nil {
-		return nil, ErrInvalidSemVer
+func NewVersion(v string) (Version, error) {
+	if CacheVersions {
+		versionCacheLock.RLock()
+		if sv, exists := versionCache[v]; exists {
+			versionCacheLock.RUnlock()
+			return sv.v, sv.err
+		}
+		versionCacheLock.RUnlock()
 	}
 
-	sv := &Version{
+	m := versionRegex.FindStringSubmatch(v)
+	if m == nil {
+		if CacheVersions {
+			versionCacheLock.Lock()
+			versionCache[v] = vcache{err: ErrInvalidSemVer}
+			versionCacheLock.Unlock()
+		}
+		return Version{}, ErrInvalidSemVer
+	}
+
+	sv := Version{
 		metadata: m[8],
 		pre:      m[5],
 		original: v,
 	}
 
-	var temp int64
-	temp, err := strconv.ParseInt(m[1], 10, 32)
+	var temp uint64
+	temp, err := strconv.ParseUint(m[1], 10, 32)
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing version segment: %s", err)
+		bvs := badVersionSegment{e: err}
+		if CacheVersions {
+			versionCacheLock.Lock()
+			versionCache[v] = vcache{err: bvs}
+			versionCacheLock.Unlock()
+		}
+
+		return Version{}, bvs
 	}
 	sv.major = temp
 
 	if m[2] != "" {
-		temp, err = strconv.ParseInt(strings.TrimPrefix(m[2], "."), 10, 32)
+		temp, err = strconv.ParseUint(strings.TrimPrefix(m[2], "."), 10, 32)
 		if err != nil {
-			return nil, fmt.Errorf("Error parsing version segment: %s", err)
+			bvs := badVersionSegment{e: err}
+			if CacheVersions {
+				versionCacheLock.Lock()
+				versionCache[v] = vcache{err: bvs}
+				versionCacheLock.Unlock()
+			}
+
+			return Version{}, bvs
 		}
 		sv.minor = temp
 	} else {
@@ -80,25 +126,29 @@ func NewVersion(v string) (*Version, error) {
 	}
 
 	if m[3] != "" {
-		temp, err = strconv.ParseInt(strings.TrimPrefix(m[3], "."), 10, 32)
+		temp, err = strconv.ParseUint(strings.TrimPrefix(m[3], "."), 10, 32)
 		if err != nil {
-			return nil, fmt.Errorf("Error parsing version segment: %s", err)
+			bvs := badVersionSegment{e: err}
+			if CacheVersions {
+				versionCacheLock.Lock()
+				versionCache[v] = vcache{err: bvs}
+				versionCacheLock.Unlock()
+			}
+
+			return Version{}, bvs
 		}
 		sv.patch = temp
 	} else {
 		sv.patch = 0
 	}
 
-	return sv, nil
-}
-
-// MustParse parses a given version and panics on error.
-func MustParse(v string) *Version {
-	sv, err := NewVersion(v)
-	if err != nil {
-		panic(err)
+	if CacheVersions {
+		versionCacheLock.Lock()
+		versionCache[v] = vcache{v: sv}
+		versionCacheLock.Unlock()
 	}
-	return sv
+
+	return sv, nil
 }
 
 // String converts a Version object to a string.
@@ -106,10 +156,28 @@ func MustParse(v string) *Version {
 // See the Original() method to retrieve the original value. Semantic Versions
 // don't contain a leading v per the spec. Instead it's optional on
 // impelementation.
-func (v *Version) String() string {
+func (v Version) String() string {
+	return v.toString(false)
+}
+
+// ImpliedCaretString follows the same rules as String(), but in accordance with
+// the Constraint interface will always print a leading "=", as all Versions,
+// when acting as a Constraint, act as exact matches.
+func (v Version) ImpliedCaretString() string {
+	return v.toString(true)
+}
+
+func (v Version) toString(ic bool) string {
 	var buf bytes.Buffer
 
-	fmt.Fprintf(&buf, "%d.%d.%d", v.major, v.minor, v.patch)
+	var base string
+	if ic {
+		base = "=%d.%d.%d"
+	} else {
+		base = "%d.%d.%d"
+	}
+
+	fmt.Fprintf(&buf, base, v.major, v.minor, v.patch)
 	if v.pre != "" {
 		fmt.Fprintf(&buf, "-%s", v.pre)
 	}
@@ -121,138 +189,49 @@ func (v *Version) String() string {
 }
 
 // Original returns the original value passed in to be parsed.
-func (v *Version) Original() string {
+func (v Version) Original() string {
 	return v.original
 }
 
 // Major returns the major version.
-func (v *Version) Major() int64 {
+func (v *Version) Major() uint64 {
 	return v.major
 }
 
 // Minor returns the minor version.
-func (v *Version) Minor() int64 {
+func (v *Version) Minor() uint64 {
 	return v.minor
 }
 
 // Patch returns the patch version.
-func (v *Version) Patch() int64 {
+func (v *Version) Patch() uint64 {
 	return v.patch
 }
 
 // Prerelease returns the pre-release version.
-func (v *Version) Prerelease() string {
+func (v Version) Prerelease() string {
 	return v.pre
 }
 
 // Metadata returns the metadata on the version.
-func (v *Version) Metadata() string {
+func (v Version) Metadata() string {
 	return v.metadata
 }
 
-// originalVPrefix returns the original 'v' prefix if any.
-func (v *Version) originalVPrefix() string {
-
-	// Note, only lowercase v is supported as a prefix by the parser.
-	if v.original != "" && v.original[:1] == "v" {
-		return v.original[:1]
-	}
-	return ""
-}
-
-// IncPatch produces the next patch version.
-// If the current version does not have prerelease/metadata information,
-// it unsets metadata and prerelease values, increments patch number.
-// If the current version has any of prerelease or metadata information,
-// it unsets both values and keeps curent patch value
-func (v Version) IncPatch() Version {
-	vNext := v
-	// according to http://semver.org/#spec-item-9
-	// Pre-release versions have a lower precedence than the associated normal version.
-	// according to http://semver.org/#spec-item-10
-	// Build metadata SHOULD be ignored when determining version precedence.
-	if v.pre != "" {
-		vNext.metadata = ""
-		vNext.pre = ""
-	} else {
-		vNext.metadata = ""
-		vNext.pre = ""
-		vNext.patch = v.patch + 1
-	}
-	vNext.original = v.originalVPrefix() + "" + vNext.String()
-	return vNext
-}
-
-// IncMinor produces the next minor version.
-// Sets patch to 0.
-// Increments minor number.
-// Unsets metadata.
-// Unsets prerelease status.
-func (v Version) IncMinor() Version {
-	vNext := v
-	vNext.metadata = ""
-	vNext.pre = ""
-	vNext.patch = 0
-	vNext.minor = v.minor + 1
-	vNext.original = v.originalVPrefix() + "" + vNext.String()
-	return vNext
-}
-
-// IncMajor produces the next major version.
-// Sets patch to 0.
-// Sets minor to 0.
-// Increments major number.
-// Unsets metadata.
-// Unsets prerelease status.
-func (v Version) IncMajor() Version {
-	vNext := v
-	vNext.metadata = ""
-	vNext.pre = ""
-	vNext.patch = 0
-	vNext.minor = 0
-	vNext.major = v.major + 1
-	vNext.original = v.originalVPrefix() + "" + vNext.String()
-	return vNext
-}
-
-// SetPrerelease defines the prerelease value.
-// Value must not include the required 'hypen' prefix.
-func (v Version) SetPrerelease(prerelease string) (Version, error) {
-	vNext := v
-	if len(prerelease) > 0 && !validPrereleaseRegex.MatchString(prerelease) {
-		return vNext, ErrInvalidPrerelease
-	}
-	vNext.pre = prerelease
-	vNext.original = v.originalVPrefix() + "" + vNext.String()
-	return vNext, nil
-}
-
-// SetMetadata defines metadata value.
-// Value must not include the required 'plus' prefix.
-func (v Version) SetMetadata(metadata string) (Version, error) {
-	vNext := v
-	if len(metadata) > 0 && !validPrereleaseRegex.MatchString(metadata) {
-		return vNext, ErrInvalidMetadata
-	}
-	vNext.metadata = metadata
-	vNext.original = v.originalVPrefix() + "" + vNext.String()
-	return vNext, nil
-}
-
 // LessThan tests if one version is less than another one.
-func (v *Version) LessThan(o *Version) bool {
+func (v Version) LessThan(o Version) bool {
 	return v.Compare(o) < 0
 }
 
 // GreaterThan tests if one version is greater than another one.
-func (v *Version) GreaterThan(o *Version) bool {
+func (v Version) GreaterThan(o Version) bool {
 	return v.Compare(o) > 0
 }
 
 // Equal tests if two versions are equal to each other.
 // Note, versions can be equal with different metadata since metadata
 // is not considered part of the comparable version.
-func (v *Version) Equal(o *Version) bool {
+func (v Version) Equal(o Version) bool {
 	return v.Compare(o) == 0
 }
 
@@ -261,7 +240,27 @@ func (v *Version) Equal(o *Version) bool {
 //
 // Versions are compared by X.Y.Z. Build metadata is ignored. Prerelease is
 // lower than the version without a prerelease.
-func (v *Version) Compare(o *Version) int {
+func (v Version) Compare(o Version) int {
+	// The special field supercedes all the other information. If it's not
+	// equal, we can skip out early
+	if v.special != o.special {
+		switch v.special {
+		case zeroVersion:
+			return -1
+		case notSpecial:
+			if o.special == zeroVersion {
+				return 1
+			}
+			return -1
+		case infiniteVersion:
+			return 1
+		}
+	} else if v.special != notSpecial {
+		// If special fields are equal and not notSpecial, then they're
+		// necessarily equal
+		return 0
+	}
+
 	// Compare the major, minor, and patch version for differences. If a
 	// difference is found return the comparison.
 	if d := compareSegment(v.Major(), o.Major()); d != 0 {
@@ -291,7 +290,58 @@ func (v *Version) Compare(o *Version) int {
 	return comparePrerelease(ps, po)
 }
 
-func compareSegment(v, o int64) int {
+// Matches checks that a verstions match. If they do not,
+// an error is returned indcating the problem; if it does, the error is nil.
+// This is part of the Constraint interface.
+func (v Version) Matches(v2 Version) error {
+	if v.Equal(v2) {
+		return nil
+	}
+
+	return VersionMatchFailure{v: v, other: v2}
+}
+
+// MatchesAny checks if an instance of a version matches a constraint which can
+// include anything matching the Constraint interface.
+func (v Version) MatchesAny(c Constraint) bool {
+	if v2, ok := c.(Version); ok {
+		return v.Equal(v2)
+	}
+
+	// The other implementations all have specific handling for this; fall
+	// back on theirs.
+	return c.MatchesAny(v)
+}
+
+// Intersect computes the intersection between the receiving Constraint and
+// passed Constraint, and returns a new Constraint representing the result.
+// This is part of the Constraint interface.
+func (v Version) Intersect(c Constraint) Constraint {
+	if v2, ok := c.(Version); ok {
+		if v.Equal(v2) {
+			return v
+		}
+		return none{}
+	}
+
+	return c.Intersect(v)
+}
+
+// Union computes the union between the receiving Constraint and the passed
+// Constraint, and returns a new Constraint representing the result.
+// This is part of the Constraint interface.
+func (v Version) Union(c Constraint) Constraint {
+	if v2, ok := c.(Version); ok && v.Equal(v2) {
+		return v
+	}
+
+	return Union(v, c)
+}
+
+func (Version) _private() {}
+func (Version) _real()    {}
+
+func compareSegment(v, o uint64) int {
 	if v < o {
 		return -1
 	}
@@ -321,7 +371,7 @@ func comparePrerelease(v, o string) int {
 
 	// Iterate over each part of the prereleases to compare the differences.
 	for i := 0; i < l; i++ {
-		// Since the lentgh of the parts can be different we need to create
+		// Since the length of the parts can be different we need to create
 		// a placeholder. This is to avoid out of bounds issues.
 		stemp := ""
 		if i < slen {
@@ -354,14 +404,14 @@ func comparePrePart(s, o string) int {
 	// When s or o are empty we can use the other in an attempt to determine
 	// the response.
 	if o == "" {
-		_, n := strconv.ParseInt(s, 10, 64)
+		_, n := strconv.ParseUint(s, 10, 64)
 		if n != nil {
 			return -1
 		}
 		return 1
 	}
 	if s == "" {
-		_, n := strconv.ParseInt(o, 10, 64)
+		_, n := strconv.ParseUint(o, 10, 64)
 		if n != nil {
 			return 1
 		}
@@ -372,4 +422,26 @@ func comparePrePart(s, o string) int {
 		return 1
 	}
 	return -1
+}
+
+func numPartsEq(v1, v2 Version) bool {
+	if v1.special != v2.special {
+		return false
+	}
+	if v1.special != notSpecial {
+		// If special fields are equal and not notSpecial, then the versions are
+		// necessarily equal, so their numeric parts are too.
+		return true
+	}
+
+	if v1.major != v2.major {
+		return false
+	}
+	if v1.minor != v2.minor {
+		return false
+	}
+	if v1.patch != v2.patch {
+		return false
+	}
+	return true
 }

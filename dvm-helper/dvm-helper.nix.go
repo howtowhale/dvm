@@ -8,7 +8,6 @@ import (
 )
 
 const binaryFileExt string = ""
-const archiveFileExt string = ".tgz"
 
 func upgradeSelf(version string) {
 	binaryURL := buildDvmReleaseURL(version, dvmOS, dvmArch, "dvm-helper")

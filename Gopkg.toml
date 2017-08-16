@@ -23,7 +23,7 @@
 
 [[constraint]]
   name = "github.com/Masterminds/semver"
-  version = "1.2.2"
+  branch = "2.x" 
 
 [[constraint]]
   name = "github.com/codegangsta/cli"
