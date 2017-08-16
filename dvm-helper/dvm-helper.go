@@ -442,14 +442,27 @@ func install(version dockerversion.Version) {
 }
 
 func downloadRelease(version dockerversion.Version) {
-	url, archived := version.BuildDownloadURL(mirrorURL)
+	url, archived, checksumed, err := version.BuildDownloadURL(mirrorURL)
+	if err != nil {
+		die("Unable to determine the download URL for %s", err, retCodeRuntimeError, version)
+	}
+
 	binaryName := getBinaryName()
 	binaryPath := filepath.Join(getVersionDir(version), binaryName)
 	if archived {
 		archivedFile := path.Join("docker", binaryName)
-		downloadArchivedFileWithChecksum(url, archivedFile, binaryPath)
+		if checksumed {
+			downloadArchivedFileWithChecksum(url, archivedFile, binaryPath)
+		} else {
+			downloadArchivedFile(url, archivedFile, binaryPath)
+		}
 	} else {
-		downloadFileWithChecksum(url, binaryPath)
+		if checksumed {
+			downloadFileWithChecksum(url, binaryPath)
+		} else {
+			downloadFile(url, binaryPath)
+		}
+
 	}
 	writeDebug("Downloaded Docker %s to %s.", version, binaryPath)
 }

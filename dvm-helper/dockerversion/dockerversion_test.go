@@ -65,6 +65,19 @@ func TestExperimentalAlias(t *testing.T) {
 		"The value for an empty aliased version should be empty")
 }
 
+func TestExperimentalAliasWithVersion(t *testing.T) {
+	v := Parse("17.06.0-ce+02c1d87")
+	v.SetAsExperimental()
+	assert.Equal(t, ExperimentalAlias, v.Slug(),
+		"The slug for the experimental version should be 'experimental'")
+	assert.Equal(t, "experimental (17.06.0-ce+02c1d87)", v.String(),
+		"The string representation should include the alias and version")
+	assert.Equal(t, ExperimentalAlias, v.Name(),
+		"The name for an aliased version should be its alias")
+	assert.Equal(t, "17.06.0-ce+02c1d87", v.Value(),
+		"The value for a populated alias should be the version")
+}
+
 func TestAlias(t *testing.T) {
 	v := NewAlias("prod", "1.2.3")
 	assert.Equal(t, "1.2.3", v.Slug(),
@@ -126,19 +139,23 @@ func TestVersion_BuildDownloadURL(t *testing.T) {
 
 		// docker store download, prerelease
 		Parse("17.07.0-ce-rc1"): {fmt.Sprintf("https://download.docker.com/%s/static/test/%s/docker-17.07.0-ce-rc1.tgz", mobyOS, dockerArch), true},
-
-		// latest edge/experimental
-		Parse("experimental"): {fmt.Sprintf("https://download.docker.com/%s/static/edge/%s/docker-17.06.0-ce.tgz", mobyOS, dockerArch), true},
 	}
 
 	for version, testcase := range testcases {
 		t.Run(version.String(), func(t *testing.T) {
-			gotURL, gotArchived := version.BuildDownloadURL("")
+			gotURL, gotArchived, gotChecksumed, err := version.BuildDownloadURL("")
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			if testcase.wantURL != gotURL {
 				t.Fatalf("Expected %s to be downloaded from '%s', but got '%s'", version, testcase.wantURL, gotURL)
 			}
 			if testcase.wantArchived != gotArchived {
 				t.Fatalf("Expected %s to use an archived download strategy", version)
+			}
+			if !gotChecksumed {
+				t.Fatalf("Expected %s to provide a checksum", version)
 			}
 
 			response, err := http.DefaultClient.Head(gotURL)
@@ -150,5 +167,31 @@ func TestVersion_BuildDownloadURL(t *testing.T) {
 				t.Fatalf("Unexpected status code (%d) when downloading %s", response.StatusCode, gotURL)
 			}
 		})
+	}
+}
+
+func TestVersion_DownloadExperimentalRelease(t *testing.T) {
+	version := Parse("experimental")
+
+	url, archived, checksumed, err := version.BuildDownloadURL("")
+	if err != nil {
+		t.Fatalf("%#v", err)
+	}
+
+	if !archived {
+		t.Fatal("Expected the edge release to be archived.")
+	}
+
+	if checksumed {
+		t.Fatal("Expected the edge release to NOT be checksumed.")
+	}
+
+	response, err := http.DefaultClient.Get(url)
+	if err != nil {
+		t.Fatalf("%#v", errors.Wrapf(err, "Unable to download release from %s", response))
+	}
+
+	if response.StatusCode != 200 {
+		t.Fatalf("Unexpected status code (%d) when downloading %s", response.StatusCode, url)
 	}
 }

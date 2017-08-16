@@ -37,7 +37,7 @@ func Parse(value string) Version {
 	return v
 }
 
-func (version Version) BuildDownloadURL(mirrorURL string) (url string, archived bool) {
+func (version Version) BuildDownloadURL(mirror string) (url string, archived bool, checksumed bool, err error) {
 	var releaseSlug, versionSlug, extSlug string
 
 	archivedReleaseCutoff, _ := semver.NewVersion("1.11.0-rc1")
@@ -46,15 +46,19 @@ func (version Version) BuildDownloadURL(mirrorURL string) (url string, archived 
 	var edgeVersion Version
 	if version.IsExperimental() {
 		// TODO: Figure out the latest edge version
-		edgeVersion = Parse("17.06.0-ce")
+		edgeVersion, err = findLatestEdgeVersion(mirror)
+		if err != nil {
+			return
+		}
 	}
 
 	// Docker Store Download
 	if version.IsExperimental() || !version.semver.LessThan(dockerStoreCutoff) {
 		archived = true
+		checksumed = !version.IsExperimental()
 		extSlug = archiveFileExt
-		if mirrorURL == "" {
-			mirrorURL = "download.docker.com"
+		if mirror == "" {
+			mirror = "download.docker.com"
 		}
 		if version.IsExperimental() {
 			releaseSlug = "edge"
@@ -68,18 +72,19 @@ func (version Version) BuildDownloadURL(mirrorURL string) (url string, archived 
 		}
 
 		url = fmt.Sprintf("https://%s/%s/static/%s/%s/docker-%s%s",
-			mirrorURL, mobyOS, releaseSlug, dockerArch, versionSlug, extSlug)
+			mirror, mobyOS, releaseSlug, dockerArch, versionSlug, extSlug)
 		return
 	} else { // Original Download
 		archived = !version.semver.LessThan(archivedReleaseCutoff)
+		checksumed = true
 		versionSlug = version.String()
 		if archived {
 			extSlug = archiveFileExt
 		} else {
 			extSlug = binaryFileExt
 		}
-		if mirrorURL == "" {
-			mirrorURL = "docker.com"
+		if mirror == "" {
+			mirror = "docker.com"
 		}
 		if version.IsPrerelease() {
 			releaseSlug = "test"
@@ -88,7 +93,7 @@ func (version Version) BuildDownloadURL(mirrorURL string) (url string, archived 
 		}
 
 		url = fmt.Sprintf("https://%s.%s/builds/%s/%s/docker-%s%s",
-			releaseSlug, mirrorURL, dockerOS, dockerArch, versionSlug, extSlug)
+			releaseSlug, mirror, dockerOS, dockerArch, versionSlug, extSlug)
 		return
 	}
 }
@@ -168,8 +173,7 @@ func (version Version) Name() string {
 
 func (version Version) formatRaw() string {
 	value := version.raw
-	prefix := value[0:1]
-	if strings.ToLower(prefix) == "v" {
+	if strings.HasPrefix(strings.ToLower(value), "v") {
 		value = value[1:]
 	}
 	return value

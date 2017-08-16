@@ -101,16 +101,24 @@ func downloadFileWithChecksum(url string, destPath string) {
 	}
 }
 
+func downloadArchivedFile(url string, archivedFile string, destPath string) {
+	archiveName := path.Base(url)
+	tmpPath := filepath.Join(dvmDir, ".tmp", archiveName)
+	downloadFile(url, tmpPath)
+	extractArchive(tmpPath, archiveName, archivedFile, destPath)
+}
+
 func downloadArchivedFileWithChecksum(url string, archivedFile string, destPath string) {
 	archiveName := path.Base(url)
 	tmpPath := filepath.Join(dvmDir, ".tmp", archiveName)
 	downloadFileWithChecksum(url, tmpPath)
-
+	extractArchive(tmpPath, archiveName, archivedFile, destPath)
+}
+func extractArchive(tmpPath string, archiveName string, archivedFile string, destPath string) {
 	// Extract the archive
 	archivePath := filepath.Join(dvmDir, ".tmp", strings.TrimSuffix(archiveName, filepath.Ext(archiveName)))
 	extractor := extractor.NewDetectable()
 	extractor.Extract(tmpPath, archivePath)
-
 	// Copy the archived file to the final destination
 	archivedFilePath := filepath.Join(archivePath, archivedFile)
 	ensureParentDirectoryExists(destPath)
@@ -118,7 +126,6 @@ func downloadArchivedFileWithChecksum(url string, archivedFile string, destPath 
 	if err != nil {
 		die("Unable to copy %s to %s.", err, retCodeRuntimeError, archivedFilePath, destPath)
 	}
-
 	// Cleanup temp files
 	if err = os.Remove(tmpPath); err != nil {
 		writeWarning("Unable to remove temporary file: %s\n%s", tmpPath, err)
