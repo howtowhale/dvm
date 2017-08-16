@@ -46,7 +46,7 @@ func writeUpgradeScript() {
 func getCleanPathRegex() string {
 	versionDir := getVersionsDir()
 	escapedVersionDir := strings.Replace(versionDir, `\`, `\\`, -1)
-	return escapedVersionDir + `\\(\d+\.\d+\.\d+|experimental);`
+	return escapedVersionDir + `\\(\d+\.\d+\.\d+|edge);`
 }
 
 func validateShellFlag() {

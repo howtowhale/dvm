@@ -10,7 +10,7 @@ import (
 )
 
 const SystemAlias = "system"
-const ExperimentalAlias = "experimental"
+const EdgeAlias = "edge"
 
 type Version struct {
 	// Since Docker versions aren't valid versions, (it has leading zeroes)
@@ -44,7 +44,7 @@ func (version Version) BuildDownloadURL(mirror string) (url string, archived boo
 	dockerStoreCutoff, _ := semver.NewVersion("17.06.0-ce")
 
 	var edgeVersion Version
-	if version.IsExperimental() {
+	if version.IsEdge() {
 		// TODO: Figure out the latest edge version
 		edgeVersion, err = findLatestEdgeVersion(mirror)
 		if err != nil {
@@ -53,14 +53,14 @@ func (version Version) BuildDownloadURL(mirror string) (url string, archived boo
 	}
 
 	// Docker Store Download
-	if version.IsExperimental() || !version.semver.LessThan(dockerStoreCutoff) {
+	if version.IsEdge() || !version.semver.LessThan(dockerStoreCutoff) {
 		archived = true
-		checksumed = !version.IsExperimental()
+		checksumed = !version.IsEdge()
 		extSlug = archiveFileExt
 		if mirror == "" {
 			mirror = "download.docker.com"
 		}
-		if version.IsExperimental() {
+		if version.IsEdge() {
 			releaseSlug = "edge"
 			versionSlug = edgeVersion.String()
 		} else if version.IsPrerelease() {
@@ -131,12 +131,12 @@ func (version *Version) SetAsSystem() {
 	version.alias = SystemAlias
 }
 
-func (version Version) IsExperimental() bool {
-	return version.alias == ExperimentalAlias
+func (version Version) IsEdge() bool {
+	return version.alias == EdgeAlias
 }
 
-func (version *Version) SetAsExperimental() {
-	version.alias = ExperimentalAlias
+func (version *Version) SetAsEdge() {
+	version.alias = EdgeAlias
 }
 
 func (version Version) String() string {
@@ -158,7 +158,7 @@ func (version Version) Slug() string {
 	if version.IsSystem() {
 		return ""
 	}
-	if version.IsExperimental() {
+	if version.IsEdge() {
 		return version.alias
 	}
 	return version.formatRaw()

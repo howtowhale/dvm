@@ -81,7 +81,7 @@ func makeCliApp() *cli.App {
 		{
 			Name:    "install",
 			Aliases: []string{"i"},
-			Usage:   "dvm install [<version>], dvm install experimental\n\tInstall a Docker version, using $DOCKER_VERSION if the version is not specified.",
+			Usage:   "dvm install [<version>], dvm install edge\n\tInstall a Docker version, using $DOCKER_VERSION if the version is not specified.",
 			Flags: []cli.Flag{
 				cli.StringFlag{Name: "mirror-url", EnvVar: "DVM_MIRROR_URL", Usage: "Specify an alternate URL from which to download the Docker client. Defaults to https://get.docker.com/builds"},
 				cli.BoolFlag{Name: "nocheck", EnvVar: "DVM_NOCHECK", Usage: "Do not check if version exists (use with caution)."},
@@ -121,7 +121,7 @@ func makeCliApp() *cli.App {
 		},
 		{
 			Name:  "use",
-			Usage: "dvm use [<version>], dvm use system, dvm use experimental\n\tUse a Docker version, using $DOCKER_VERSION if the version is not specified.",
+			Usage: "dvm use [<version>], dvm use system, dvm use edge\n\tUse a Docker version, using $DOCKER_VERSION if the version is not specified.",
 			Flags: []cli.Flag{
 				cli.StringFlag{Name: "mirror-url", EnvVar: "DVM_MIRROR_URL", Usage: "Specify an alternate URL from which to download the Docker client. Defaults to https://get.docker.com/builds"},
 				cli.BoolFlag{Name: "nocheck", EnvVar: "DVM_NOCHECK", Usage: "Do not check if version exists (use with caution)."},
@@ -416,11 +416,11 @@ func install(version dockerversion.Version) {
 
 	versionDir := getVersionDir(version)
 
-	if version.IsExperimental() && pathExists(versionDir) {
-		// Always install latest of experimental build
+	if version.IsEdge() && pathExists(versionDir) {
+		// Always install latest of edge build
 		err := os.RemoveAll(versionDir)
 		if err != nil {
-			die("Unable to remove experimental version at %s.", err, retCodeRuntimeError, versionDir)
+			die("Unable to remove edge version at %s.", err, retCodeRuntimeError, versionDir)
 		}
 	}
 
@@ -499,8 +499,8 @@ func use(version dockerversion.Version) {
 
 	if version.IsSystem() {
 		version, _ = getSystemDockerVersion()
-	} else if version.IsExperimental() {
-		version, _ = getExperimentalDockerVersion()
+	} else if version.IsEdge() {
+		version, _ = getEdgeDockerVersion()
 	}
 
 	removePreviousDockerVersionFromPath()
@@ -648,7 +648,7 @@ func isVersionInstalled(version dockerversion.Version) bool {
 }
 
 func versionExists(version dockerversion.Version) bool {
-	if version.IsExperimental() {
+	if version.IsEdge() {
 		return true
 	}
 
@@ -674,21 +674,21 @@ func getCurrentDockerVersion() (dockerversion.Version, error) {
 	}
 
 	systemDockerPath, _ := getSystemDockerPath()
-	experimentalVersionPath, _ := getExperimentalDockerPath()
+	edgeVersionPath, _ := getEdgeDockerPath()
 
 	isSystem := currentDockerPath == systemDockerPath
-	isExperimental := currentDockerPath == experimentalVersionPath
+	isEdge := currentDockerPath == edgeVersionPath
 
-	current, _ := getDockerVersion(currentDockerPath, isExperimental)
+	current, _ := getDockerVersion(currentDockerPath, isEdge)
 
 	if isSystem {
 		writeDebug("The current docker is the system installation")
 		current.SetAsSystem()
 	}
 
-	if isExperimental {
-		writeDebug("The current docker is an experimental version")
-		current.SetAsExperimental()
+	if isEdge {
+		writeDebug("The current docker is an edge version")
+		current.SetAsEdge()
 	}
 
 	writeDebug("The current version is: %s", current)
@@ -713,19 +713,19 @@ func getSystemDockerVersion() (dockerversion.Version, error) {
 	return version, err
 }
 
-func getExperimentalDockerPath() (string, error) {
-	experimentalVersionPath := filepath.Join(getVersionsDir(), dockerversion.ExperimentalAlias, getBinaryName())
-	_, err := os.Stat(experimentalVersionPath)
-	return experimentalVersionPath, err
+func getEdgeDockerPath() (string, error) {
+	edgeVersionPath := filepath.Join(getVersionsDir(), dockerversion.EdgeAlias, getBinaryName())
+	_, err := os.Stat(edgeVersionPath)
+	return edgeVersionPath, err
 }
 
-func getExperimentalDockerVersion() (dockerversion.Version, error) {
-	experimentalDockerpath, err := getExperimentalDockerPath()
+func getEdgeDockerVersion() (dockerversion.Version, error) {
+	edgeDockerpath, err := getEdgeDockerPath()
 	if err != nil {
 		return dockerversion.Version{}, err
 	}
-	version, err := getDockerVersion(experimentalDockerpath, true)
-	version.SetAsExperimental()
+	version, err := getDockerVersion(edgeDockerpath, true)
+	version.SetAsEdge()
 	return version, err
 }
 
@@ -767,14 +767,14 @@ func getInstalledVersions(pattern string) []dockerversion.Version {
 	for _, versionDir := range versions {
 		version := dockerversion.Parse(filepath.Base(versionDir))
 
-		if version.IsExperimental() {
-			experimentalDockerPath := filepath.Join(versionDir, getBinaryName())
-			experimentalVersion, err := getDockerVersion(experimentalDockerPath, true)
+		if version.IsEdge() {
+			edgeDockerPath := filepath.Join(versionDir, getBinaryName())
+			edgeVersion, err := getDockerVersion(edgeDockerPath, true)
 			if err != nil {
-				writeDebug("Unable to get version of installed experimental version at %s.\n%s", versionDir, err)
+				writeDebug("Unable to get version of installed edge version at %s.\n%s", versionDir, err)
 				continue
 			}
-			version = dockerversion.NewAlias(dockerversion.ExperimentalAlias, experimentalVersion.Value())
+			version = dockerversion.NewAlias(dockerversion.EdgeAlias, edgeVersion.Value())
 		}
 
 		results = append(results, version)
@@ -867,8 +867,8 @@ func getVersionsDir() string {
 
 func getVersionDir(version dockerversion.Version) string {
 	versionPath := version.Slug()
-	if version.IsExperimental() {
-		versionPath = dockerversion.ExperimentalAlias
+	if version.IsEdge() {
+		versionPath = dockerversion.EdgeAlias
 	}
 	return filepath.Join(getVersionsDir(), versionPath)
 }

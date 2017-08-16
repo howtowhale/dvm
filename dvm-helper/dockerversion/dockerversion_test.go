@@ -53,26 +53,26 @@ func TestSystemAlias(t *testing.T) {
 		"The value for an empty aliased version should be empty")
 }
 
-func TestExperimentalAlias(t *testing.T) {
-	v := Parse(ExperimentalAlias)
-	assert.Equal(t, ExperimentalAlias, v.Slug(),
-		"The slug for the experimental version should be 'experimental'")
-	assert.Equal(t, ExperimentalAlias, v.String(),
+func TestEdgeAlias(t *testing.T) {
+	v := Parse(EdgeAlias)
+	assert.Equal(t, EdgeAlias, v.Slug(),
+		"The slug for the edge version should be 'edge'")
+	assert.Equal(t, EdgeAlias, v.String(),
 		"An empty alias should only print the alias")
-	assert.Equal(t, ExperimentalAlias, v.Name(),
+	assert.Equal(t, EdgeAlias, v.Name(),
 		"The name for an aliased version should be its alias")
 	assert.Equal(t, "", v.Value(),
 		"The value for an empty aliased version should be empty")
 }
 
-func TestExperimentalAliasWithVersion(t *testing.T) {
+func TestEdgeAliasWithVersion(t *testing.T) {
 	v := Parse("17.06.0-ce+02c1d87")
-	v.SetAsExperimental()
-	assert.Equal(t, ExperimentalAlias, v.Slug(),
-		"The slug for the experimental version should be 'experimental'")
-	assert.Equal(t, "experimental (17.06.0-ce+02c1d87)", v.String(),
+	v.SetAsEdge()
+	assert.Equal(t, EdgeAlias, v.Slug(),
+		"The slug for the edge version should be 'edge'")
+	assert.Equal(t, "edge (17.06.0-ce+02c1d87)", v.String(),
 		"The string representation should include the alias and version")
-	assert.Equal(t, ExperimentalAlias, v.Name(),
+	assert.Equal(t, EdgeAlias, v.Name(),
 		"The name for an aliased version should be its alias")
 	assert.Equal(t, "17.06.0-ce+02c1d87", v.Value(),
 		"The value for a populated alias should be the version")
@@ -102,10 +102,10 @@ func TestSemanticVersion(t *testing.T) {
 		"The value for a semantic version should be its semver value")
 }
 
-func TestSetAsExperimental(t *testing.T) {
+func TestSetAsEdge(t *testing.T) {
 	v := Parse("1.2.3")
-	v.SetAsExperimental()
-	assert.True(t, v.IsExperimental())
+	v.SetAsEdge()
+	assert.True(t, v.IsEdge())
 }
 
 func TestSetAsSystem(t *testing.T) {
@@ -170,8 +170,8 @@ func TestVersion_BuildDownloadURL(t *testing.T) {
 	}
 }
 
-func TestVersion_DownloadExperimentalRelease(t *testing.T) {
-	version := Parse("experimental")
+func TestVersion_DownloadEdgeRelease(t *testing.T) {
+	version := Parse("edge")
 
 	url, archived, checksumed, err := version.BuildDownloadURL("")
 	if err != nil {
