@@ -27,7 +27,7 @@ fi
 if [ -n "$BASH_SOURCE" ]; then
   DVM_SCRIPT_SOURCE="${BASH_SOURCE[0]}"
 fi
-export DVM_HELPER="$(command cd $DVM_CD_FLAGS "$(dirname "${DVM_SCRIPT_SOURCE:-$0}")" > /dev/null && command pwd)/dvm-helper/dvm-helper"
+export DVM_HELPER="$(builtin cd $DVM_CD_FLAGS "$(dirname "${DVM_SCRIPT_SOURCE:-$0}")" > /dev/null && command pwd)/dvm-helper/dvm-helper"
 unset DVM_SCRIPT_SOURCE 2> /dev/null
 
 dvm() {
