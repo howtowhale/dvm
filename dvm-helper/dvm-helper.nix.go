@@ -21,7 +21,7 @@ func upgradeSelf(version string) {
 
 func getCleanPathRegex() string {
 	versionDir := getVersionsDir()
-	return versionDir + `/(\d+\.\d+\.\d+|experimental):`
+	return versionDir + `/(\d+\.\d+\.\d+|edge):`
 }
 
 func validateShellFlag() {

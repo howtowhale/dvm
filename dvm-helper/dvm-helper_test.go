@@ -3,14 +3,13 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/fatih/color"
+	"github.com/howtowhale/dvm/dvm-helper/internal/test"
 	"github.com/ryanuber/go-glob"
 	"github.com/stretchr/testify/assert"
 )
@@ -49,7 +48,7 @@ func githubReleasesHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.RequestURI {
 	case "/repos/docker/docker/releases?per_page=100":
-		fmt.Fprintln(w, loadTestData("github-docker-releases.json"))
+		fmt.Fprintln(w, test.LoadTestData("github-docker-releases.json"))
 	default:
 		w.WriteHeader(404)
 	}
@@ -156,18 +155,4 @@ func TestInstallPrereleases(t *testing.T) {
 	output := outputCapture.String()
 	assert.NotEmpty(t, output, "Should have captured stdout")
 	assert.Contains(t, output, "Now using Docker 1.12.5-rc1", "Should have installed a prerelease version")
-}
-
-func loadTestData(src string) string {
-	pwd, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-
-	testFile := filepath.Join(pwd, "testdata", src)
-	content, err := ioutil.ReadFile(testFile)
-	if err != nil {
-		panic(err)
-	}
-	return string(content)
 }
