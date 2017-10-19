@@ -45,7 +45,6 @@ func (version Version) BuildDownloadURL(mirror string) (url string, archived boo
 
 	var edgeVersion Version
 	if version.IsEdge() {
-		// TODO: Figure out the latest edge version
 		edgeVersion, err = findLatestEdgeVersion(mirror)
 		if err != nil {
 			return
