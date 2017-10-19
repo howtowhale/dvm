@@ -47,7 +47,7 @@ func githubReleasesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	switch r.RequestURI {
-	case "/repos/docker/docker/releases?per_page=100":
+	case "/repos/moby/moby/releases?per_page=100":
 		fmt.Fprintln(w, test.LoadTestData("github-docker-releases.json"))
 	default:
 		w.WriteHeader(404)
@@ -118,12 +118,16 @@ func TestListRemote(t *testing.T) {
 	color.Output = outputCapture
 
 	dvm := makeCliApp()
-	dvm.Run([]string{"dvm", "--debug", "list-remote", "1.12"})
+	dvm.Run([]string{"dvm", "--debug", "list-remote"})
 
 	output := outputCapture.String()
 	assert.NotEmpty(t, output, "Should have captured stdout")
-	assert.NotContains(t, output, "1.12.5-rc1", "Should not have listed a prerelease version")
 
+	assert.Contains(t, output, "1.12.5", "Should have listed a legacy stable version")
+	assert.NotContains(t, output, "1.12.5-rc1", "Should not have listed a legacy prerelease version")
+
+	assert.Contains(t, output, "17.09.0-ce", "Should have listed a stable version")
+	assert.NotContains(t, output, "17.10.0-ce-rc1", "Should not have listed a prerelease version")
 }
 
 func TestListRemoteWithPrereleases(t *testing.T) {
@@ -134,12 +138,13 @@ func TestListRemoteWithPrereleases(t *testing.T) {
 	color.Output = outputCapture
 
 	dvm := makeCliApp()
-	dvm.Run([]string{"dvm-helper", "--debug", "list-remote", "--pre", "1.12"})
+	dvm.Run([]string{"dvm-helper", "--debug", "list-remote", "--pre"})
 
 	output := outputCapture.String()
 	assert.NotEmpty(t, output, "Should have captured stdout")
-	assert.Contains(t, output, "1.12.5-rc1", "Should have listed a prerelease version")
 
+	assert.Contains(t, output, "1.12.5-rc1", "Should have listed a legacy prerelease version")
+	assert.Contains(t, output, "17.10.0-ce-rc1", "Should have listed a prerelease version")
 }
 
 func TestInstallPrereleases(t *testing.T) {

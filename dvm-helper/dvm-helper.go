@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	neturl "net/url"
@@ -20,6 +19,7 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/howtowhale/dvm/dvm-helper/dockerversion"
 	"github.com/howtowhale/dvm/dvm-helper/url"
+	"github.com/pkg/errors"
 	"github.com/ryanuber/go-glob"
 	"golang.org/x/oauth2"
 )
@@ -326,7 +326,7 @@ func detect() {
 		}
 
 		// Find the highest version that satisfies the client version range
-		availableVersions := getAvailableVersions("")
+		availableVersions := getAvailableVersions("", true)
 		for i := len(availableVersions) - 1; i >= 0; i-- {
 			v := availableVersions[i]
 
@@ -721,11 +721,8 @@ func getDockerVersion(dockerPath string, includeBuild bool) (dockerversion.Versi
 }
 
 func listRemote(prefix string) {
-	versions := getAvailableVersions(prefix)
+	versions := getAvailableVersions(prefix, includePrereleases)
 	for _, version := range versions {
-		if !includePrereleases && version.IsPrerelease() {
-			continue
-		}
 		writeInfo(version.String())
 	}
 }
@@ -762,21 +759,71 @@ func getInstalledVersions(pattern string) []dockerversion.Version {
 	return results
 }
 
-func getAvailableVersions(pattern string) []dockerversion.Version {
+func getAvailableVersions(pattern string, includePrereleases bool) []dockerversion.Version {
+	versions := make(map[string]dockerversion.Version)
+
+	writeDebug("Retrieving legacy Docker releases")
+	legacyVersions, err := listLegacyDockerVersions()
+	if err != nil {
+		die("", err, retCodeRuntimeError)
+	}
+	for _, v := range legacyVersions {
+		if !includePrereleases && v.IsPrerelease() {
+			continue
+		}
+		if strings.HasPrefix(v.Value(), pattern) {
+			versions[v.String()] = v
+		}
+	}
+
 	writeDebug("Retrieving Docker releases")
+	stableVersions, err := dockerversion.ListVersions(mirrorURL, dockerversion.Stable)
+	if err != nil {
+		die("", err, retCodeRuntimeError)
+	}
+	for _, v := range stableVersions {
+		if strings.HasPrefix(v.Value(), pattern) {
+			versions[v.String()] = v
+		}
+	}
+
+	if includePrereleases {
+		writeDebug("Retrieving Docker pre-releases")
+		prereleaseVersions, err := dockerversion.ListVersions(mirrorURL, dockerversion.Test)
+		if err != nil {
+			die("", err, retCodeRuntimeError)
+		}
+		for _, v := range prereleaseVersions {
+			if strings.HasPrefix(v.Value(), pattern) {
+				versions[v.String()] = v
+			}
+		}
+	}
+
+	results := make([]dockerversion.Version, 0, len(versions))
+	for _, v := range versions {
+		results = append(results, v)
+	}
+
+	dockerversion.Sort(results)
+
+	return results
+}
+
+func listLegacyDockerVersions() ([]dockerversion.Version, error) {
 	gh := buildGithubClient()
 	options := &github.ListOptions{PerPage: 100}
 
 	var allReleases []github.RepositoryRelease
 	for {
-		releases, response, err := gh.Repositories.ListReleases("docker", "docker", options)
+		releases, response, err := gh.Repositories.ListReleases("moby", "moby", options)
 		if err != nil {
 			warnWhenRateLimitExceeded(err, response)
-			die("Unable to retrieve list of Docker releases from GitHub", err, retCodeRuntimeError)
+			return nil, errors.Wrap(err, "Unable to retrieve list of Docker releases from GitHub")
 		}
 		allReleases = append(allReleases, releases...)
 		if response.StatusCode != 200 {
-			die("Unable to retrieve list of Docker releases from GitHub (Status %s).", nil, retCodeRuntimeError, response.StatusCode)
+			return nil, errors.Errorf("Unable to retrieve list of Docker releases from GitHub (Status %s).", response.StatusCode)
 		}
 		if response.NextPage == 0 {
 			break
@@ -792,14 +839,10 @@ func getAvailableVersions(pattern string) []dockerversion.Version {
 			writeDebug("Ignoring non-semver Docker release: %s", version)
 			continue
 		}
-
-		if strings.HasPrefix(v.Value(), pattern) {
-			results = append(results, v)
-		}
+		results = append(results, v)
 	}
 
-	dockerversion.Sort(results)
-	return results
+	return results, nil
 }
 
 func isUpgradeAvailable() (bool, string) {
