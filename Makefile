@@ -26,7 +26,7 @@ validate:
 	-go list ./... | grep -v /vendor/ | xargs -L1 golint --set_exit_status
 
 test: local
-	go test -v $(GOFILES_NOVENDOR)
+	go test $(GOFILES_NOVENDOR)
 	eval "$( ./dvm-helper --bash-completion )"
 	./dvm-helper/dvm-helper --version
 
