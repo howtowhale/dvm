@@ -31,7 +31,6 @@ var mirrorURL string
 var githubUrlOverride string
 var debug bool
 var silent bool
-var nocheck bool
 var useAfterInstall bool
 var token string
 var includePrereleases bool
@@ -84,7 +83,6 @@ func makeCliApp() *cli.App {
 			Usage:   "dvm install [<version>], dvm install edge\n\tInstall a Docker version, using $DOCKER_VERSION if the version is not specified.",
 			Flags: []cli.Flag{
 				cli.StringFlag{Name: "mirror-url", EnvVar: "DVM_MIRROR_URL", Usage: "Specify an alternate URL from which to download the Docker client. Defaults to https://get.docker.com/builds"},
-				cli.BoolFlag{Name: "nocheck", EnvVar: "DVM_NOCHECK", Usage: "Do not check if version exists (use with caution)."},
 			},
 			Action: func(c *cli.Context) error {
 				setGlobalVars(c)
@@ -277,7 +275,6 @@ func setGlobalVars(c *cli.Context) {
 	useAfterInstall = true
 
 	debug = c.GlobalBool("debug")
-	nocheck = c.Bool("nocheck")
 	token = c.GlobalString("github-token")
 	shell = c.GlobalString("shell")
 	validateShellFlag()
@@ -347,7 +344,6 @@ func detect() {
 	os.Setenv(versionEnvVar, version.String())
 	writeEnvironmentVariableScript(versionEnvVar)
 
-	nocheck = true
 	use(version)
 }
 
@@ -406,14 +402,6 @@ func list(pattern string) {
 }
 
 func install(version dockerversion.Version) {
-	if nocheck {
-		writeDebug("Skipping version validation!")
-	}
-
-	if !nocheck && !versionExists(version) {
-		die("Version %s not found - try `dvm ls-remote` to browse available versions.", nil, retCodeInvalidOperation, version)
-	}
-
 	versionDir := getVersionDir(version)
 
 	if version.IsEdge() && pathExists(versionDir) {
@@ -426,7 +414,6 @@ func install(version dockerversion.Version) {
 
 	if _, err := os.Stat(versionDir); err == nil {
 		writeWarning("%s is already installed", version)
-		nocheck = true
 		use(version)
 		return
 	}
@@ -436,7 +423,6 @@ func install(version dockerversion.Version) {
 	downloadRelease(version)
 
 	if useAfterInstall {
-		nocheck = true
 		use(version)
 	}
 }
@@ -644,21 +630,6 @@ func isVersionInstalled(version dockerversion.Version) bool {
 		}
 	}
 
-	return false
-}
-
-func versionExists(version dockerversion.Version) bool {
-	if version.IsEdge() {
-		return true
-	}
-
-	availableVersions := getAvailableVersions(version.Value())
-
-	for _, availableVersion := range availableVersions {
-		if version.Equals(availableVersion) {
-			return true
-		}
-	}
 	return false
 }
 
