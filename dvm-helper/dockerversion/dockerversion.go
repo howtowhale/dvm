@@ -55,7 +55,7 @@ func (version Version) BuildDownloadURL(mirror string) (url string, archived boo
 	// Docker Store Download
 	if version.IsEdge() || !version.semver.LessThan(dockerStoreCutoff) {
 		archived = true
-		checksumed = !version.IsEdge()
+		checksumed = false
 		extSlug = archiveFileExt
 		if mirror == "" {
 			mirror = "download.docker.com"

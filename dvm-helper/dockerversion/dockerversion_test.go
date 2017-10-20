@@ -118,27 +118,56 @@ func TestVersion_BuildDownloadURL(t *testing.T) {
 	testcases := map[Version]struct {
 		wantURL      string
 		wantArchived bool
+		wantChecksum bool
 	}{
 		// original download location, without compression
-		Parse("1.10.3"): {fmt.Sprintf("https://get.docker.com/builds/%s/%s/docker-1.10.3", dockerOS, dockerArch), false},
+		Parse("1.10.3"): {
+			wantURL:      fmt.Sprintf("https://get.docker.com/builds/%s/%s/docker-1.10.3", dockerOS, dockerArch),
+			wantArchived: false,
+			wantChecksum: true,
+		},
 
 		// original download location, without compression, prerelease
-		Parse("1.10.0-rc1"): {fmt.Sprintf("https://test.docker.com/builds/%s/%s/docker-1.10.0-rc1", dockerOS, dockerArch), false},
+		Parse("1.10.0-rc1"): {
+			wantURL:      fmt.Sprintf("https://test.docker.com/builds/%s/%s/docker-1.10.0-rc1", dockerOS, dockerArch),
+			wantArchived: false,
+			wantChecksum: true,
+		},
 
 		// compressed binaries
-		Parse("1.11.0-rc1"): {fmt.Sprintf("https://test.docker.com/builds/%s/%s/docker-1.11.0-rc1.tgz", dockerOS, dockerArch), true},
+		Parse("1.11.0-rc1"): {
+			wantURL:      fmt.Sprintf("https://test.docker.com/builds/%s/%s/docker-1.11.0-rc1.tgz", dockerOS, dockerArch),
+			wantArchived: true,
+			wantChecksum: true,
+		},
 
 		// original version scheme, prerelease binaries
-		Parse("1.13.0-rc1"): {fmt.Sprintf("https://test.docker.com/builds/%s/%s/docker-1.13.0-rc1.tgz", dockerOS, dockerArch), true},
+		Parse("1.13.0-rc1"): {
+			wantURL:      fmt.Sprintf("https://test.docker.com/builds/%s/%s/docker-1.13.0-rc1.tgz", dockerOS, dockerArch),
+			wantArchived: true,
+			wantChecksum: true,
+		},
 
 		// yearly notation, original download location, release location
-		Parse("17.03.0-ce"): {fmt.Sprintf("https://get.docker.com/builds/%s/%s/docker-17.03.0-ce%s", dockerOS, dockerArch, archiveFileExt), true},
+		Parse("17.03.0-ce"): {
+			wantURL:      fmt.Sprintf("https://get.docker.com/builds/%s/%s/docker-17.03.0-ce%s", dockerOS, dockerArch, archiveFileExt),
+			wantArchived: true,
+			wantChecksum: true,
+		},
 
-		// docker store download
-		Parse("17.06.0-ce"): {fmt.Sprintf("https://download.docker.com/%s/static/stable/%s/docker-17.06.0-ce.tgz", mobyOS, dockerArch), true},
+		// docker store download (no more checksums)
+		Parse("17.06.0-ce"): {
+			wantURL:      fmt.Sprintf("https://download.docker.com/%s/static/stable/%s/docker-17.06.0-ce.tgz", mobyOS, dockerArch),
+			wantArchived: true,
+			wantChecksum: false,
+		},
 
 		// docker store download, prerelease
-		Parse("17.07.0-ce-rc1"): {fmt.Sprintf("https://download.docker.com/%s/static/test/%s/docker-17.07.0-ce-rc1.tgz", mobyOS, dockerArch), true},
+		Parse("17.07.0-ce-rc1"): {
+			wantURL:      fmt.Sprintf("https://download.docker.com/%s/static/test/%s/docker-17.07.0-ce-rc1.tgz", mobyOS, dockerArch),
+			wantArchived: true,
+			wantChecksum: false,
+		},
 	}
 
 	for version, testcase := range testcases {
@@ -152,10 +181,10 @@ func TestVersion_BuildDownloadURL(t *testing.T) {
 				t.Fatalf("Expected %s to be downloaded from '%s', but got '%s'", version, testcase.wantURL, gotURL)
 			}
 			if testcase.wantArchived != gotArchived {
-				t.Fatalf("Expected %s to use an archived download strategy", version)
+				t.Fatalf("Expected archive for %s to be %v, got %v", version, testcase.wantArchived, gotArchived)
 			}
-			if !gotChecksumed {
-				t.Fatalf("Expected %s to provide a checksum", version)
+			if testcase.wantChecksum != gotChecksumed {
+				t.Fatalf("Expected checksum for %s to be %v, got %v", version, testcase.wantChecksum, gotChecksumed)
 			}
 
 			response, err := http.DefaultClient.Head(gotURL)
