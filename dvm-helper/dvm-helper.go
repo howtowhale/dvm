@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	neturl "net/url"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -404,7 +404,7 @@ func list(pattern string) {
 func install(version dockerversion.Version) {
 	versionDir := getVersionDir(version)
 
-	if version.IsEdge() && pathExists(versionDir) {
+	if version.IsEdge() {
 		// Always install latest of edge build
 		err := os.RemoveAll(versionDir)
 		if err != nil {
@@ -428,29 +428,20 @@ func install(version dockerversion.Version) {
 }
 
 func downloadRelease(version dockerversion.Version) {
-	url, archived, checksumed, err := version.BuildDownloadURL(mirrorURL)
+	destPath := filepath.Join(getVersionDir(version), getBinaryName())
+	err := version.Download(mirrorURL, destPath, getDebugLogger())
 	if err != nil {
-		die("Unable to determine the download URL for %s", err, retCodeRuntimeError, version)
+		die("", err, retCodeRuntimeError)
 	}
 
-	binaryName := getBinaryName()
-	binaryPath := filepath.Join(getVersionDir(version), binaryName)
-	if archived {
-		archivedFile := path.Join("docker", binaryName)
-		if checksumed {
-			downloadArchivedFileWithChecksum(url, archivedFile, binaryPath)
-		} else {
-			downloadArchivedFile(url, archivedFile, binaryPath)
-		}
-	} else {
-		if checksumed {
-			downloadFileWithChecksum(url, binaryPath)
-		} else {
-			downloadFile(url, binaryPath)
-		}
+	writeDebug("Downloaded Docker %s to %s", version, destPath)
+}
 
+func getDebugLogger() *log.Logger {
+	if debug {
+		return log.New(color.Output, "", log.LstdFlags)
 	}
-	writeDebug("Downloaded Docker %s to %s.", version, binaryPath)
+	return log.New(ioutil.Discard, "", log.LstdFlags)
 }
 
 func uninstall(version dockerversion.Version) {

@@ -2,10 +2,13 @@ package dockerversion
 
 import (
 	"fmt"
+	"log"
+	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/Masterminds/semver"
+	"github.com/howtowhale/dvm/dvm-helper/internal/downloader"
 	"github.com/pkg/errors"
 )
 
@@ -37,7 +40,7 @@ func Parse(value string) Version {
 	return v
 }
 
-func (version Version) BuildDownloadURL(mirror string) (url string, archived bool, checksumed bool, err error) {
+func (version Version) buildDownloadURL(mirror string, forcePrerelease bool) (url string, archived bool, checksumed bool, err error) {
 	var releaseSlug, versionSlug, extSlug string
 
 	archivedReleaseCutoff, _ := semver.NewVersion("1.11.0-rc1")
@@ -63,7 +66,7 @@ func (version Version) BuildDownloadURL(mirror string) (url string, archived boo
 		if version.IsEdge() {
 			releaseSlug = "edge"
 			versionSlug = edgeVersion.String()
-		} else if version.IsPrerelease() {
+		} else if version.IsPrerelease() || forcePrerelease {
 			releaseSlug = "test"
 			versionSlug = version.String()
 		} else {
@@ -96,6 +99,46 @@ func (version Version) BuildDownloadURL(mirror string) (url string, archived boo
 			releaseSlug, mirror, dockerOS, dockerArch, versionSlug, extSlug)
 		return
 	}
+}
+
+// Download a Docker release.
+// version - the desired version.
+// mirrorURL - optional alternate download location.
+// binaryPath - full path to where the Docker client binary should be saved.
+func (version Version) Download(mirrorURL string, binaryPath string, l *log.Logger) error {
+	err := version.download(false, mirrorURL, binaryPath, l)
+	if err != nil && !version.IsPrerelease() {
+		// Docker initially publishes non-rc version veresions to the test location
+		// and then later republishes to the stable location
+		// Retry stable versions against test to find "unstable" stable versions. :-)
+		l.Printf("Could not find a stable release for %s, checking for a test release\n", version)
+		retryErr := version.download(true, mirrorURL, binaryPath, l)
+		return errors.Wrapf(retryErr, "Attempted to fallback to downloading from the prerelease location after downloading from the stable location failed: %s", err.Error())
+	}
+	return err
+}
+
+func (version Version) download(forcePrerelease bool, mirrorURL string, binaryPath string, l *log.Logger) error {
+	url, archived, checksumed, err := version.buildDownloadURL(mirrorURL, forcePrerelease)
+	if err != nil {
+		return errors.Wrapf(err, "Unable to determine the download URL for %s", version)
+	}
+
+	d := downloader.New(l)
+	binaryName := filepath.Base(binaryPath)
+
+	if archived {
+		archivedFile := filepath.Join("docker", binaryName)
+		if checksumed {
+			return d.DownloadArchivedFileWithChecksum(url, archivedFile, binaryPath)
+		}
+		return d.DownloadArchivedFile(url, archivedFile, binaryPath)
+	}
+
+	if checksumed {
+		return d.DownloadFileWithChecksum(url, binaryPath)
+	}
+	return d.DownloadFile(url, binaryPath)
 }
 
 func (version Version) IsPrerelease() bool {
