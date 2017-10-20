@@ -393,7 +393,7 @@ func list(pattern string) {
 	current, _ := getCurrentDockerVersion()
 
 	for _, version := range versions {
-		if current.Equals(version) {
+		if current.String() == version.String() {
 			color.Green("->\t%s", version)
 		} else {
 			writeInfo("\t%s", version)
