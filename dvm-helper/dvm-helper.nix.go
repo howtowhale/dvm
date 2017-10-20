@@ -5,18 +5,28 @@ package main
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/howtowhale/dvm/dvm-helper/internal/downloader"
 )
 
 const binaryFileExt string = ""
 
 func upgradeSelf(version string) {
+	d := downloader.New(getDebugLogger())
+
 	binaryURL := buildDvmReleaseURL(version, dvmOS, dvmArch, "dvm-helper")
 	binaryPath := filepath.Join(dvmDir, "dvm-helper", "dvm-helper")
-	downloadFileWithChecksum(binaryURL, binaryPath)
+	err := d.DownloadFileWithChecksum(binaryURL, binaryPath)
+	if err != nil {
+		die("", err, retCodeRuntimeError)
+	}
 
 	scriptURL := buildDvmReleaseURL(version, "dvm.sh")
 	scriptPath := filepath.Join(dvmDir, "dvm.sh")
-	downloadFile(scriptURL, scriptPath)
+	err = d.DownloadFile(scriptURL, scriptPath)
+	if err != nil {
+		die("", err, retCodeRuntimeError)
+	}
 }
 
 func getCleanPathRegex() string {

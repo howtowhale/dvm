@@ -1,15 +1,13 @@
 package main
 
-import "fmt"
-import "io"
-import "net/http"
-import "os"
-import "path"
-import "path/filepath"
-import "strings"
-import "github.com/fatih/color"
-import "github.com/pivotal-golang/archiver/extractor"
-import "github.com/howtowhale/dvm/dvm-helper/checksum"
+import (
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+
+	"github.com/fatih/color"
+)
 
 func exportEnvironmentVariable(name string) string {
 	value := os.Getenv(name)
@@ -26,112 +24,12 @@ func exportEnvironmentVariable(name string) string {
 	return fmt.Sprintf("export %s=\"%s\"\n", name, value)
 }
 
-func pathExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
-}
-
 func ensureParentDirectoryExists(filePath string) {
 	dir := filepath.Dir(filePath)
 
 	err := os.MkdirAll(dir, 0777)
 	if err != nil {
 		die("Unable to create directory %s.", err, retCodeRuntimeError, dir)
-	}
-}
-
-func downloadFile(url string, destPath string) {
-	ensureParentDirectoryExists(destPath)
-
-	destFile, err := os.Create(destPath)
-	if err != nil {
-		die("Unable to create to %s.", err, retCodeRuntimeError, destPath)
-	}
-	defer destFile.Close()
-	os.Chmod(destPath, 0755)
-
-	writeDebug("Downloading %s", url)
-
-	response, err := http.Get(url)
-	if err != nil {
-		die("Unable to download %s.", err, retCodeRuntimeError, url)
-	}
-
-	if response.StatusCode != 200 {
-		die("Unable to download %s. (Status %d)", nil, retCodeRuntimeError, url, response.StatusCode)
-	}
-	defer response.Body.Close()
-
-	_, err = io.Copy(destFile, response.Body)
-	if err != nil {
-		die("Unable to write to %s.", err, retCodeRuntimeError, destPath)
-	}
-}
-
-func downloadFileWithChecksum(url string, destPath string) {
-	fileName := filepath.Base(destPath)
-	tmpPath := filepath.Join(dvmDir, ".tmp", fileName)
-	downloadFile(url, tmpPath)
-
-	checksumURL := url + ".sha256"
-	checksumPath := filepath.Join(dvmDir, ".tmp", (fileName + ".sh256"))
-	downloadFile(checksumURL, checksumPath)
-
-	checksum.CompareChecksum(tmpPath, checksumPath)
-	isValid, err := checksum.CompareChecksum(tmpPath, checksumPath)
-	if err != nil {
-		die("Unable to calculate checksum of %s.", err, retCodeRuntimeError, tmpPath)
-	}
-	if !isValid {
-		die("The checksum of %s failed to match %s.", nil, retCodeRuntimeError, tmpPath, checksumPath)
-	}
-
-	// Copy to final location, if different
-	if destPath != tmpPath {
-		ensureParentDirectoryExists(destPath)
-		err = os.Rename(tmpPath, destPath)
-		if err != nil {
-			die("Unable to copy %s to %s.", err, retCodeRuntimeError, tmpPath, destPath)
-		}
-	}
-
-	// Cleanup temp files
-	if err = os.Remove(checksumPath); err != nil {
-		writeWarning("Unable to remove temporary file: %s.", checksumPath)
-	}
-}
-
-func downloadArchivedFile(url string, archivedFile string, destPath string) {
-	archiveName := path.Base(url)
-	tmpPath := filepath.Join(dvmDir, ".tmp", archiveName)
-	downloadFile(url, tmpPath)
-	extractArchive(tmpPath, archiveName, archivedFile, destPath)
-}
-
-func downloadArchivedFileWithChecksum(url string, archivedFile string, destPath string) {
-	archiveName := path.Base(url)
-	tmpPath := filepath.Join(dvmDir, ".tmp", archiveName)
-	downloadFileWithChecksum(url, tmpPath)
-	extractArchive(tmpPath, archiveName, archivedFile, destPath)
-}
-func extractArchive(tmpPath string, archiveName string, archivedFile string, destPath string) {
-	// Extract the archive
-	archivePath := filepath.Join(dvmDir, ".tmp", strings.TrimSuffix(archiveName, filepath.Ext(archiveName)))
-	extractor := extractor.NewDetectable()
-	extractor.Extract(tmpPath, archivePath)
-	// Copy the archived file to the final destination
-	archivedFilePath := filepath.Join(archivePath, archivedFile)
-	ensureParentDirectoryExists(destPath)
-	err := os.Rename(archivedFilePath, destPath)
-	if err != nil {
-		die("Unable to copy %s to %s.", err, retCodeRuntimeError, archivedFilePath, destPath)
-	}
-	// Cleanup temp files
-	if err = os.Remove(tmpPath); err != nil {
-		writeWarning("Unable to remove temporary file: %s\n%s", tmpPath, err)
-	}
-	if err = os.RemoveAll(archivePath); err != nil {
-		writeWarning("Unable to remove temporary directory: %s\n%s", archivePath, err)
 	}
 }
 

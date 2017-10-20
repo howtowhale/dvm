@@ -6,24 +6,37 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/howtowhale/dvm/dvm-helper/internal/downloader"
 )
-import "strings"
 
 const dvmOS string = "Windows"
 const binaryFileExt string = ".exe"
 
 func upgradeSelf(version string) {
+	d := downloader.New(getDebugLogger())
+
 	binaryURL := buildDvmReleaseURL(version, dvmOS, dvmArch, "dvm-helper.exe")
 	binaryPath := filepath.Join(dvmDir, ".tmp", "dvm-helper.exe")
-	downloadFileWithChecksum(binaryURL, binaryPath)
+	err := d.DownloadFileWithChecksum(binaryURL, binaryPath)
+	if err != nil {
+		die("", err, retCodeRuntimeError)
+	}
 
 	psScriptURL := buildDvmReleaseURL(version, "dvm.ps1")
 	psScriptPath := filepath.Join(dvmDir, "dvm.ps1")
-	downloadFile(psScriptURL, psScriptPath)
+	err = d.DownloadFile(psScriptURL, psScriptPath)
+	if err != nil {
+		die("", err, retCodeRuntimeError)
+	}
 
 	cmdScriptURL := buildDvmReleaseURL(version, "dvm.cmd")
 	cmdScriptPath := filepath.Join(dvmDir, "dvm.cmd")
-	downloadFile(cmdScriptURL, cmdScriptPath)
+	err = d.DownloadFile(cmdScriptURL, cmdScriptPath)
+	if err != nil {
+		die("", err, retCodeRuntimeError)
+	}
 
 	writeUpgradeScript()
 }
