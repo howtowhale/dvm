@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+
+# bash completion for Docker Version Manager (DVM)
+
+__dvm_generate_completion()
+{
+  declare current_word
+  current_word="${COMP_WORDS[COMP_CWORD]}"
+  COMPREPLY=($(compgen -W "$1" -- "$current_word"))
+  return 0
+}
+
+__dvm_commands ()
+{
+  declare current_word
+  declare command
+
+  current_word="${COMP_WORDS[COMP_CWORD]}"
+
+  COMMANDS='\
+    help install uninstall use \
+    alias unalias upgrade \
+    current list ls list-remote ls-remote \
+    list-alias ls-alias deactivate unload \
+    version which'
+
+    if [ ${#COMP_WORDS[@]} == 4 ]; then
+
+      command="${COMP_WORDS[COMP_CWORD-2]}"
+      case "${command}" in
+      alias)  __dvm_installed_dockers ;;
+      esac
+
+    else
+
+      case "${current_word}" in
+      -*)     __dvm_options ;;
+      *)      __dvm_generate_completion "$COMMANDS" ;;
+      esac
+
+    fi
+}
+
+__dvm_options ()
+{
+  OPTIONS=''
+  __dvm_generate_completion "$OPTIONS"
+}
+
+__dvm_installed_dockers ()
+{
+  __dvm_generate_completion "$(__dvm_ls) $(__dvm_aliases)"
+}
+
+__dvm_ls ()
+{
+  declare installed
+  installed=""
+  if [ -d $DVM_DIR/bin/docker ]; then
+    installed="`cd $DVM_DIR/bin/docker && command ls`"
+  fi
+  echo "${installed}"
+}
+
+__dvm_aliases ()
+{
+  declare aliases
+  aliases=""
+  if [ -d $DVM_DIR/alias ]; then
+    aliases="`cd $DVM_DIR/alias && command ls`"
+  fi
+  echo "${aliases}"
+}
+
+__dvm_alias ()
+{
+  __dvm_generate_completion "$(__dvm_aliases)"
+}
+
+__dvm ()
+{
+  declare previous_word
+  previous_word="${COMP_WORDS[COMP_CWORD-1]}"
+
+  case "$previous_word" in
+  use|ls|list|uninstall) __dvm_installed_dockers ;;
+  alias|unalias)  __dvm_alias ;;
+  *)              __dvm_commands ;;
+  esac
+
+  return 0
+}
+
+# complete is a bash builtin, but recent versions of ZSH come with a function
+# called bashcompinit that will create a complete in ZSH. If the user is in
+# ZSH, load and run bashcompinit before calling the complete function.
+if [[ -n ${ZSH_VERSION-} ]]; then
+	autoload -U +X bashcompinit && bashcompinit
+fi
+
+complete -o default -o nospace -F __dvm dvm
