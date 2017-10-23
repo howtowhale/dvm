@@ -2,8 +2,12 @@ package dockerversion
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"testing"
+
+	"log"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -172,7 +176,7 @@ func TestVersion_BuildDownloadURL(t *testing.T) {
 
 	for version, testcase := range testcases {
 		t.Run(version.String(), func(t *testing.T) {
-			gotURL, gotArchived, gotChecksumed, err := version.BuildDownloadURL("")
+			gotURL, gotArchived, gotChecksumed, err := version.buildDownloadURL("", false)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -201,26 +205,12 @@ func TestVersion_BuildDownloadURL(t *testing.T) {
 
 func TestVersion_DownloadEdgeRelease(t *testing.T) {
 	version := Parse("edge")
+	tempDir, _ := ioutil.TempDir("", "dvmtest")
+	destPath := filepath.Join(tempDir, "docker")
 
-	url, archived, checksumed, err := version.BuildDownloadURL("")
+	l := log.New(ioutil.Discard, "", log.LstdFlags)
+	err := version.Download("", destPath, l)
 	if err != nil {
 		t.Fatalf("%#v", err)
-	}
-
-	if !archived {
-		t.Fatal("Expected the edge release to be archived.")
-	}
-
-	if checksumed {
-		t.Fatal("Expected the edge release to NOT be checksumed.")
-	}
-
-	response, err := http.DefaultClient.Get(url)
-	if err != nil {
-		t.Fatalf("%#v", errors.Wrapf(err, "Unable to download release from %s", response))
-	}
-
-	if response.StatusCode != 200 {
-		t.Fatalf("Unexpected status code (%d) when downloading %s", response.StatusCode, url)
 	}
 }

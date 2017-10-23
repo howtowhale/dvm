@@ -161,3 +161,35 @@ func TestInstallPrereleases(t *testing.T) {
 	assert.NotEmpty(t, output, "Should have captured stdout")
 	assert.Contains(t, output, "Now using Docker 1.12.5-rc1", "Should have installed a prerelease version")
 }
+
+// install a version from the test location that is missing the -rc suffix
+func TestInstallNonPrereleaseTestRelease(t *testing.T) {
+	_, github := createMockDVM(nil)
+	defer github.Close()
+
+	outputCapture := &bytes.Buffer{}
+	color.Output = outputCapture
+
+	dvm := makeCliApp()
+	dvm.Run([]string{"dvm-helper", "--debug", "install", "17.10.0-ce"})
+
+	output := outputCapture.String()
+	assert.NotEmpty(t, output, "Should have captured stdout")
+	assert.Contains(t, output, "Now using Docker 17.10.0-ce", "Should have installed a test version")
+}
+
+// install something that used to be a test release and is now considered stable
+func TestInstallStabilizedTestRelease(t *testing.T) {
+	_, github := createMockDVM(nil)
+	defer github.Close()
+
+	outputCapture := &bytes.Buffer{}
+	color.Output = outputCapture
+
+	dvm := makeCliApp()
+	dvm.Run([]string{"dvm-helper", "--debug", "install", "17.09.0-ce"})
+
+	output := outputCapture.String()
+	assert.NotEmpty(t, output, "Should have captured stdout")
+	assert.Contains(t, output, "Now using Docker 17.09.0-ce", "Should have installed a stable version")
+}
