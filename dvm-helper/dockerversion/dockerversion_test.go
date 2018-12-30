@@ -132,25 +132,31 @@ func TestVersion_BuildDownloadURL(t *testing.T) {
 		},
 
 		// original download location, without compression, prerelease
+		/* test.docker.com has been removed by docker
 		Parse("1.10.0-rc1"): {
 			wantURL:      fmt.Sprintf("https://test.docker.com/builds/%s/%s/docker-1.10.0-rc1", dockerOS, dockerArch),
 			wantArchived: false,
 			wantChecksum: true,
 		},
+		*/
 
 		// compressed binaries
+		/* test.docker.com has been removed by docker
 		Parse("1.11.0-rc1"): {
 			wantURL:      fmt.Sprintf("https://test.docker.com/builds/%s/%s/docker-1.11.0-rc1.tgz", dockerOS, dockerArch),
 			wantArchived: true,
 			wantChecksum: true,
 		},
+		*/
 
 		// original version scheme, prerelease binaries
+		/* test.docker.com has been removed by docker
 		Parse("1.13.0-rc1"): {
 			wantURL:      fmt.Sprintf("https://test.docker.com/builds/%s/%s/docker-1.13.0-rc1.tgz", dockerOS, dockerArch),
 			wantArchived: true,
 			wantChecksum: true,
 		},
+		*/
 
 		// yearly notation, original download location, release location
 		Parse("17.03.0-ce"): {
