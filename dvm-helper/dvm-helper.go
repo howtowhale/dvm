@@ -814,7 +814,7 @@ func listLegacyDockerVersions() ([]dockerversion.Version, error) {
 		}
 		allReleases = append(allReleases, releases...)
 		if response.StatusCode != 200 {
-			return nil, errors.Errorf("Unable to retrieve list of Docker releases from GitHub (Status %s).", response.StatusCode)
+			return nil, errors.Errorf("Unable to retrieve list of Docker releases from GitHub (Status %v).", response.StatusCode)
 		}
 		if response.NextPage == 0 {
 			break
