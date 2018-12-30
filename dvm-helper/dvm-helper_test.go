@@ -155,11 +155,11 @@ func TestInstallPrereleases(t *testing.T) {
 	color.Output = outputCapture
 
 	dvm := makeCliApp()
-	dvm.Run([]string{"dvm-helper", "--debug", "install", "1.12.5-rc1"})
+	dvm.Run([]string{"dvm-helper", "--debug", "install", "18.06.1-ce"})
 
 	output := outputCapture.String()
 	assert.NotEmpty(t, output, "Should have captured stdout")
-	assert.Contains(t, output, "Now using Docker 1.12.5-rc1", "Should have installed a prerelease version")
+	assert.Contains(t, output, "Now using Docker 18.06.1-ce", "Should have installed a prerelease version")
 }
 
 // install a version from the test location that is missing the -rc suffix
