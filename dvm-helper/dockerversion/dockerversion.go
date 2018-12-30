@@ -102,20 +102,20 @@ func (version Version) buildDownloadURL(mirror string, forcePrerelease bool) (ur
 // version - the desired version.
 // mirrorURL - optional alternate download location.
 // binaryPath - full path to where the Docker client binary should be saved.
-func (version Version) Download(mirrorURL string, binaryPath string, l *log.Logger) error {
-	err := version.download(false, mirrorURL, binaryPath, l)
+func (version Version) Download(mirrorURL string, dvmDir string, binaryPath string, l *log.Logger) error {
+	err := version.download(false, mirrorURL, dvmDir, binaryPath, l)
 	if err != nil && !version.IsPrerelease() && version.shouldBeInDockerStore() {
 		// Docker initially publishes non-rc version versions to the test location
 		// and then later republishes to the stable location
 		// Retry stable versions against test to find "unstable" stable versions. :-)
 		l.Printf("Could not find a stable release for %s, checking for a test release\n", version)
-		retryErr := version.download(true, mirrorURL, binaryPath, l)
+		retryErr := version.download(true, mirrorURL, dvmDir, binaryPath, l)
 		return errors.Wrapf(retryErr, "Attempted to fallback to downloading from the prerelease location after downloading from the stable location failed: %s", err.Error())
 	}
 	return err
 }
 
-func (version Version) download(forcePrerelease bool, mirrorURL string, binaryPath string, l *log.Logger) error {
+func (version Version) download(forcePrerelease bool, mirrorURL string, dvmDir string, binaryPath string, l *log.Logger) error {
 	url, archived, checksumed, err := version.buildDownloadURL(mirrorURL, forcePrerelease)
 	if err != nil {
 		return errors.Wrapf(err, "Unable to determine the download URL for %s", version)
@@ -130,7 +130,7 @@ func (version Version) download(forcePrerelease bool, mirrorURL string, binaryPa
 		return errors.Errorf("Version %s not found (%v) - try `dvm ls-remote` to browse available versions", version, head.StatusCode)
 	}
 
-	d := downloader.New(l)
+	d := downloader.New(dvmDir, l)
 	binaryName := filepath.Base(binaryPath)
 
 	if archived {

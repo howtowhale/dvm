@@ -429,7 +429,7 @@ func install(version dockerversion.Version) {
 
 func downloadRelease(version dockerversion.Version) {
 	destPath := filepath.Join(getVersionDir(version), getBinaryName())
-	err := version.Download(mirrorURL, destPath, getDebugLogger())
+	err := version.Download(mirrorURL, dvmDir, destPath, getDebugLogger())
 	if err != nil {
 		die("", err, retCodeRuntimeError)
 	}

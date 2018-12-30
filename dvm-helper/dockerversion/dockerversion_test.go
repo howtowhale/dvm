@@ -212,10 +212,11 @@ func TestVersion_BuildDownloadURL(t *testing.T) {
 func TestVersion_DownloadEdgeRelease(t *testing.T) {
 	version := Parse("edge")
 	tempDir, _ := ioutil.TempDir("", "dvmtest")
-	destPath := filepath.Join(tempDir, "docker")
+	dvmDir := filepath.Join(tempDir, ".dvm")
+	destPath := filepath.Join(dvmDir, "docker")
 
 	l := log.New(ioutil.Discard, "", log.LstdFlags)
-	err := version.Download("", destPath, l)
+	err := version.Download("", dvmDir, destPath, l)
 	if err != nil {
 		t.Fatalf("%#v", err)
 	}

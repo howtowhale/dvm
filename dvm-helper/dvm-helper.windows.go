@@ -15,7 +15,7 @@ const dvmOS string = "Windows"
 const binaryFileExt string = ".exe"
 
 func upgradeSelf(version string) {
-	d := downloader.New(getDebugLogger())
+	d := downloader.New(dvmDir, getDebugLogger())
 
 	binaryURL := buildDvmReleaseURL(version, dvmOS, dvmArch, "dvm-helper.exe")
 	binaryPath := filepath.Join(dvmDir, ".tmp", "dvm-helper.exe")

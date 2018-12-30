@@ -23,11 +23,11 @@ type Client struct {
 
 // New creates a downloader client.
 // l - optional logger for debug output
-func New(l *log.Logger) Client {
+func New(dvmDir string, l *log.Logger) Client {
 	if l == nil {
 		l = log.New(ioutil.Discard, "", log.LstdFlags)
 	}
-	tmpDir, _ := ioutil.TempDir("", "dvm")
+	tmpDir := filepath.Join(dvmDir, ".tmp")
 
 	return Client{
 		log: l, tmp: tmpDir}
@@ -52,7 +52,7 @@ func (d Client) DownloadFile(url string, destPath string) error {
 	defer destFile.Close()
 	os.Chmod(destPath, 0755)
 
-	d.log.Printf("Downloading %s\n", url)
+	d.log.Printf("Downloading %s to %s\n", url, destPath)
 
 	response, err := http.Get(url)
 	if err != nil {

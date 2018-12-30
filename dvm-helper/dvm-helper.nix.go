@@ -12,7 +12,7 @@ import (
 const binaryFileExt string = ""
 
 func upgradeSelf(version string) {
-	d := downloader.New(getDebugLogger())
+	d := downloader.New(dvmDir, getDebugLogger())
 
 	binaryURL := buildDvmReleaseURL(version, dvmOS, dvmArch, "dvm-helper")
 	binaryPath := filepath.Join(dvmDir, "dvm-helper", "dvm-helper")
