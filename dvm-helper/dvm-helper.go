@@ -18,6 +18,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/google/go-github/github"
 	"github.com/howtowhale/dvm/dvm-helper/dockerversion"
+	"github.com/howtowhale/dvm/dvm-helper/internal/config"
 	"github.com/howtowhale/dvm/dvm-helper/url"
 	"github.com/pkg/errors"
 	"github.com/ryanuber/go-glob"
@@ -25,20 +26,16 @@ import (
 )
 
 // These are global command line variables
-var shell string
-var dvmDir string
-var mirrorURL string
-var githubUrlOverride string
-var debug bool
-var silent bool
+var opts config.DvmOptions
+
+// This is a nasty global state flag that we flip. Bad Carolyn.
 var useAfterInstall bool
-var token string
-var includePrereleases bool
 
 // These are set during the build
 var dvmVersion string
 var dvmCommit string
 var upgradeDisabled string // Allow package managers like homebrew to disable in-place upgrades
+var githubUrlOverride string
 
 const (
 	retCodeInvalidArgument  = 127
@@ -274,20 +271,20 @@ func makeCliApp() *cli.App {
 func setGlobalVars(c *cli.Context) {
 	useAfterInstall = true
 
-	debug = c.GlobalBool("debug")
-	token = c.GlobalString("github-token")
-	shell = c.GlobalString("shell")
+	opts.Debug = c.GlobalBool("debug")
+	opts.Token = c.GlobalString("github-token")
+	opts.Shell = c.GlobalString("shell")
 	validateShellFlag()
 
-	silent = c.GlobalBool("silent")
-	mirrorURL = c.String("mirror-url")
-	includePrereleases = c.Bool("pre")
+	opts.Silent = c.GlobalBool("silent")
+	opts.MirrorURL = c.String("mirror-url")
+	opts.IncludePrereleases = c.Bool("pre")
 
-	dvmDir = c.GlobalString("dvm-dir")
-	if dvmDir == "" {
-		dvmDir = filepath.Join(getUserHomeDir(), ".dvm")
+	opts.DvmDir = c.GlobalString("dvm-dir")
+	if opts.DvmDir == "" {
+		opts.DvmDir = filepath.Join(getUserHomeDir(), ".dvm")
 	}
-	writeDebug("The dvm home directory is: %s", dvmDir)
+	writeDebug("The dvm home directory is: %s", opts.DvmDir)
 }
 
 func detect() {
@@ -429,7 +426,7 @@ func install(version dockerversion.Version) {
 
 func downloadRelease(version dockerversion.Version) {
 	destPath := filepath.Join(getVersionDir(version), getBinaryName())
-	err := version.Download(mirrorURL, dvmDir, destPath, getDebugLogger())
+	err := version.Download(opts.MirrorURL, opts.DvmDir, destPath, getDebugLogger())
 	if err != nil {
 		die("", err, retCodeRuntimeError)
 	}
@@ -438,7 +435,7 @@ func downloadRelease(version dockerversion.Version) {
 }
 
 func getDebugLogger() *log.Logger {
-	if debug {
+	if opts.Debug {
 		return log.New(color.Output, "", log.LstdFlags)
 	}
 	return log.New(ioutil.Discard, "", log.LstdFlags)
@@ -561,7 +558,7 @@ func getAliases() map[string]string {
 }
 
 func getAliasPath(alias string) string {
-	return filepath.Join(dvmDir, "alias", alias)
+	return filepath.Join(opts.DvmDir, "alias", alias)
 }
 
 func getBinaryName() string {
@@ -587,14 +584,14 @@ func writeEnvironmentVariableScript(name string) {
 
 func buildDvmOutputScriptPath() string {
 	var fileExtension string
-	if shell == "powershell" {
+	if opts.Shell == "powershell" {
 		fileExtension = "ps1"
-	} else if shell == "cmd" {
+	} else if opts.Shell == "cmd" {
 		fileExtension = "cmd"
 	} else { // default to bash
 		fileExtension = "sh"
 	}
-	return filepath.Join(dvmDir, ".tmp", ("dvm-output." + fileExtension))
+	return filepath.Join(opts.DvmDir, ".tmp", "dvm-output."+fileExtension)
 }
 
 func removePreviousDockerVersionFromPath() {
@@ -712,7 +709,7 @@ func getDockerVersion(dockerPath string, includeBuild bool) (dockerversion.Versi
 }
 
 func listRemote(prefix string) {
-	versions := getAvailableVersions(prefix, includePrereleases)
+	versions := getAvailableVersions(prefix, opts.IncludePrereleases)
 	for _, version := range versions {
 		writeInfo(version.String())
 	}
@@ -768,7 +765,7 @@ func getAvailableVersions(pattern string, includePrereleases bool) []dockerversi
 	}
 
 	writeDebug("Retrieving Docker releases")
-	stableVersions, err := dockerversion.ListVersions(mirrorURL, dockerversion.Stable)
+	stableVersions, err := dockerversion.ListVersions(opts.MirrorURL, dockerversion.Stable)
 	if err != nil {
 		die("", err, retCodeRuntimeError)
 	}
@@ -780,7 +777,7 @@ func getAvailableVersions(pattern string, includePrereleases bool) []dockerversi
 
 	if includePrereleases {
 		writeDebug("Retrieving Docker pre-releases")
-		prereleaseVersions, err := dockerversion.ListVersions(mirrorURL, dockerversion.Test)
+		prereleaseVersions, err := dockerversion.ListVersions(opts.MirrorURL, dockerversion.Test)
 		if err != nil {
 			die("", err, retCodeRuntimeError)
 		}
@@ -867,7 +864,7 @@ func isUpgradeAvailable() (bool, string) {
 }
 
 func getVersionsDir() string {
-	return filepath.Join(dvmDir, "bin", "docker")
+	return filepath.Join(opts.DvmDir, "bin", "docker")
 }
 
 func getVersionDir(version dockerversion.Version) string {
@@ -883,8 +880,8 @@ func getDockerVersionVar() string {
 }
 
 func buildGithubClient() *github.Client {
-	if token != "" {
-		tokenSource := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+	if opts.Token != "" {
+		tokenSource := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: opts.Token})
 		httpClient := oauth2.NewClient(oauth2.NoContext, tokenSource)
 		return github.NewClient(httpClient)
 	}
