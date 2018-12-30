@@ -26,7 +26,7 @@ import (
 )
 
 // These are global command line variables
-var opts config.DvmOptions
+var opts = config.NewDvmOptions()
 
 // This is a nasty global state flag that we flip. Bad Carolyn.
 var useAfterInstall bool
@@ -272,6 +272,12 @@ func setGlobalVars(c *cli.Context) {
 	useAfterInstall = true
 
 	opts.Debug = c.GlobalBool("debug")
+	if opts.Debug {
+		opts.Logger = log.New(color.Output, "", log.LstdFlags)
+	} else {
+		opts.Logger = log.New(ioutil.Discard, "", log.LstdFlags)
+	}
+
 	opts.Token = c.GlobalString("github-token")
 	opts.Shell = c.GlobalString("shell")
 	validateShellFlag()
@@ -426,19 +432,12 @@ func install(version dockerversion.Version) {
 
 func downloadRelease(version dockerversion.Version) {
 	destPath := filepath.Join(getVersionDir(version), getBinaryName())
-	err := version.Download(opts.MirrorURL, opts.DvmDir, destPath, getDebugLogger())
+	err := version.Download(opts, destPath)
 	if err != nil {
 		die("", err, retCodeRuntimeError)
 	}
 
 	writeDebug("Downloaded Docker %s to %s", version, destPath)
-}
-
-func getDebugLogger() *log.Logger {
-	if opts.Debug {
-		return log.New(color.Output, "", log.LstdFlags)
-	}
-	return log.New(ioutil.Discard, "", log.LstdFlags)
 }
 
 func uninstall(version dockerversion.Version) {
