@@ -1,13 +1,9 @@
 language: go
 go:
-- 1.7.x
-- 1.8.x
-- 1.9.x
-- tip
+- 1.11.x
 go_import_path: github.com/howtowhale/dvm
 git:
   depth: 9999999
-sudo: false # Run in a container
 script:
 - make test
 - make cross-build
