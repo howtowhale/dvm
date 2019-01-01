@@ -2,6 +2,7 @@ SHELL := /bin/bash
 
 COMMIT = $(shell git rev-parse --verify --short HEAD)
 VERSION = $(shell git describe --tags --dirty='-dev' 2> /dev/null)
+BREW_VERSION = $(shell git describe --tags --abbrev=0 2> /dev/null)
 PERMALINK = $(shell if [[ $(VERSION) =~ [^-]*-([^.]+).* ]]; then echo $${BASH_REMATCH[1]}; else echo "latest"; fi)
 
 GITHUB_ORG = howtowhale
@@ -19,6 +20,9 @@ GOFILES = dvm-helper/*.go
 GOFILES_NOVENDOR = $(shell go list ./... | grep -v /vendor/)
 
 default: local
+
+homebrew:
+	brew bump-formula-pr --strict --url=https://github.com/howtowhale/dvm/archive/$(BREW_VERSION).tar.gz dvm
 
 validate:
 	go fmt $(GOFILES_NOVENDOR)
