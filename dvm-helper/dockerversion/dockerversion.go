@@ -2,13 +2,13 @@ package dockerversion
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/Masterminds/semver"
+	"github.com/howtowhale/dvm/dvm-helper/internal/config"
 	"github.com/howtowhale/dvm/dvm-helper/internal/downloader"
 	"github.com/pkg/errors"
 )
@@ -102,26 +102,26 @@ func (version Version) buildDownloadURL(mirror string, forcePrerelease bool) (ur
 // version - the desired version.
 // mirrorURL - optional alternate download location.
 // binaryPath - full path to where the Docker client binary should be saved.
-func (version Version) Download(mirrorURL string, binaryPath string, l *log.Logger) error {
-	err := version.download(false, mirrorURL, binaryPath, l)
+func (version Version) Download(opts config.DvmOptions, binaryPath string) error {
+	err := version.download(false, opts, binaryPath)
 	if err != nil && !version.IsPrerelease() && version.shouldBeInDockerStore() {
 		// Docker initially publishes non-rc version versions to the test location
 		// and then later republishes to the stable location
 		// Retry stable versions against test to find "unstable" stable versions. :-)
-		l.Printf("Could not find a stable release for %s, checking for a test release\n", version)
-		retryErr := version.download(true, mirrorURL, binaryPath, l)
+		opts.Logger.Printf("Could not find a stable release for %s, checking for a test release\n", version)
+		retryErr := version.download(true, opts, binaryPath)
 		return errors.Wrapf(retryErr, "Attempted to fallback to downloading from the prerelease location after downloading from the stable location failed: %s", err.Error())
 	}
 	return err
 }
 
-func (version Version) download(forcePrerelease bool, mirrorURL string, binaryPath string, l *log.Logger) error {
-	url, archived, checksumed, err := version.buildDownloadURL(mirrorURL, forcePrerelease)
+func (version Version) download(forcePrerelease bool, opts config.DvmOptions, binaryPath string) error {
+	url, archived, checksumed, err := version.buildDownloadURL(opts.MirrorURL, forcePrerelease)
 	if err != nil {
 		return errors.Wrapf(err, "Unable to determine the download URL for %s", version)
 	}
 
-	l.Printf("Checking if %s can be found at %s", version, url)
+	opts.Logger.Printf("Checking if %s can be found at %s", version, url)
 	head, err := http.Head(url)
 	if err != nil {
 		return errors.Wrapf(err, "Unable to determine if %s is a valid version", version)
@@ -130,7 +130,7 @@ func (version Version) download(forcePrerelease bool, mirrorURL string, binaryPa
 		return errors.Errorf("Version %s not found (%v) - try `dvm ls-remote` to browse available versions", version, head.StatusCode)
 	}
 
-	d := downloader.New(l)
+	d := downloader.New(opts)
 	binaryName := filepath.Base(binaryPath)
 
 	if archived {

@@ -2,7 +2,6 @@ package downloader
 
 import (
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -11,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/howtowhale/dvm/dvm-helper/checksum"
+	"github.com/howtowhale/dvm/dvm-helper/internal/config"
 	"github.com/pivotal-golang/archiver/extractor"
 	"github.com/pkg/errors"
 )
@@ -23,14 +23,11 @@ type Client struct {
 
 // New creates a downloader client.
 // l - optional logger for debug output
-func New(l *log.Logger) Client {
-	if l == nil {
-		l = log.New(ioutil.Discard, "", log.LstdFlags)
-	}
-	tmpDir, _ := ioutil.TempDir("", "dvm")
-
+func New(opts config.DvmOptions) Client {
 	return Client{
-		log: l, tmp: tmpDir}
+		log: opts.Logger,
+		tmp: filepath.Join(opts.DvmDir, ".tmp"),
+	}
 }
 
 func (d Client) ensureParentDirectoryExists(path string) error {
@@ -52,7 +49,7 @@ func (d Client) DownloadFile(url string, destPath string) error {
 	defer destFile.Close()
 	os.Chmod(destPath, 0755)
 
-	d.log.Printf("Downloading %s\n", url)
+	d.log.Printf("Downloading %s to %s\n", url, destPath)
 
 	response, err := http.Get(url)
 	if err != nil {

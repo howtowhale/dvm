@@ -7,8 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"log"
-
+	"github.com/howtowhale/dvm/dvm-helper/internal/config"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
@@ -212,10 +211,11 @@ func TestVersion_BuildDownloadURL(t *testing.T) {
 func TestVersion_DownloadEdgeRelease(t *testing.T) {
 	version := Parse("edge")
 	tempDir, _ := ioutil.TempDir("", "dvmtest")
-	destPath := filepath.Join(tempDir, "docker")
+	opts := config.NewDvmOptions()
+	opts.DvmDir = filepath.Join(tempDir, ".dvm")
+	destPath := filepath.Join(opts.DvmDir, "docker")
 
-	l := log.New(ioutil.Discard, "", log.LstdFlags)
-	err := version.Download("", destPath, l)
+	err := version.Download(opts, destPath)
 	if err != nil {
 		t.Fatalf("%#v", err)
 	}

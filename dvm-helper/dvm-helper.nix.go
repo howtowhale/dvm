@@ -12,17 +12,17 @@ import (
 const binaryFileExt string = ""
 
 func upgradeSelf(version string) {
-	d := downloader.New(getDebugLogger())
+	d := downloader.New(opts)
 
 	binaryURL := buildDvmReleaseURL(version, dvmOS, dvmArch, "dvm-helper")
-	binaryPath := filepath.Join(dvmDir, "dvm-helper", "dvm-helper")
+	binaryPath := filepath.Join(opts.DvmDir, "dvm-helper", "dvm-helper")
 	err := d.DownloadFileWithChecksum(binaryURL, binaryPath)
 	if err != nil {
 		die("", err, retCodeRuntimeError)
 	}
 
 	scriptURL := buildDvmReleaseURL(version, "dvm.sh")
-	scriptPath := filepath.Join(dvmDir, "dvm.sh")
+	scriptPath := filepath.Join(opts.DvmDir, "dvm.sh")
 	err = d.DownloadFile(scriptURL, scriptPath)
 	if err != nil {
 		die("", err, retCodeRuntimeError)

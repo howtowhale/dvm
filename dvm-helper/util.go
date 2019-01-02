@@ -12,11 +12,11 @@ import (
 func exportEnvironmentVariable(name string) string {
 	value := os.Getenv(name)
 
-	if shell == "powershell" {
+	if opts.Shell == "powershell" {
 		return fmt.Sprintf("$env:%s=\"%s\"\r\n", name, value)
 	}
 
-	if shell == "cmd" {
+	if opts.Shell == "cmd" {
 		return fmt.Sprintf("%s=%s\r\n", name, value)
 	}
 
@@ -53,7 +53,7 @@ func writeFile(path string, contents string) {
 }
 
 func writeDebug(format string, a ...interface{}) {
-	if !debug {
+	if !opts.Debug {
 		return
 	}
 
@@ -61,7 +61,7 @@ func writeDebug(format string, a ...interface{}) {
 }
 
 func writeInfo(format string, a ...interface{}) {
-	if silent {
+	if opts.Silent {
 		return
 	}
 
@@ -69,7 +69,7 @@ func writeInfo(format string, a ...interface{}) {
 }
 
 func writeWarning(format string, a ...interface{}) {
-	if silent {
+	if opts.Silent {
 		return
 	}
 

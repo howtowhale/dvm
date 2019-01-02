@@ -15,24 +15,24 @@ const dvmOS string = "Windows"
 const binaryFileExt string = ".exe"
 
 func upgradeSelf(version string) {
-	d := downloader.New(getDebugLogger())
+	d := downloader.New(opts)
 
 	binaryURL := buildDvmReleaseURL(version, dvmOS, dvmArch, "dvm-helper.exe")
-	binaryPath := filepath.Join(dvmDir, ".tmp", "dvm-helper.exe")
+	binaryPath := filepath.Join(opts.DvmDir, ".tmp", "dvm-helper.exe")
 	err := d.DownloadFileWithChecksum(binaryURL, binaryPath)
 	if err != nil {
 		die("", err, retCodeRuntimeError)
 	}
 
 	psScriptURL := buildDvmReleaseURL(version, "dvm.ps1")
-	psScriptPath := filepath.Join(dvmDir, "dvm.ps1")
+	psScriptPath := filepath.Join(opts.DvmDir, "dvm.ps1")
 	err = d.DownloadFile(psScriptURL, psScriptPath)
 	if err != nil {
 		die("", err, retCodeRuntimeError)
 	}
 
 	cmdScriptURL := buildDvmReleaseURL(version, "dvm.cmd")
-	cmdScriptPath := filepath.Join(dvmDir, "dvm.cmd")
+	cmdScriptPath := filepath.Join(opts.DvmDir, "dvm.cmd")
 	err = d.DownloadFile(cmdScriptURL, cmdScriptPath)
 	if err != nil {
 		die("", err, retCodeRuntimeError)
@@ -43,11 +43,11 @@ func upgradeSelf(version string) {
 
 func writeUpgradeScript() {
 	scriptPath := buildDvmOutputScriptPath()
-	tmpBinaryPath := filepath.Join(dvmDir, ".tmp", "dvm-helper.exe")
-	binaryPath := filepath.Join(dvmDir, "dvm-helper", "dvm-helper.exe")
+	tmpBinaryPath := filepath.Join(opts.DvmDir, ".tmp", "dvm-helper.exe")
+	binaryPath := filepath.Join(opts.DvmDir, "dvm-helper", "dvm-helper.exe")
 
 	var contents string
-	if shell == "powershell" {
+	if opts.Shell == "powershell" {
 		contents = fmt.Sprintf("cp -force '%s' '%s'", tmpBinaryPath, binaryPath)
 	} else { // cmd
 		contents = fmt.Sprintf("cp /Y '%s' '%s'", tmpBinaryPath, binaryPath)
@@ -63,7 +63,7 @@ func getCleanPathRegex() string {
 }
 
 func validateShellFlag() {
-	if shell != "powershell" && shell != "cmd" {
+	if opts.Shell != "powershell" && opts.Shell != "cmd" {
 		die("The --shell flag or SHELL environment variable must be set when running on Windows. Available values are powershell and cmd.", nil, retCodeInvalidArgument)
 	}
 }
