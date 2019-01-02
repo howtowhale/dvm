@@ -52,10 +52,10 @@ install_dvm_helper() {
   DVM_OS=$(uname -s)
   DVM_ARCH=$(uname -m)
 
-  # Download 1.0.1 release
+  # Download 1.0.2 release
   mkdir -p "$DVM_DIR/dvm-helper"
   bin="$DVM_DIR/dvm-helper/dvm-helper"
-  url=https://howtowhale.github.io/dvm/downloads/1.0.1/$DVM_OS/$DVM_ARCH/dvm-helper
+  url=https://howtowhale.github.io/dvm/downloads/1.0.2/$DVM_OS/$DVM_ARCH/dvm-helper
   dvm_download -L --progress-bar $url -o "$bin"
   chmod u+x $bin
 }
@@ -70,10 +70,10 @@ if [ ! -d "$DVM_DIR" ]; then
 fi
 
 echo "Downloading dvm.sh..."
-dvm_download -L --progress-bar https://howtowhale.github.io/dvm/downloads/1.0.1/dvm.sh -o $DVM_DIR/dvm.sh
+dvm_download -L --progress-bar https://howtowhale.github.io/dvm/downloads/1.0.2/dvm.sh -o $DVM_DIR/dvm.sh
 
 echo "Downloading bash_completion"
-dvm_download -L --progress-bar https://howtowhale.github.io/dvm/downloads/1.0.1/bash_completion -o $DVM_DIR/bash_completion
+dvm_download -L --progress-bar https://howtowhale.github.io/dvm/downloads/1.0.2/bash_completion -o $DVM_DIR/bash_completion
 
 echo "Downloading dvm-helper..."
 install_dvm_helper
