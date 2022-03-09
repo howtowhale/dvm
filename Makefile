@@ -34,7 +34,7 @@ test: local
 	eval "$( ./dvm-helper --bash-completion )"
 	./dvm-helper/dvm-helper --version
 
-cross-build: local linux linux32 darwin windows windows32
+cross-build: linux darwin windows
 	cp dvm.sh dvm.ps1 dvm.cmd install.sh install.ps1 README.md LICENSE bash_completion $(BINDIR)/
 	find $(BINDIR) -maxdepth 1 -name "install.*" -exec sed -i -e 's/$(PERMALINK)/$(VERSION)/g' {} \;
 	cp -R $(BINDIR) bin/dvm/$(PERMALINK)
@@ -43,10 +43,15 @@ local: $(GOFILES)
 	CGO_ENABLED=0 $(GOBUILD) -o dvm-helper/dvm-helper $(PACKAGE)
 
 linux: $(GOFILES)
+	# amd64
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINDIR)/Linux/x86_64/dvm-helper $(PACKAGE)
 	cd $(BINDIR)/Linux/x86_64 && shasum -a 256 dvm-helper > dvm-helper.sha256
 
-linux32: $(GOFILES)
+	# amd64
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 $(GOBUILD) -o $(BINDIR)/Linux/aarch64/dvm-helper $(PACKAGE)
+	cd $(BINDIR)/Linux/aarch64 && shasum -a 256 dvm-helper > dvm-helper.sha256
+
+	# 386
 	CGO_ENABLED=0 GOOS=linux GOARCH=386 $(GOBUILD) -o $(BINDIR)/Linux/i686/dvm-helper $(PACKAGE)
 	cd $(BINDIR)/Linux/i686 && shasum -a 256 dvm-helper > dvm-helper.sha256
 
@@ -54,11 +59,19 @@ darwin: $(GOFILES)
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GOBUILD) -o $(BINDIR)/Darwin/x86_64/dvm-helper $(PACKAGE)
 	cd $(BINDIR)/Darwin/x86_64 && shasum -a 256 dvm-helper > dvm-helper.sha256
 
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 $(GOBUILD) -o $(BINDIR)/Darwin/aarch64/dvm-helper $(PACKAGE)
+	cd $(BINDIR)/Darwin/aarch64 && shasum -a 256 dvm-helper > dvm-helper.sha256
+
 windows: $(GOFILES)
+	# amd64
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GOBUILD) -o $(BINDIR)/Windows/x86_64/dvm-helper.exe $(PACKAGE)
 	cd $(BINDIR)/Windows/x86_64 && shasum -a 256 dvm-helper.exe > dvm-helper.exe.sha256
 
-windows32: $(GOFILES)
+	# arm64
+	CGO_ENABLED=0 GOOS=windows GOARCH=arm64 $(GOBUILD) -o $(BINDIR)/Windows/aarch64/dvm-helper.exe $(PACKAGE)
+	cd $(BINDIR)/Windows/aarch64 && shasum -a 256 dvm-helper.exe > dvm-helper.exe.sha256
+
+	# 386
 	CGO_ENABLED=0 GOOS=windows GOARCH=386 $(GOBUILD) -o $(BINDIR)/Windows/i686/dvm-helper.exe $(PACKAGE)
 	cd $(BINDIR)/Windows/i686 && shasum -a 256 dvm-helper.exe > dvm-helper.exe.sha256
 

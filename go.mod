@@ -33,7 +33,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0-rc0 // indirect
 	github.com/pmezard/go-difflib v0.0.0-20151028094244-d8ed2627bdf0 // indirect
 	golang.org/x/net v0.0.0-20201202161906-c7110b5ffcbb // indirect
-	golang.org/x/sys v0.0.0-20210112080510-489259a85091 // indirect
+	golang.org/x/sys v0.0.0-20220307203707-22a9840ba4d7 // indirect
 	google.golang.org/appengine v1.0.1-0.20170206203024-2e4a801b39fc // indirect
 	google.golang.org/protobuf v1.23.0 // indirect
 )
