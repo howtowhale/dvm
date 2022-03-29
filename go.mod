@@ -1,6 +1,6 @@
 module github.com/howtowhale/dvm
 
-go 1.17
+go 1.18
 
 require (
 	github.com/Masterminds/semver v0.0.0-20170707023526-c2e7f6c2f49a
